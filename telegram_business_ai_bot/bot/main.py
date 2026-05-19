@@ -6,6 +6,7 @@ from aiogram.types import BotCommand
 
 from bot.ai_service import HuggingFaceAIService
 from bot.config import load_settings
+from bot.customers import CustomerStorage
 from bot.handlers import create_router
 from bot.storage import MessageLoggingMiddleware, SessionStorage, setup_file_logging
 
@@ -17,6 +18,7 @@ async def setup_bot_commands(bot: Bot) -> None:
             BotCommand(command="menu", description="Открыть главное меню"),
             BotCommand(command="catalog", description="Посмотреть каталог"),
             BotCommand(command="ai", description="Задать вопрос AI"),
+            BotCommand(command="cart", description="Открыть корзину"),
             BotCommand(command="about", description="О магазине"),
             BotCommand(command="contact", description="Связаться с менеджером"),
         ]
@@ -35,9 +37,17 @@ async def main() -> None:
     dispatcher = Dispatcher()
     ai_service = HuggingFaceAIService(settings)
     storage = SessionStorage()
+    customer_storage = CustomerStorage()
 
     dispatcher.message.middleware(MessageLoggingMiddleware(storage))
-    dispatcher.include_router(create_router(ai_service, storage))
+    dispatcher.include_router(
+        create_router(
+            ai_service=ai_service,
+            storage=storage,
+            customer_storage=customer_storage,
+            shop_webapp_url=settings.shop_webapp_url,
+        )
+    )
 
     await setup_bot_commands(bot)
     await dispatcher.start_polling(bot)

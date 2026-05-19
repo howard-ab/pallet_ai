@@ -1,14 +1,14 @@
+from html import escape
+import json
 from pathlib import Path
 
-from html import escape
 from aiogram import F, Router
 from aiogram.filters import Command, CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, FSInputFile, Message
 
-from bot.ai_service import FALLBACK_MESSAGE
-from bot.ai_service import HuggingFaceAIService
+from bot.ai_service import FALLBACK_MESSAGE, HuggingFaceAIService
 from bot.cart import cart_total, make_cart_item
 from bot.catalog import (
     find_category_by_subcategory,
@@ -17,6 +17,7 @@ from bot.catalog import (
     get_product_id,
     get_products,
 )
+from bot.customers import CustomerStorage, is_valid_phone
 from bot.keyboards import (
     ABOUT_BUTTON,
     ASK_AI_BUTTON,
@@ -25,10 +26,13 @@ from bot.keyboards import (
     CONTACT_BUTTON,
     HOME_BUTTON,
     OLD_BACK_BUTTON,
+    PROFILE_BUTTON,
+    SHOP_BUTTON,
     back_to_menu_keyboard,
+    build_main_menu_keyboard,
     catalog_keyboard,
     cart_actions_keyboard,
-    main_menu_keyboard,
+    contact_request_keyboard,
     product_actions_keyboard,
     subcategory_keyboard,
 )
@@ -38,35 +42,35 @@ from bot.storage import SessionStorage
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 WELCOME_TEXT = (
-    "<b>Мир Сухофруктов Вас приветствует! 🌸 </b>\n\n"
-    "----------------------------------------"
-    "Здесь Вы можете заказать все позиции нашей торговой сети, рехи, финики и сладости для дома, офиса и подарков и не только.\n\n"
-    "Выберите раздел ниже. Я помогу подобрать товар и собрать корзину."
+    "<b>Мир Сухофруктов Вас приветствует!</b>\n\n"
+    "Здесь можно выбрать сухофрукты, орехи, финики, сладости и подарочные наборы.\n\n"
+    "Откройте витрину, задайте вопрос AI или соберите заказ прямо в боте."
 )
 
 ABOUT_TEXT = (
     "<b>О нас</b>\n\n"
-    "Мир Сухофруктов — торговая сеть качественных сухофруктов, орехов, кураги, изюма, "
-    "фиников, сладостей и подарочных наборов и не только.\n\n"
+    "Мир Сухофруктов — торговая сеть качественных сухофруктов, орехов, кураги, "
+    "изюма, фиников, сладостей и подарочных наборов.\n\n"
     "AI-ассистент помогает быстро выбрать товары, ответить на вопросы и подготовить заказ."
 )
 
 CONTACT_TEXT = (
     "<b>Менеджер</b>\n\n"
     "Для оформления заказа или уточнения деталей:\n"
-    "@your_manager_username - Телеграм\n"
+    "@your_manager_username - Telegram\n"
     "+7-928-111-11-11 - WhatsApp\n"
-    "+7-928-111-11-11 - Связаться с нами по телефону\n"
+    "+7-928-111-11-11 - телефон"
 )
 
 MAIN_MENU_TEXT = (
     "<b>Главное меню</b>\n\n"
-    "Каталог, AI-помощник, корзина и контакты — все под рукой."
+    "Витрина, AI-помощник, корзина и контакты — все под рукой."
 )
 
 
 class UserFlow(StatesGroup):
     waiting_for_ai_question = State()
+    waiting_for_manual_phone = State()
 
 
 async def answer_and_log(
@@ -90,18 +94,48 @@ def product_caption(index: int, product: dict[str, str]) -> str:
             f"Вес: {escape(product['weight'])}",
             f"Происхождение: {escape(product['origin'])}",
         ]
-    ) 
+    )
 
 
-async def show_cart(message: Message, state: FSMContext, storage: SessionStorage) -> None:
+def registration_text(message: Message) -> str:
+    username = message.from_user.username if message.from_user else None
+    username_text = f"@{username}" if username else "не указан в Telegram"
+    return (
+        "<b>Мир Сухофруктов Вас приветствует!</b>\n\n"
+        "_____________________________________________"
+        "<b>Перед покупками сохраним контакты</b>\n\n"
+        f"Telegram username: <b>{escape(username_text)}</b>\n"
+        "Телефон: будет получен после нажатия кнопки ниже.\n\n"
+        "Контакты нужны менеджеру, чтобы подтвердить заказ. "
+        "Если номер неактуален, его можно ввести вручную."
+    )
+
+
+def profile_text(customer: dict[str, object]) -> str:
+    username = customer.get("username") or "не указан"
+    phone = customer.get("phone") or "не указан"
+    return (
+        "<b>Ваши контакты</b>\n\n"
+        f"Telegram: @{escape(str(username))}\n"
+        f"Телефон: {escape(str(phone))}\n\n"
+        "Если номер изменился, поделитесь контактом снова или введите новый номер вручную."
+    )
+
+
+async def show_cart(
+    message: Message,
+    state: FSMContext,
+    storage: SessionStorage,
+    menu_keyboard: object,
+) -> None:
     data = await state.get_data()
     items = data.get("cart", [])
     if not items:
         await answer_and_log(
             message,
             storage,
-            "<b>Корзина</b>\n\nПока пусто. Откройте каталог и добавьте товары.",
-            reply_markup=main_menu_keyboard(),
+            "<b>Корзина</b>\n\nПока пусто. Откройте витрину или каталог и добавьте товары.",
+            reply_markup=menu_keyboard,
             parse_mode="HTML",
         )
         return
@@ -120,17 +154,82 @@ async def show_cart(message: Message, state: FSMContext, storage: SessionStorage
     )
 
 
-def create_router(ai_service: HuggingFaceAIService, storage: SessionStorage) -> Router:
+def create_router(
+    ai_service: HuggingFaceAIService,
+    storage: SessionStorage,
+    customer_storage: CustomerStorage,
+    shop_webapp_url: str = "",
+) -> Router:
     router = Router()
+    menu_keyboard = build_main_menu_keyboard(shop_webapp_url)
 
     @router.message(CommandStart())
     async def start(message: Message, state: FSMContext) -> None:
         await state.clear()
+        if message.from_user and await customer_storage.get(message.from_user.id) is None:
+            await answer_and_log(
+                message,
+                storage,
+                registration_text(message),
+                reply_markup=contact_request_keyboard(),
+                parse_mode="HTML",
+            )
+            return
+
         await answer_and_log(
             message,
             storage,
             WELCOME_TEXT,
-            reply_markup=main_menu_keyboard(),
+            reply_markup=menu_keyboard,
+            parse_mode="HTML",
+        )
+
+    @router.message(F.contact)
+    async def save_shared_contact(message: Message, state: FSMContext) -> None:
+        if not message.from_user or not message.contact:
+            return
+        customer = await customer_storage.upsert(
+            user=message.from_user,
+            phone=message.contact.phone_number,
+        )
+        await state.clear()
+        await answer_and_log(
+            message,
+            storage,
+            profile_text(customer) + "\n\n<b>Готово.</b> Теперь можно перейти к покупкам.",
+            reply_markup=menu_keyboard,
+            parse_mode="HTML",
+        )
+
+    @router.message(F.text == "Ввести номер вручную")
+    async def request_manual_phone(message: Message, state: FSMContext) -> None:
+        await state.set_state(UserFlow.waiting_for_manual_phone)
+        await answer_and_log(
+            message,
+            storage,
+            "Введите номер телефона в формате +79990000000.",
+            reply_markup=contact_request_keyboard(),
+        )
+
+    @router.message(UserFlow.waiting_for_manual_phone)
+    async def save_manual_phone(message: Message, state: FSMContext) -> None:
+        if not message.from_user or not message.text:
+            return
+        if not is_valid_phone(message.text):
+            await answer_and_log(
+                message,
+                storage,
+                "Номер выглядит некорректно. Введите номер еще раз, например +79990000000.",
+                reply_markup=contact_request_keyboard(),
+            )
+            return
+        customer = await customer_storage.upsert(user=message.from_user, phone=message.text)
+        await state.clear()
+        await answer_and_log(
+            message,
+            storage,
+            profile_text(customer) + "\n\n<b>Готово.</b> Контакты обновлены.",
+            reply_markup=menu_keyboard,
             parse_mode="HTML",
         )
 
@@ -142,7 +241,47 @@ def create_router(ai_service: HuggingFaceAIService, storage: SessionStorage) -> 
             message,
             storage,
             MAIN_MENU_TEXT,
-            reply_markup=main_menu_keyboard(),
+            reply_markup=menu_keyboard,
+            parse_mode="HTML",
+        )
+
+    @router.message(F.text == PROFILE_BUTTON)
+    async def profile(message: Message) -> None:
+        customer = await customer_storage.get(message.from_user.id) if message.from_user else None
+        if customer is None:
+            await answer_and_log(
+                message,
+                storage,
+                registration_text(message),
+                reply_markup=contact_request_keyboard(),
+                parse_mode="HTML",
+            )
+            return
+        await answer_and_log(
+            message,
+            storage,
+            profile_text(customer),
+            reply_markup=contact_request_keyboard(),
+            parse_mode="HTML",
+        )
+
+    @router.message(F.text == SHOP_BUTTON)
+    async def shop(message: Message) -> None:
+        if not shop_webapp_url:
+            await answer_and_log(
+                message,
+                storage,
+                "<b>Покупки</b>\n\nMini App готов в папке <code>webapp/</code>. "
+                "Чтобы открыть его из Telegram, укажите HTTPS-ссылку в <code>SHOP_WEBAPP_URL</code>.",
+                reply_markup=menu_keyboard,
+                parse_mode="HTML",
+            )
+            return
+        await answer_and_log(
+            message,
+            storage,
+            "<b>Покупки</b>\n\nНажмите кнопку «Покупки» в меню, чтобы открыть витрину.",
+            reply_markup=menu_keyboard,
             parse_mode="HTML",
         )
 
@@ -174,12 +313,7 @@ def create_router(ai_service: HuggingFaceAIService, storage: SessionStorage) -> 
         subcategory = message.text or ""
         category = find_category_by_subcategory(subcategory)
         if category is None:
-            await answer_and_log(
-                message,
-                storage,
-                "Подкатегория не найдена.",
-                reply_markup=catalog_keyboard(),
-            )
+            await answer_and_log(message, storage, "Подкатегория не найдена.", reply_markup=catalog_keyboard())
             return
 
         products = get_products(category, subcategory)
@@ -213,11 +347,7 @@ def create_router(ai_service: HuggingFaceAIService, storage: SessionStorage) -> 
                     reply_markup=actions,
                     parse_mode="HTML",
                 )
-                await storage.log_bot_text(
-                    message,
-                    caption,
-                    metadata={"photo": product["photo"]},
-                )
+                await storage.log_bot_text(message, caption, metadata={"photo": product["photo"]})
             elif product.get("photo_url"):
                 await message.answer_photo(
                     photo=product["photo_url"],
@@ -225,19 +355,9 @@ def create_router(ai_service: HuggingFaceAIService, storage: SessionStorage) -> 
                     reply_markup=actions,
                     parse_mode="HTML",
                 )
-                await storage.log_bot_text(
-                    message,
-                    caption,
-                    metadata={"photo_url": product["photo_url"]},
-                )
+                await storage.log_bot_text(message, caption, metadata={"photo_url": product["photo_url"]})
             else:
-                await answer_and_log(
-                    message,
-                    storage,
-                    caption,
-                    reply_markup=actions,
-                    parse_mode="HTML",
-                )
+                await answer_and_log(message, storage, caption, reply_markup=actions, parse_mode="HTML")
 
     @router.message(Command("ai"))
     @router.message(F.text == ASK_AI_BUTTON)
@@ -268,12 +388,53 @@ def create_router(ai_service: HuggingFaceAIService, storage: SessionStorage) -> 
             success=answer != FALLBACK_MESSAGE,
         )
         await state.clear()
-        await answer_and_log(message, storage, answer, reply_markup=main_menu_keyboard())
+        await answer_and_log(message, storage, answer, reply_markup=menu_keyboard)
 
     @router.message(Command("cart"))
     @router.message(F.text == CART_BUTTON)
     async def cart(message: Message, state: FSMContext) -> None:
-        await show_cart(message, state, storage)
+        await show_cart(message, state, storage, menu_keyboard)
+
+    @router.message(F.web_app_data)
+    async def webapp_order(message: Message) -> None:
+        try:
+            payload = json.loads(message.web_app_data.data)
+        except json.JSONDecodeError:
+            await answer_and_log(
+                message,
+                storage,
+                "Не удалось прочитать заказ из Mini App.",
+                reply_markup=menu_keyboard,
+            )
+            return
+
+        if payload.get("type") != "order":
+            return
+
+        items = payload.get("items", [])
+        total = payload.get("total", 0)
+        lines = ["<b>Заказ из Mini App</b>", ""]
+        customer = await customer_storage.get(message.from_user.id) if message.from_user else None
+        if customer:
+            username = customer.get("username") or "не указан"
+            phone = customer.get("phone") or "не указан"
+            lines.append(f"Клиент: @{escape(str(username))}")
+            lines.append(f"Телефон: {escape(str(phone))}")
+            lines.append("")
+        for index, item in enumerate(items, start=1):
+            lines.append(f"{index}. {escape(str(item.get('name', 'Товар')))}")
+            lines.append(
+                f"   {escape(str(item.get('weight', '')))} · "
+                f"<b>{escape(str(item.get('price', '')))}</b>"
+            )
+        lines.extend(["", f"<b>Итого: {escape(str(total))} руб.</b>", "", "Менеджер скоро свяжется с вами."])
+        await answer_and_log(
+            message,
+            storage,
+            "\n".join(lines),
+            reply_markup=menu_keyboard,
+            parse_mode="HTML",
+        )
 
     @router.message(Command("about"))
     @router.message(F.text.in_({ABOUT_BUTTON, "О нас"}))
@@ -283,7 +444,7 @@ def create_router(ai_service: HuggingFaceAIService, storage: SessionStorage) -> 
             message,
             storage,
             ABOUT_TEXT,
-            reply_markup=main_menu_keyboard(),
+            reply_markup=menu_keyboard,
             parse_mode="HTML",
         )
 
@@ -295,7 +456,7 @@ def create_router(ai_service: HuggingFaceAIService, storage: SessionStorage) -> 
             message,
             storage,
             CONTACT_TEXT,
-            reply_markup=main_menu_keyboard(),
+            reply_markup=menu_keyboard,
             parse_mode="HTML",
         )
 
@@ -325,7 +486,7 @@ def create_router(ai_service: HuggingFaceAIService, storage: SessionStorage) -> 
         if callback.message:
             await callback.message.answer(
                 "<b>Корзина очищена</b>\n\nМожно выбрать товары заново.",
-                reply_markup=main_menu_keyboard(),
+                reply_markup=menu_keyboard,
                 parse_mode="HTML",
             )
 
@@ -335,7 +496,7 @@ def create_router(ai_service: HuggingFaceAIService, storage: SessionStorage) -> 
             message,
             storage,
             "Выберите действие из меню или отправьте /menu.",
-            reply_markup=main_menu_keyboard(),
+            reply_markup=menu_keyboard,
         )
 
     return router

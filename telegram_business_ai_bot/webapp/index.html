@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Мир Сухофруктов</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  </head>
+  <body>
+    <main class="app">
+      <section class="topbar">
+        <div>
+          <p class="eyebrow">Мир Сухофруктов</p>
+          <h1>Витрина</h1>
+        </div>
+        <button class="cart-button" id="cartButton" type="button">Корзина · 0</button>
+      </section>
+
+      <section class="hero">
+        <p>Сухофрукты, орехи, финики и сладости для дома, офиса и подарков.</p>
+      </section>
+
+      <nav class="tabs" id="categoryTabs" aria-label="Категории"></nav>
+      <nav class="chips" id="subcategoryChips" aria-label="Подкатегории"></nav>
+
+      <section class="grid" id="productGrid"></section>
+    </main>
+
+    <aside class="cart-panel" id="cartPanel" aria-hidden="true">
+      <div class="cart-sheet">
+        <div class="cart-head">
+          <div>
+            <p class="eyebrow">Заказ</p>
+            <h2>Корзина</h2>
+          </div>
+          <button class="icon-button" id="closeCartButton" type="button">×</button>
+        </div>
+        <div class="cart-list" id="cartList"></div>
+        <div class="cart-total">
+          <span>Итого</span>
+          <strong id="cartTotal">0 руб.</strong>
+        </div>
+        <button class="order-button" id="orderButton" type="button">Оформить заказ</button>
+        <button class="clear-button" id="clearButton" type="button">Очистить</button>
+      </div>
+    </aside>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

@@ -50,6 +50,7 @@ Then fill in real values:
 TELEGRAM_BOT_TOKEN=your_real_telegram_bot_token
 HUGGINGFACE_API_TOKEN=your_real_huggingface_api_token
 HUGGINGFACE_MODEL=Qwen/Qwen2.5-Coder-3B-Instruct
+SHOP_WEBAPP_URL=https://howard-ab.github.io/pallet_ai/webapp/
 ```
 
 `HUGGINGFACE_MODEL` is configurable. By default, the project uses a small Qwen instruct model that is available through Hugging Face Inference Providers:
@@ -67,6 +68,40 @@ python -m bot.main
 ```
 
 Open your Telegram bot and send `/start`.
+
+## Telegram Mini App
+
+The project already contains a ready-to-deploy Telegram Mini App in `webapp/`.
+
+GitHub Pages deployment is configured in:
+
+```text
+.github/workflows/deploy-telegram-webapp.yml
+```
+
+How to publish it:
+
+1. Push the repository to GitHub.
+2. Open GitHub -> Settings -> Pages.
+3. In `Build and deployment`, choose `GitHub Actions`.
+4. Push to `main` or `feature_bot`, or run the workflow manually in `Actions`.
+5. After deployment, the Mini App will be available at:
+
+```text
+https://howard-ab.github.io/pallet_ai/webapp/
+```
+
+Then set the same URL in `.env`:
+
+```env
+SHOP_WEBAPP_URL=https://howard-ab.github.io/pallet_ai/webapp/
+```
+
+If you want to disable Mini App opening in the bot, leave:
+
+```env
+SHOP_WEBAPP_URL=
+```
 
 ## Features
 

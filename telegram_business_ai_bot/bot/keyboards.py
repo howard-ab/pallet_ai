@@ -1,4 +1,4 @@
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup, WebAppInfo
 
 from bot.catalog import get_categories, get_subcategories
 
@@ -8,14 +8,26 @@ ASK_AI_BUTTON = "Спросить AI"
 ABOUT_BUTTON = "О магазине"
 CONTACT_BUTTON = "Связаться с менеджером"
 CART_BUTTON = "Корзина"
+SHOP_BUTTON = "Покупки"
+PROFILE_BUTTON = "Мои контакты"
 HOME_BUTTON = "В главное меню"
 OLD_BACK_BUTTON = "Назад в меню"
 
 
 def main_menu_keyboard() -> ReplyKeyboardMarkup:
+    return build_main_menu_keyboard()
+
+
+def build_main_menu_keyboard(shop_webapp_url: str = "") -> ReplyKeyboardMarkup:
+    shop_button = KeyboardButton(
+        text=SHOP_BUTTON,
+        web_app=WebAppInfo(url=shop_webapp_url),
+    ) if shop_webapp_url else KeyboardButton(text=SHOP_BUTTON)
+
     return ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(text=CATALOG_BUTTON), KeyboardButton(text=ASK_AI_BUTTON)],
+            [shop_button, KeyboardButton(text=ASK_AI_BUTTON)],
+            [KeyboardButton(text=CATALOG_BUTTON), KeyboardButton(text=PROFILE_BUTTON)],
             [KeyboardButton(text=CART_BUTTON), KeyboardButton(text=CONTACT_BUTTON)],
             [KeyboardButton(text=ABOUT_BUTTON)],
         ],
@@ -74,4 +86,15 @@ def cart_actions_keyboard() -> InlineKeyboardMarkup:
                 InlineKeyboardButton(text="Очистить корзину", callback_data="cart:clear"),
             ]
         ]
+    )
+
+
+def contact_request_keyboard() -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text="Поделиться контактом", request_contact=True)],
+            [KeyboardButton(text="Ввести номер вручную")],
+        ],
+        resize_keyboard=True,
+        input_field_placeholder="Поделитесь номером телефона",
     )
