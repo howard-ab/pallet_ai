@@ -1,5 +1,7 @@
 import asyncio
 import logging
+import os
+import time
 
 from aiogram import Bot, Dispatcher
 from aiogram.types import BotCommand
@@ -26,6 +28,11 @@ async def setup_bot_commands(bot: Bot) -> None:
 
 
 async def main() -> None:
+    # Make log timestamps match Europe/Moscow (UTC+3) on systems where TZ is honored.
+    os.environ.setdefault("TZ", "Europe/Moscow")
+    if hasattr(time, "tzset"):
+        time.tzset()
+
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",

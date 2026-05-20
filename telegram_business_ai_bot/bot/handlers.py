@@ -101,8 +101,8 @@ def registration_text(message: Message) -> str:
     username = message.from_user.username if message.from_user else None
     username_text = f"@{username}" if username else "не указан в Telegram"
     return (
-        "<b>Мир Сухофруктов Вас приветствует!</b>\n\n"
-        "_____________________________________________"
+        "<b>Мир Сухофруктов Вас приветствует!</b>"
+        "____________________________________\n\n"
         "<b>Перед покупками сохраним контакты</b>\n\n"
         f"Telegram username: <b>{escape(username_text)}</b>\n"
         "Телефон: будет получен после нажатия кнопки ниже.\n\n"

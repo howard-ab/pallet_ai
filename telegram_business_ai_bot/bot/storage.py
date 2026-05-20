@@ -2,9 +2,10 @@ import asyncio
 import json
 import logging
 import re
-from datetime import UTC, datetime
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Awaitable, Callable
+from zoneinfo import ZoneInfo
 
 from aiogram import BaseMiddleware
 from aiogram.types import Message
@@ -13,6 +14,7 @@ from aiogram.types import Message
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SESSIONS_DIR = PROJECT_ROOT / "sessions"
 LOGS_DIR = PROJECT_ROOT / "logs"
+MOSCOW_TZ = ZoneInfo("Europe/Moscow")
 
 
 class SessionStorage:
@@ -29,7 +31,7 @@ class SessionStorage:
         metadata: dict[str, Any] | None = None,
     ) -> None:
         record = {
-            "timestamp": datetime.now(UTC).isoformat(),
+            "timestamp": datetime.now(MOSCOW_TZ).isoformat(),
             "event": event,
             "direction": direction,
             "chat_id": message.chat.id,
@@ -65,7 +67,7 @@ class SessionStorage:
         success: bool,
     ) -> None:
         record = {
-            "timestamp": datetime.now(UTC).isoformat(),
+            "timestamp": datetime.now(MOSCOW_TZ).isoformat(),
             "event": "ai_interaction",
             "chat_id": source_message.chat.id,
             "message_id": source_message.message_id,
@@ -98,7 +100,7 @@ class SessionStorage:
     async def _append_session_index(self, message: Message) -> None:
         user = self._user_payload(message)
         record = {
-            "timestamp": datetime.now(UTC).isoformat(),
+            "timestamp": datetime.now(MOSCOW_TZ).isoformat(),
             "chat_id": message.chat.id,
             "user": user,
             "session_file": f"{self._chat_session_name(message)}.jsonl",

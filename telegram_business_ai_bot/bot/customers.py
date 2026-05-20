@@ -1,9 +1,10 @@
 import asyncio
 import json
 import re
-from datetime import UTC, datetime
+from datetime import datetime
 from pathlib import Path
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from aiogram.types import User
 
@@ -11,6 +12,7 @@ from aiogram.types import User
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = PROJECT_ROOT / "data"
 CUSTOMERS_FILE = DATA_DIR / "customers.json"
+MOSCOW_TZ = ZoneInfo("Europe/Moscow")
 
 
 class CustomerStorage:
@@ -30,7 +32,7 @@ class CustomerStorage:
             "first_name": user.first_name,
             "last_name": user.last_name,
             "phone": normalize_phone(phone),
-            "updated_at": datetime.now(UTC).isoformat(),
+            "updated_at": datetime.now(MOSCOW_TZ).isoformat(),
         }
         customers[str(user.id)] = record
         await asyncio.to_thread(self._write_all_sync, customers)
