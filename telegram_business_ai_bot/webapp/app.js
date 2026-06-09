@@ -145,7 +145,6 @@ function renderProducts() {
       <img src="${product.photo}" alt="${product.name}">
       <div class="product-body">
         <h3>${product.name}</h3>
-        <p>${product.description}</p>
         <div class="meta">
           <span>${product.origin}</span>
           <span>${product.weight}</span>
