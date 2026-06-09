@@ -57,15 +57,26 @@ ABOUT_TEXT = (
     "<b>О нас</b>\n\n"
     "Мир Сухофруктов — торговая сеть качественных сухофруктов, орехов, кураги, "
     "изюма, фиников, сладостей и подарочных наборов.\n\n"
+    "<b>Адреса магазинов:</b>\n"
+    "Ростов-на-Дону, ул. Пойменная, 1\n"
+    "Проспект Стачки, 25\n"
+    "Коммунистический проспект, 32\n"
+    "Сельмаш, 2\n"
+    "Таганрогская, 151\n\n"
+    "<b>Менеджер:</b> +7-928-199-38-00\n\n"
     "AI-ассистент помогает быстро выбрать товары, ответить на вопросы и подготовить заказ."
 )
 
 CONTACT_TEXT = (
     "<b>Менеджер</b>\n\n"
-    "Для оформления заказа или уточнения деталей:\n"
-    "@your_manager_username - Telegram\n"
-    "+7-928-111-11-11 - WhatsApp\n"
-    "+7-928-111-11-11 - телефон"
+    "Для оформления заказа или уточнения деталей свяжитесь с менеджером:\n\n"
+    "+7-928-199-38-00\n\n"
+    "<b>Адреса магазинов:</b>\n"
+    "Ростов-на-Дону, ул. Пойменная, 1\n"
+    "Проспект Стачки, 25\n"
+    "Коммунистический проспект, 32\n"
+    "Сельмаш, 2\n"
+    "Таганрогская, 151"
 )
 
 MAIN_MENU_TEXT = (
@@ -128,12 +139,10 @@ def profile_text(customer: dict[str, object]) -> str:
         "Если номер изменился, поделитесь контактом снова или введите новый номер вручную."
     )
 
-
 async def show_cart(
     message: Message,
     state: FSMContext,
     storage: SessionStorage,
-    menu_keyboard: object,
 ) -> None:
     data = await state.get_data()
     items = data.get("cart", [])
@@ -142,7 +151,7 @@ async def show_cart(
             message,
             storage,
             "<b>Корзина</b>\n\nПока пусто. Откройте витрину или каталог и добавьте товары.",
-            reply_markup=menu_keyboard,
+            reply_markup=back_to_menu_keyboard(),
             parse_mode="HTML",
         )
         return
@@ -156,7 +165,7 @@ async def show_cart(
         message,
         storage,
         "\n".join(lines),
-        reply_markup=cart_actions_keyboard(),
+        reply_markup=back_to_menu_keyboard(),
         parse_mode="HTML",
     )
 
@@ -286,7 +295,7 @@ def create_router(
                 storage,
                 "<b>Покупки</b>\n\nMini App готов в папке <code>webapp/</code>. "
                 "Чтобы открыть его из Telegram, укажите HTTPS-ссылку в <code>SHOP_WEBAPP_URL</code>.",
-                reply_markup=menu_keyboard,
+                reply_markup=back_to_menu_keyboard(),
                 parse_mode="HTML",
             )
             return
@@ -294,7 +303,7 @@ def create_router(
             message,
             storage,
             "<b>Покупки</b>\n\nНажмите кнопку «Покупки» в меню, чтобы открыть витрину.",
-            reply_markup=menu_keyboard,
+            reply_markup=back_to_menu_keyboard(),
             parse_mode="HTML",
         )
 
@@ -401,12 +410,12 @@ def create_router(
             success=answer != FALLBACK_MESSAGE,
         )
         await state.clear()
-        await answer_and_log(message, storage, answer, reply_markup=menu_keyboard)
+        await answer_and_log(message, storage, answer, reply_markup=back_to_menu_keyboard())
 
     @router.message(Command("cart"))
     @router.message(F.text == CART_BUTTON)
     async def cart(message: Message, state: FSMContext) -> None:
-        await show_cart(message, state, storage, menu_keyboard)
+        await show_cart(message, state, storage)
 
     @router.message(F.web_app_data)
     async def webapp_order(message: Message) -> None:
@@ -440,7 +449,7 @@ def create_router(
             "<b>Заказ принят</b> ✨\n\n"
             "Мы передали его в отдел заказов. "
             "Менеджер свяжется с вами после подтверждения.",
-            reply_markup=menu_keyboard,
+            reply_markup=back_to_menu_keyboard(),
             parse_mode="HTML",
         )
 
@@ -452,7 +461,7 @@ def create_router(
             message,
             storage,
             ABOUT_TEXT,
-            reply_markup=menu_keyboard,
+            reply_markup=back_to_menu_keyboard(),
             parse_mode="HTML",
         )
 
@@ -464,7 +473,7 @@ def create_router(
             message,
             storage,
             CONTACT_TEXT,
-            reply_markup=menu_keyboard,
+            reply_markup=back_to_menu_keyboard(),
             parse_mode="HTML",
         )
 
@@ -494,7 +503,7 @@ def create_router(
         if callback.message:
             await callback.message.answer(
                 "<b>Корзина очищена</b>\n\nМожно выбрать товары заново.",
-                reply_markup=menu_keyboard,
+                reply_markup=back_to_menu_keyboard(),
                 parse_mode="HTML",
             )
 

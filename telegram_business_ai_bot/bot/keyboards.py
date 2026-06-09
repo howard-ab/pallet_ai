@@ -4,7 +4,7 @@ from bot.catalog import get_categories, get_subcategories
 
 
 CATALOG_BUTTON = "Каталог"
-ASK_AI_BUTTON = "Спросить AI"
+ASK_AI_BUTTON = "Задать вопрос ИИ"
 ABOUT_BUTTON = "О магазине"
 CONTACT_BUTTON = "Связаться с менеджером"
 CART_BUTTON = "Корзина"
@@ -110,6 +110,7 @@ def contact_request_keyboard() -> ReplyKeyboardMarkup:
         keyboard=[
             [KeyboardButton(text="Поделиться контактом", request_contact=True)],
             [KeyboardButton(text="Ввести номер вручную")],
+            [KeyboardButton(text=HOME_BUTTON)],
         ],
         resize_keyboard=True,
         input_field_placeholder="Поделитесь номером телефона",

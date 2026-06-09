@@ -281,9 +281,11 @@ h2 {
   display: flex;
   gap: 8px;
   overflow-x: auto;
-  justify-content: center;
+  justify-content: flex-start;
+  align-items: center;
   padding: 2px 0 12px;
   scrollbar-width: none;
+  scroll-padding-left: 0;
 }
 
 .tabs::-webkit-scrollbar,
