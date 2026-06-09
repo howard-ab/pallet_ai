@@ -624,6 +624,10 @@ h2 {
   box-shadow: 0 14px 28px rgb(22 62 158 / 0.16);
 }
 
+.order-button:disabled {
+  opacity: 0.8;
+}
+
 .clear-button {
   width: 100%;
   margin-top: 8px;

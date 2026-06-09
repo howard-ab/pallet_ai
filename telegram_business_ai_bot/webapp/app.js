@@ -259,7 +259,14 @@ els.cartPanel.onclick = (event) => {
 };
 
 els.orderButton.onclick = () => {
-  if (!state.cart.length) return;
+  if (!state.cart.length) {
+    if (tg?.showAlert) {
+      tg.showAlert("Сначала добавьте товары в корзину.");
+    } else {
+      alert("Сначала добавьте товары в корзину.");
+    }
+    return;
+  }
   const payload = {
     type: "order",
     items: state.cart.map((item) => ({
@@ -271,8 +278,12 @@ els.orderButton.onclick = () => {
     total: cartTotalValue(),
   };
   if (tg) {
+    els.orderButton.disabled = true;
+    els.orderButton.textContent = "Отправляем...";
     tg.sendData(JSON.stringify(payload));
-    tg.close();
+    window.setTimeout(() => {
+      tg.close();
+    }, 600);
   } else {
     alert("Заказ подготовлен. В Telegram он будет отправлен менеджеру.");
   }
