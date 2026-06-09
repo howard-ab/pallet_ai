@@ -279,10 +279,12 @@ h2 {
 .tabs,
 .chips {
   display: flex;
+  width: 100%;
   gap: 8px;
   overflow-x: auto;
-  justify-content: flex-start;
+  justify-content: flex-start !important;
   align-items: center;
+  margin: 0;
   padding: 2px 0 12px;
   scrollbar-width: none;
   scroll-padding-left: 0;

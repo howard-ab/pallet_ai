@@ -106,6 +106,9 @@ function renderCategories() {
     };
     els.categories.append(button);
   });
+  window.requestAnimationFrame(() => {
+    els.categories.scrollLeft = 0;
+  });
 }
 
 function renderSubcategories() {
@@ -119,6 +122,9 @@ function renderSubcategories() {
       render();
     };
     els.subcategories.append(button);
+  });
+  window.requestAnimationFrame(() => {
+    els.subcategories.scrollLeft = 0;
   });
 }
 
