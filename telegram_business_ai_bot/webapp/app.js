@@ -26,6 +26,13 @@ const els = {
   closeCartButton: document.querySelector("#closeCartButton"),
   orderButton: document.querySelector("#orderButton"),
   clearButton: document.querySelector("#clearButton"),
+  infoPanel: document.querySelector("#infoPanel"),
+  closeInfoButton: document.querySelector("#closeInfoButton"),
+  infoTitle: document.querySelector("#infoTitle"),
+  infoDescription: document.querySelector("#infoDescription"),
+  infoOrigin: document.querySelector("#infoOrigin"),
+  infoWeight: document.querySelector("#infoWeight"),
+  infoPrice: document.querySelector("#infoPrice"),
 };
 
 function hideSplash() {
@@ -140,17 +147,23 @@ function renderProducts() {
         <h3>${product.name}</h3>
         <p>${product.description}</p>
         <div class="meta">
+          <span>${product.origin}</span>
           <span>${product.weight}</span>
           <strong>${product.price}</strong>
         </div>
-        <button class="add-button" type="button">В корзину</button>
+        <div class="product-actions">
+          <button class="info-button" type="button">Инфо</button>
+          <button class="add-button" type="button">В корзину</button>
+        </div>
       </div>
     `;
-    const button = card.querySelector("button");
-    button.onclick = () => {
+    const infoButton = card.querySelector(".info-button");
+    const addButton = card.querySelector(".add-button");
+    infoButton.onclick = () => openProductInfo(product);
+    addButton.onclick = () => {
       addToCart(product);
       renderCart();
-      showAddedFeedback(card, button);
+      showAddedFeedback(card, addButton);
     };
     els.products.append(card);
   });
@@ -211,11 +224,39 @@ function closeCart() {
   els.cartPanel.setAttribute("aria-hidden", "true");
 }
 
+function openProductInfo(product) {
+  els.infoTitle.textContent = product.name;
+  els.infoDescription.textContent = product.description;
+  els.infoOrigin.textContent = product.origin;
+  els.infoWeight.textContent = product.weight;
+  els.infoPrice.textContent = product.price;
+  els.infoPanel.classList.add("open");
+  els.infoPanel.setAttribute("aria-hidden", "false");
+}
+
+function closeProductInfo() {
+  els.infoPanel.classList.remove("open");
+  els.infoPanel.setAttribute("aria-hidden", "true");
+}
+
 els.cartDockButton.onclick = openCart;
 els.closeCartButton.onclick = closeCart;
+els.closeInfoButton.onclick = closeProductInfo;
 els.clearButton.onclick = () => {
   state.cart = [];
   renderCart();
+};
+
+els.infoPanel.onclick = (event) => {
+  if (event.target === els.infoPanel) {
+    closeProductInfo();
+  }
+};
+
+els.cartPanel.onclick = (event) => {
+  if (event.target === els.cartPanel) {
+    closeCart();
+  }
 };
 
 els.orderButton.onclick = () => {

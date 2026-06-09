@@ -408,7 +408,15 @@ h2 {
   font-size: 13px;
 }
 
+.product-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 84px) minmax(0, 1fr);
+  gap: 8px;
+  margin-top: auto;
+}
+
 .add-button,
+.info-button,
 .order-button,
 .clear-button,
 .icon-button,
@@ -417,13 +425,21 @@ h2 {
 }
 
 .add-button {
-  width: 100%;
-  margin-top: auto;
   border: 0;
   border-radius: 12px;
   background: var(--ink);
   color: white;
   padding: 9px 12px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.info-button {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: white;
+  color: var(--accent-strong);
+  padding: 9px 10px;
   font-weight: 700;
   line-height: 1.1;
 }
@@ -455,6 +471,11 @@ h2 {
   align-items: flex-end;
 }
 
+.info-panel.open {
+  display: flex;
+  align-items: flex-end;
+}
+
 .cart-sheet {
   width: 100%;
   max-width: 560px;
@@ -464,6 +485,47 @@ h2 {
   padding: 18px;
   border-radius: 28px;
   text-align: center;
+}
+
+.info-sheet {
+  max-width: 520px;
+}
+
+.info-copy {
+  display: grid;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.info-description {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.info-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.info-card {
+  display: grid;
+  gap: 4px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: linear-gradient(180deg, #fffefb 0%, #faf5eb 100%);
+}
+
+.info-card span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.info-card strong {
+  font-size: 15px;
 }
 
 .cart-head,

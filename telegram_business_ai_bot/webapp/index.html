@@ -119,6 +119,37 @@
       </div>
     </aside>
 
+    <aside class="cart-panel info-panel" id="infoPanel" aria-hidden="true">
+      <div class="cart-sheet info-sheet">
+        <div class="cart-head">
+          <div>
+            <p class="eyebrow">Информация о товаре</p>
+            <h2 id="infoTitle">Товар</h2>
+          </div>
+          <button class="icon-button" id="closeInfoButton" type="button" aria-label="Закрыть информацию">
+            ×
+          </button>
+        </div>
+        <div class="info-copy">
+          <p class="info-description" id="infoDescription"></p>
+          <div class="info-grid">
+            <div class="info-card">
+              <span>Страна</span>
+              <strong id="infoOrigin"></strong>
+            </div>
+            <div class="info-card">
+              <span>Вес</span>
+              <strong id="infoWeight"></strong>
+            </div>
+            <div class="info-card">
+              <span>Цена</span>
+              <strong id="infoPrice"></strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
     <script src="./app.js"></script>
   </body>
 </html>
