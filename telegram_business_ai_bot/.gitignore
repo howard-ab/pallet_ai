@@ -12,3 +12,7 @@ data/customers.json
 !logs/.gitkeep
 data/manager_recipients.json
 !data/manager_recipients.example.json
+staff_access/*.json
+staff_access/*.jsonl
+staff_access/orders/*.jsonl
+!staff_access/.gitkeep

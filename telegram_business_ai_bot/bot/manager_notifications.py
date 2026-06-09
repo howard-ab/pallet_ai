@@ -12,6 +12,8 @@ from zoneinfo import ZoneInfo
 from aiogram import Bot
 from aiogram.exceptions import TelegramBadRequest
 
+from bot.manager_access import ManagerAccessStorage
+
 DEFAULT_MANAGER_CHAT_IDS = [5467423100]
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 RECIPIENTS_FILE = PROJECT_ROOT / "data" / "manager_recipients.json"
@@ -33,10 +35,10 @@ class ManagerNotifier:
         manager_chat_ids: Iterable[int] | None = None,
         *,
         manager_bot: Bot | None = None,
-        main_bot_token: str = "",
+        access_storage: ManagerAccessStorage | None = None,
     ) -> None:
         self._manager_bot = manager_bot
-        self._main_bot_token = main_bot_token
+        self._access_storage = access_storage or ManagerAccessStorage()
         recipients = self._load_recipients_file()
         if not recipients:
             recipients = [
@@ -48,6 +50,9 @@ class ManagerNotifier:
     @property
     def manager_chat_ids(self) -> list[int]:
         return [recipient.chat_id for recipient in self._recipients if recipient.enabled]
+
+    def is_allowed_chat(self, chat_id: int) -> bool:
+        return any(recipient.enabled and recipient.chat_id == chat_id for recipient in self._recipients)
 
     def _load_recipients_file(self) -> list[ManagerRecipient]:
         if not RECIPIENTS_FILE.exists():
@@ -103,6 +108,13 @@ class ManagerNotifier:
 
         now = datetime.now(MOSCOW_TZ)
         order_number = f"MS-{now.strftime('%Y%m%d-%H%M')}-{user_id or 'guest'}"
+        await self._access_storage.store_order_record(
+            order_number=order_number,
+            customer=customer,
+            telegram_user=telegram_user,
+            items=items,
+            total=total,
+        )
         display_name = first_name or username or "без имени"
         phone = (customer or {}).get("phone") or "не указан"
 
@@ -133,6 +145,13 @@ class ManagerNotifier:
         text = "\n".join(lines)
 
         for recipient in recipients:
+            if not await self._access_storage.is_verified(recipient.chat_id):
+                logging.info(
+                    "Skipping manager notification to unverified staff chat_id=%s username=%s",
+                    recipient.chat_id,
+                    recipient.username,
+                )
+                continue
             if self._manager_bot is None and user_id is not None and recipient.chat_id == user_id:
                 logging.info(
                     "Skipping manager notification to the same main-bot dialog chat_id=%s. Configure MANAGER_BOT_TOKEN or a separate group chat.",
