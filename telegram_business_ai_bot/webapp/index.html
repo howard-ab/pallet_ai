@@ -10,63 +10,111 @@
   <body>
     <div class="splash" id="splashScreen" aria-hidden="false">
       <div class="splash-card">
-        <img class="splash-logo" src="./assets/logo-mir-sukhofruktov.svg" alt="Мир Сухофруктов" />
-        <p class="splash-text">Добро пожаловать ✨</p>
+        <img
+          class="splash-logo"
+          src="./assets/logo-mir-sukhofruktov-emblem.png"
+          alt="Мир Сухофруктов"
+        />
+        <p class="splash-title">Добро пожаловать</p>
+        <div class="loading-dots" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
       </div>
     </div>
 
+    <button class="cart-dock" id="cartDockButton" type="button" aria-label="Открыть корзину">
+      <span class="cart-dock-count" id="cartDockCount">0</span>
+      <span class="cart-dock-copy">
+        <strong>Корзина</strong>
+        <span id="cartDockTotal">0 руб.</span>
+      </span>
+    </button>
+
     <main class="app app-hidden" id="appRoot">
-      <section class="topbar">
-        <div class="brand-block">
-          <img class="brand-logo" src="./assets/logo-mir-sukhofruktov.svg" alt="Мир Сухофруктов" />
-          <div class="brand-copy">
-            <p class="eyebrow">Натуральные вкусы каждый день</p>
-            <h1>Витрина магазина</h1>
-            <p class="brand-note">Сухофрукты, орехи, сладости и подарочные наборы в аккуратной мини-витрине.</p>
-          </div>
-        </div>
-        <button class="cart-button" id="cartButton" type="button">🧺 Корзина · 0</button>
+      <section class="masthead">
+        <img
+          class="brand-logo"
+          src="./assets/logo-mir-sukhofruktov-emblem.png"
+          alt="Мир Сухофруктов"
+        />
+        <p class="eyebrow">Восточная витрина вкусов</p>
+        <h1>Мир сухофруктов</h1>
+        <p class="brand-note">
+          Отборная курага, орехи, изюм, финики и подарочные наборы для дома,
+          офиса и красивых подарков.
+        </p>
       </section>
 
       <section class="hero">
-        <div class="hero-copy">
-          <p class="hero-title">Подберите любимые вкусы для дома, офиса и подарков</p>
-          <p class="hero-text">Все категории собраны на одном светлом экране: фотографии, краткие описания и быстрая корзина.</p>
+        <div class="hero-panel">
+          <p class="hero-title">Натуральные продукты, собранные в одной витрине</p>
+          <p class="hero-text">
+            Выбирайте категории, собирайте корзину и отправляйте заказ за пару
+            касаний. Все карточки, фотографии и цены перед глазами.
+          </p>
         </div>
         <div class="hero-badges">
-          <span>🥭 Сухофрукты</span>
-          <span>🌰 Орехи</span>
-          <span>🎁 Подарки</span>
+          <span>Курага</span>
+          <span>Изюм</span>
+          <span>Орехи</span>
+          <span>Финики</span>
+          <span>Подарки</span>
         </div>
       </section>
 
+      <section class="store-strip">
+        <article class="store-card">
+          <p class="store-label">Адрес</p>
+          <p class="store-value">Ростов-на-Дону, ул. Пойменная, 21</p>
+        </article>
+        <article class="store-card">
+          <p class="store-label">Заказы и консультации</p>
+          <p class="store-value">+7-928-111-11-11</p>
+        </article>
+        <article class="store-card">
+          <p class="store-label">Формат</p>
+          <p class="store-value">Самовывоз, подарочные наборы, ежедневная витрина</p>
+        </article>
+      </section>
+
       <section class="section-head">
-        <div>
-          <p class="eyebrow">Каталог</p>
-          <h2>Выберите категорию</h2>
-        </div>
+        <p class="eyebrow">Каталог</p>
+        <h2>Выберите категорию и соберите корзину</h2>
       </section>
 
       <nav class="tabs" id="categoryTabs" aria-label="Категории"></nav>
       <nav class="chips" id="subcategoryChips" aria-label="Подкатегории"></nav>
       <section class="grid" id="productGrid"></section>
+
+      <section class="about-store">
+        <p class="eyebrow">О магазине</p>
+        <p class="about-text">
+          Мы собираем витрину из сухофруктов, орехов, сладостей и подарочных
+          позиций с акцентом на вкус, аккуратную упаковку и удобный заказ для
+          клиентов в Ростове-на-Дону.
+        </p>
+      </section>
     </main>
 
     <aside class="cart-panel" id="cartPanel" aria-hidden="true">
       <div class="cart-sheet">
         <div class="cart-head">
           <div>
-            <p class="eyebrow">Заказ</p>
-            <h2>Корзина</h2>
+            <p class="eyebrow">Корзина</p>
+            <h2>Ваш заказ</h2>
           </div>
-          <button class="icon-button" id="closeCartButton" type="button" aria-label="Закрыть корзину">×</button>
+          <button class="icon-button" id="closeCartButton" type="button" aria-label="Закрыть корзину">
+            ×
+          </button>
         </div>
         <div class="cart-list" id="cartList"></div>
         <div class="cart-total">
           <span>Итого</span>
           <strong id="cartTotal">0 руб.</strong>
         </div>
-        <button class="order-button" id="orderButton" type="button">Оформить заказ ✨</button>
+        <button class="order-button" id="orderButton" type="button">Оформить заказ</button>
         <button class="clear-button" id="clearButton" type="button">Очистить корзину</button>
       </div>
     </aside>

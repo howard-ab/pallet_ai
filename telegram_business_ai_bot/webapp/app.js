@@ -17,7 +17,9 @@ const els = {
   categories: document.querySelector("#categoryTabs"),
   subcategories: document.querySelector("#subcategoryChips"),
   products: document.querySelector("#productGrid"),
-  cartButton: document.querySelector("#cartButton"),
+  cartDockButton: document.querySelector("#cartDockButton"),
+  cartDockCount: document.querySelector("#cartDockCount"),
+  cartDockTotal: document.querySelector("#cartDockTotal"),
   cartPanel: document.querySelector("#cartPanel"),
   cartList: document.querySelector("#cartList"),
   cartTotal: document.querySelector("#cartTotal"),
@@ -30,12 +32,30 @@ function hideSplash() {
   window.setTimeout(() => {
     els.splash?.classList.add("hidden");
     els.appRoot?.classList.remove("app-hidden");
-  }, 2000);
+  }, 1800);
 }
 
 function priceValue(price) {
   const match = String(price).replace(/\s/g, "").match(/\d+/);
   return match ? Number(match[0]) : 0;
+}
+
+function cartTotalValue() {
+  return state.cart.reduce((sum, item) => sum + priceValue(item.price), 0);
+}
+
+function showAddedFeedback(card, button) {
+  card.classList.remove("added");
+  button.classList.remove("added");
+  void card.offsetWidth;
+  card.classList.add("added");
+  button.classList.add("added");
+  button.textContent = "Добавлено ✓";
+  window.setTimeout(() => {
+    card.classList.remove("added");
+    button.classList.remove("added");
+    button.textContent = "В корзину";
+  }, 900);
 }
 
 function renderCategories() {
@@ -67,20 +87,6 @@ function renderSubcategories() {
   });
 }
 
-function showAddedFeedback(card, button) {
-  card.classList.remove("added");
-  button.classList.remove("added");
-  void card.offsetWidth;
-  card.classList.add("added");
-  button.classList.add("added");
-  button.textContent = "Добавлено ✓";
-  window.setTimeout(() => {
-    card.classList.remove("added");
-    button.classList.remove("added");
-    button.textContent = "В корзину ✨";
-  }, 1100);
-}
-
 function renderProducts() {
   els.products.innerHTML = "";
   const products = state.catalog[state.category]?.[state.subcategory] || [];
@@ -96,7 +102,7 @@ function renderProducts() {
           <span>${product.weight}</span>
           <strong>${product.price}</strong>
         </div>
-        <button class="add-button" type="button">В корзину ✨</button>
+        <button class="add-button" type="button">В корзину</button>
       </div>
     `;
     const button = card.querySelector("button");
@@ -109,17 +115,41 @@ function renderProducts() {
   });
 }
 
+function removeCartItem(index) {
+  state.cart.splice(index, 1);
+  renderCart();
+}
+
 function renderCart() {
-  els.cartButton.textContent = `🧺 Корзина · ${state.cart.length}`;
+  const total = cartTotalValue();
+  els.cartDockCount.textContent = String(state.cart.length);
+  els.cartDockTotal.textContent = `${total} руб.`;
+  els.cartTotal.textContent = `${total} руб.`;
+
   els.cartList.innerHTML = "";
-  state.cart.forEach((item) => {
+  if (!state.cart.length) {
+    const empty = document.createElement("div");
+    empty.className = "cart-empty";
+    empty.textContent = "Корзина пока пустая. Добавьте товары из витрины.";
+    els.cartList.append(empty);
+    return;
+  }
+
+  state.cart.forEach((item, index) => {
     const row = document.createElement("div");
     row.className = "cart-item";
-    row.innerHTML = `<strong>${item.name}</strong><span>${item.weight} · ${item.price}</span>`;
+    row.innerHTML = `
+      <div class="cart-item-copy">
+        <strong>${item.name}</strong>
+        <span>${item.weight} · ${item.price}</span>
+      </div>
+      <div class="cart-item-actions">
+        <button class="cart-remove" type="button">Удалить</button>
+      </div>
+    `;
+    row.querySelector("button").onclick = () => removeCartItem(index);
     els.cartList.append(row);
   });
-  const total = state.cart.reduce((sum, item) => sum + priceValue(item.price), 0);
-  els.cartTotal.textContent = `${total} руб.`;
 }
 
 function render() {
@@ -139,12 +169,13 @@ function closeCart() {
   els.cartPanel.setAttribute("aria-hidden", "true");
 }
 
-els.cartButton.onclick = openCart;
+els.cartDockButton.onclick = openCart;
 els.closeCartButton.onclick = closeCart;
 els.clearButton.onclick = () => {
   state.cart = [];
   renderCart();
 };
+
 els.orderButton.onclick = () => {
   if (!state.cart.length) return;
   const payload = {
@@ -154,7 +185,7 @@ els.orderButton.onclick = () => {
       price: item.price,
       weight: item.weight,
     })),
-    total: state.cart.reduce((sum, item) => sum + priceValue(item.price), 0),
+    total: cartTotalValue(),
   };
   if (tg) {
     tg.sendData(JSON.stringify(payload));
