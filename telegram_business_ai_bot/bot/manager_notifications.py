@@ -54,6 +54,30 @@ class ManagerNotifier:
     def is_allowed_chat(self, chat_id: int) -> bool:
         return any(recipient.enabled and recipient.chat_id == chat_id for recipient in self._recipients)
 
+    async def _delivery_targets(self) -> list[ManagerRecipient]:
+        targets: dict[int, ManagerRecipient] = {
+            recipient.chat_id: recipient
+            for recipient in self._recipients
+            if recipient.enabled
+        }
+        verified_staff = await self._access_storage.get_all_verified_staff()
+        for staff in verified_staff:
+            try:
+                chat_id = int(staff["user_id"])
+            except (KeyError, TypeError, ValueError):
+                continue
+            targets.setdefault(
+                chat_id,
+                ManagerRecipient(
+                    chat_id=chat_id,
+                    name=str(staff.get("first_name") or ""),
+                    username=str(staff.get("username") or ""),
+                    enabled=True,
+                    role="verified_staff",
+                ),
+            )
+        return list(targets.values())
+
     def _load_recipients_file(self) -> list[ManagerRecipient]:
         if not RECIPIENTS_FILE.exists():
             return []
@@ -88,7 +112,7 @@ class ManagerNotifier:
         items: list[dict[str, object]],
         total: object,
     ) -> None:
-        recipients = [recipient for recipient in self._recipients if recipient.enabled]
+        recipients = await self._delivery_targets()
         if not recipients:
             return
 
@@ -145,7 +169,7 @@ class ManagerNotifier:
         text = "\n".join(lines)
 
         for recipient in recipients:
-            if not await self._access_storage.is_verified(recipient.chat_id):
+            if recipient.role != "verified_staff" and not await self._access_storage.is_verified(recipient.chat_id):
                 logging.info(
                     "Skipping manager notification to unverified staff chat_id=%s username=%s",
                     recipient.chat_id,

@@ -41,6 +41,10 @@ class ManagerAccessStorage:
         staff = await self._read_verified_staff()
         return staff.get(str(user_id))
 
+    async def get_all_verified_staff(self) -> list[dict[str, Any]]:
+        staff = await self._read_verified_staff()
+        return list(staff.values())
+
     async def verify_user(self, user: User) -> dict[str, Any]:
         now = datetime.now(MOSCOW_TZ)
         staff = await self._read_verified_staff()

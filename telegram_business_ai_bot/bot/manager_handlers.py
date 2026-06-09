@@ -32,11 +32,6 @@ def create_manager_router(
     async def require_verified(message: Message) -> bool:
         if not message.from_user:
             return False
-        if not manager_notifier.is_allowed_chat(message.from_user.id):
-            await message.answer(
-                "Этот аккаунт не входит в список сотрудников для бота заказов."
-            )
-            return False
         if await access_storage.is_verified(message.from_user.id):
             await access_storage.touch_session(message.from_user, event="session_resume")
             return True
@@ -47,12 +42,6 @@ def create_manager_router(
     @router.message(CommandStart())
     async def start(message: Message, state: FSMContext) -> None:
         if not message.from_user:
-            return
-        if not manager_notifier.is_allowed_chat(message.from_user.id):
-            await access_storage.log_access_event(message.from_user, "blocked_not_in_allowlist")
-            await message.answer(
-                "Этот аккаунт не входит в список сотрудников для бота заказов."
-            )
             return
         if await access_storage.is_verified(message.from_user.id):
             await access_storage.touch_session(message.from_user)
@@ -73,14 +62,6 @@ def create_manager_router(
     async def check_code(message: Message, state: FSMContext) -> None:
         if not message.from_user or not message.text:
             return
-        if not manager_notifier.is_allowed_chat(message.from_user.id):
-            await access_storage.log_access_event(message.from_user, "blocked_not_in_allowlist")
-            await state.clear()
-            await message.answer(
-                "Этот аккаунт не входит в список сотрудников для бота заказов."
-            )
-            return
-
         if message.text.strip() != access_code:
             await access_storage.log_access_event(message.from_user, "code_invalid")
             await message.answer("Код неверный. Попробуйте еще раз.")
