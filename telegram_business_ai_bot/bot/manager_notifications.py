@@ -10,6 +10,7 @@ from typing import Iterable
 from zoneinfo import ZoneInfo
 
 from aiogram import Bot
+from aiogram.exceptions import TelegramBadRequest
 
 DEFAULT_MANAGER_CHAT_IDS = [5467423100]
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -27,7 +28,15 @@ class ManagerRecipient:
 
 
 class ManagerNotifier:
-    def __init__(self, manager_chat_ids: Iterable[int] | None = None) -> None:
+    def __init__(
+        self,
+        manager_chat_ids: Iterable[int] | None = None,
+        *,
+        manager_bot: Bot | None = None,
+        main_bot_token: str = "",
+    ) -> None:
+        self._manager_bot = manager_bot
+        self._main_bot_token = main_bot_token
         recipients = self._load_recipients_file()
         if not recipients:
             recipients = [
@@ -78,6 +87,8 @@ class ManagerNotifier:
         if not recipients:
             return
 
+        delivery_bot = self._manager_bot or bot
+
         username = None
         first_name = None
         user_id = None
@@ -122,8 +133,20 @@ class ManagerNotifier:
         text = "\n".join(lines)
 
         for recipient in recipients:
+            if self._manager_bot is None and user_id is not None and recipient.chat_id == user_id:
+                logging.info(
+                    "Skipping manager notification to the same main-bot dialog chat_id=%s. Configure MANAGER_BOT_TOKEN or a separate group chat.",
+                    recipient.chat_id,
+                )
+                continue
             try:
-                await bot.send_message(chat_id=recipient.chat_id, text=text, parse_mode="HTML")
+                await delivery_bot.send_message(chat_id=recipient.chat_id, text=text, parse_mode="HTML")
+            except TelegramBadRequest:
+                logging.exception(
+                    "Telegram rejected manager notification to chat_id=%s username=%s",
+                    recipient.chat_id,
+                    recipient.username,
+                )
             except Exception:  # noqa: BLE001
                 logging.exception(
                     "Failed to send manager notification to chat_id=%s username=%s",

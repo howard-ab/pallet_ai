@@ -14,6 +14,7 @@ class Settings:
     huggingface_model: str = DEFAULT_HUGGINGFACE_MODEL
     shop_webapp_url: str = ""
     manager_chat_ids: tuple[int, ...] = ()
+    manager_bot_token: str = ""
 
 
 def load_settings() -> Settings:
@@ -32,6 +33,7 @@ def load_settings() -> Settings:
         for item in raw_manager_chat_ids.split(',')
         if item.strip()
     )
+    manager_bot_token = os.getenv("MANAGER_BOT_TOKEN", "").strip()
 
     if not telegram_bot_token:
         raise RuntimeError("TELEGRAM_BOT_TOKEN is not set")
@@ -45,4 +47,5 @@ def load_settings() -> Settings:
         huggingface_model=huggingface_model,
         shop_webapp_url=shop_webapp_url,
         manager_chat_ids=manager_chat_ids,
+        manager_bot_token=manager_bot_token,
     )

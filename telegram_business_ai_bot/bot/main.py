@@ -42,11 +42,16 @@ async def main() -> None:
 
     settings = load_settings()
     bot = Bot(token=settings.telegram_bot_token)
+    manager_bot = Bot(token=settings.manager_bot_token) if settings.manager_bot_token else None
     dispatcher = Dispatcher()
     ai_service = HuggingFaceAIService(settings)
     storage = SessionStorage()
     customer_storage = CustomerStorage()
-    manager_notifier = ManagerNotifier(settings.manager_chat_ids)
+    manager_notifier = ManagerNotifier(
+        settings.manager_chat_ids,
+        manager_bot=manager_bot,
+        main_bot_token=settings.telegram_bot_token,
+    )
 
     dispatcher.message.middleware(MessageLoggingMiddleware(storage))
     dispatcher.include_router(
@@ -60,7 +65,12 @@ async def main() -> None:
     )
 
     await setup_bot_commands(bot)
-    await dispatcher.start_polling(bot)
+    try:
+        await dispatcher.start_polling(bot)
+    finally:
+        await bot.session.close()
+        if manager_bot is not None:
+            await manager_bot.session.close()
 
 
 if __name__ == "__main__":
