@@ -40,13 +40,19 @@ def _summarize_orders(title: str, orders: list[dict[str, object]]) -> str:
     for order in orders:
         status = str(order.get("status", "new"))
         status_counts[status] = status_counts.get(status, 0) + 1
+    active_count = (
+        status_counts.get("new", 0)
+        + status_counts.get("assembled", 0)
+        + status_counts.get("in_delivery", 0)
+    )
 
     lines = [f"<b>{title}</b>", ""]
     lines.append(
         " · ".join(
             [
+                f"Активные: <b>{active_count}</b>",
                 f"Новые: <b>{status_counts.get('new', 0)}</b>",
-                f"Собранные: <b>{status_counts.get('assembled', 0)}</b>",
+                f"Готовы: <b>{status_counts.get('assembled', 0)}</b>",
                 f"В доставке: <b>{status_counts.get('in_delivery', 0)}</b>",
                 f"Доставленные: <b>{status_counts.get('delivered', 0)}</b>",
             ]
@@ -123,7 +129,7 @@ def create_manager_router(
             await access_storage.touch_session(message.from_user)
             await state.clear()
             await message.answer(
-                "<b>Доступ подтвержден</b>\n\n"
+                "<b>✅ Доступ подтвержден</b>\n\n"
                 "Заказы будут приходить в этот бот.\n"
                 "Команды:\n"
                 "<code>/new</code> — новые заказы\n"
@@ -156,7 +162,7 @@ def create_manager_router(
         record = await access_storage.verify_user(message.from_user)
         await state.clear()
         await message.answer(
-            "<b>Доступ открыт</b>\n\n"
+            "<b>✅ Доступ открыт</b>\n\n"
             f"Сотрудник: <b>{escape(str(record.get('first_name') or record.get('username') or 'без имени'))}</b>\n"
             f"Смена: <b>{escape(str(record.get('shift')))}</b>\n\n"
             "Теперь заказы будут приходить в этот бот.\n"
@@ -181,7 +187,7 @@ def create_manager_router(
         orders = await access_storage.get_orders_for_date(datetime.now(MOSCOW_TZ).date(), status=status)
         if not orders:
             await message.answer(
-                f"{_status_list_title(status)}: на сегодня пусто.",
+                f"✅ {_status_list_title(status)}: на сегодня пусто.",
                 reply_markup=menu_keyboard,
             )
             return
@@ -220,7 +226,7 @@ def create_manager_router(
             return
         orders = await access_storage.get_orders_for_date(datetime.now(MOSCOW_TZ).date())
         if not orders:
-            await message.answer("За сегодня заказов пока нет.", reply_markup=menu_keyboard)
+            await message.answer("✅ За сегодня заказов пока нет.", reply_markup=menu_keyboard)
             return
         await message.answer(
             _summarize_orders("Заказы за сегодня", orders),
@@ -238,7 +244,7 @@ def create_manager_router(
         target_date = (datetime.now(MOSCOW_TZ) - timedelta(days=1)).date()
         orders = await access_storage.get_orders_for_date(target_date)
         if not orders:
-            await message.answer("За вчера заказов нет.", reply_markup=menu_keyboard)
+            await message.answer("✅ За вчера заказов нет.", reply_markup=menu_keyboard)
             return
         await message.answer(
             _summarize_orders(f"Заказы за {target_date.strftime('%d.%m.%Y')}", orders),
@@ -271,7 +277,7 @@ def create_manager_router(
         orders = await access_storage.get_orders_for_date(parsed.date())
         if not orders:
             await message.answer(
-                f"За {parsed.strftime('%d.%m.%Y')} заказов нет.",
+                f"✅ За {parsed.strftime('%d.%m.%Y')} заказов нет.",
                 reply_markup=menu_keyboard,
             )
             return
@@ -310,7 +316,7 @@ def create_manager_router(
             return
         orders = await access_storage.search_orders(query)
         if not orders:
-            await message.answer("По этому номеру заказ не найден.", reply_markup=menu_keyboard)
+            await message.answer("✅ По этому номеру заказ не найден.", reply_markup=menu_keyboard)
             return
         for order in orders[:3]:
             await message.answer(
@@ -341,7 +347,7 @@ def create_manager_router(
         orders = await access_storage.search_orders(message.text.strip())
         await state.clear()
         if not orders:
-            await message.answer("По этому номеру заказ не найден.", reply_markup=menu_keyboard)
+            await message.answer("✅ По этому номеру заказ не найден.", reply_markup=menu_keyboard)
             return
         for order in orders[:5]:
             await message.answer(
@@ -368,7 +374,7 @@ def create_manager_router(
         orders = await access_storage.get_orders_for_date(parsed.date())
         if not orders:
             await message.answer(
-                f"За {parsed.strftime('%d.%m.%Y')} заказов нет.",
+                f"✅ За {parsed.strftime('%d.%m.%Y')} заказов нет.",
                 reply_markup=menu_keyboard,
             )
             return
@@ -387,7 +393,7 @@ def create_manager_router(
             return
         record = await access_storage.get_verified_staff(message.from_user.id)
         if not record:
-            await message.answer("Данные сотрудника не найдены.", reply_markup=menu_keyboard)
+            await message.answer("✅ Данные сотрудника не найдены.", reply_markup=menu_keyboard)
             return
         actions = await access_storage.get_staff_actions(message.from_user.id)
         await message.answer(
@@ -427,6 +433,12 @@ def create_manager_router(
                 format_order_message(order),
                 parse_mode="HTML",
                 reply_markup=order_status_keyboard(order),
+            )
+            await callback.message.answer(
+                f"✅ Заказ <code>{escape(str(order_number))}</code> переведен в статус "
+                f"<b>{escape(STATUS_LABELS.get(next_status, next_status))}</b>.",
+                parse_mode="HTML",
+                reply_markup=menu_keyboard,
             )
         await callback.answer(f"Статус обновлен: {STATUS_LABELS.get(next_status, next_status)}")
 

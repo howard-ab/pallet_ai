@@ -451,7 +451,7 @@ def create_router(
         await answer_and_log(
             message,
             storage,
-            "<b>Заказ принят</b> ✨\n\n"
+            "<b>✅ Заказ принят</b> ✨\n\n"
             f"Номер заказа: <code>{escape(str(order.get('order_number', '-')))}</code>\n\n"
             "Мы передали его в отдел заказов. "
             "Менеджер свяжется с вами после подтверждения.",

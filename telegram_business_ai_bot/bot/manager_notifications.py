@@ -25,6 +25,12 @@ STATUS_LABELS = {
     "in_delivery": "В доставке",
     "delivered": "Доставлен",
 }
+STATUS_ICONS = {
+    "new": "🆕",
+    "assembled": "✅",
+    "in_delivery": "🚚",
+    "delivered": "✅",
+}
 STATUS_ACTION_LABELS = {
     "assembled": "Готов к доставке",
     "in_delivery": "Передать в доставку",
@@ -87,7 +93,7 @@ def format_order_message(order: dict[str, object]) -> str:
     actor_name = last_action_by.get("first_name") or last_action_by.get("username")
 
     lines = [
-        "<b>Заказ</b> 📦",
+        f"<b>{escape(STATUS_ICONS.get(str(order.get('status', 'new')), '📦'))} Заказ</b>",
         "",
         f"Номер: <code>{escape(str(order.get('order_number', '-')))}</code>",
         f"Статус: <b>{escape(STATUS_LABELS.get(str(order.get('status', 'new')), 'Новый'))}</b>",

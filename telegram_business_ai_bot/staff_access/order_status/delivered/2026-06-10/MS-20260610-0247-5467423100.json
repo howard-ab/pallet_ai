@@ -1,0 +1,77 @@
+{
+  "timestamp": "2026-06-10T02:47:39.831071+03:00",
+  "updated_at": "2026-06-10T02:48:04.348937+03:00",
+  "date": "2026-06-10",
+  "order_number": "MS-20260610-0247-5467423100",
+  "status": "delivered",
+  "customer": {
+    "user_id": 5467423100,
+    "username": "Hoowieeee",
+    "first_name": "Ховар",
+    "phone": "79281704450"
+  },
+  "items": [
+    {
+      "name": "Абрикос сушёный (урюк) отборный, Таджикистан 1кг",
+      "price": "690 руб.",
+      "weight": "1 кг",
+      "quantity": 1
+    }
+  ],
+  "total": 690,
+  "history": [
+    {
+      "timestamp": "2026-06-10T02:47:39.831071+03:00",
+      "event": "created",
+      "status": "new",
+      "actor": {
+        "source": "customer_bot",
+        "user_id": 5467423100,
+        "username": "Hoowieeee",
+        "first_name": "Ховар"
+      }
+    },
+    {
+      "timestamp": "2026-06-10T02:47:52.369471+03:00",
+      "event": "status_changed",
+      "from_status": "new",
+      "status": "assembled",
+      "actor": {
+        "user_id": 5467423100,
+        "username": "Hoowieeee",
+        "first_name": "Ховар",
+        "last_name": null
+      }
+    },
+    {
+      "timestamp": "2026-06-10T02:48:01.177076+03:00",
+      "event": "status_changed",
+      "from_status": "assembled",
+      "status": "in_delivery",
+      "actor": {
+        "user_id": 5467423100,
+        "username": "Hoowieeee",
+        "first_name": "Ховар",
+        "last_name": null
+      }
+    },
+    {
+      "timestamp": "2026-06-10T02:48:04.348937+03:00",
+      "event": "status_changed",
+      "from_status": "in_delivery",
+      "status": "delivered",
+      "actor": {
+        "user_id": 5467423100,
+        "username": "Hoowieeee",
+        "first_name": "Ховар",
+        "last_name": null
+      }
+    }
+  ],
+  "last_action_by": {
+    "user_id": 5467423100,
+    "username": "Hoowieeee",
+    "first_name": "Ховар",
+    "last_name": null
+  }
+}
