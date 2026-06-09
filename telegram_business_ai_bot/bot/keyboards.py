@@ -18,6 +18,10 @@ MANAGER_YESTERDAY_BUTTON = "Заказы вчера"
 MANAGER_DATE_BUTTON = "Выбрать дату"
 MANAGER_FIND_BUTTON = "Найти заказ"
 MANAGER_PROFILE_BUTTON = "Мой профиль"
+MANAGER_NEW_BUTTON = "Новые заказы"
+MANAGER_READY_BUTTON = "Готовы к доставке"
+MANAGER_IN_DELIVERY_BUTTON = "В доставке"
+MANAGER_DONE_BUTTON = "Доставленные"
 
 
 def main_menu_keyboard() -> ReplyKeyboardMarkup:
@@ -125,6 +129,8 @@ def contact_request_keyboard() -> ReplyKeyboardMarkup:
 def manager_menu_keyboard() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[
+            [KeyboardButton(text=MANAGER_NEW_BUTTON), KeyboardButton(text=MANAGER_READY_BUTTON)],
+            [KeyboardButton(text=MANAGER_IN_DELIVERY_BUTTON), KeyboardButton(text=MANAGER_DONE_BUTTON)],
             [KeyboardButton(text=MANAGER_TODAY_BUTTON), KeyboardButton(text=MANAGER_YESTERDAY_BUTTON)],
             [KeyboardButton(text=MANAGER_DATE_BUTTON), KeyboardButton(text=MANAGER_FIND_BUTTON)],
             [KeyboardButton(text=MANAGER_PROFILE_BUTTON)],

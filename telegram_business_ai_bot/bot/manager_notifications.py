@@ -21,13 +21,18 @@ RECIPIENTS_FILE = PROJECT_ROOT / "data" / "manager_recipients.json"
 MOSCOW_TZ = ZoneInfo("Europe/Moscow")
 STATUS_LABELS = {
     "new": "Новый",
-    "assembled": "Собран",
+    "assembled": "Готов к доставке",
     "in_delivery": "В доставке",
     "delivered": "Доставлен",
 }
+STATUS_ACTION_LABELS = {
+    "assembled": "Готов к доставке",
+    "in_delivery": "Передать в доставку",
+    "delivered": "Отметить доставленным",
+}
 STATUS_TRANSITIONS = {
-    "new": ("assembled", "in_delivery", "delivered"),
-    "assembled": ("in_delivery", "delivered"),
+    "new": ("assembled",),
+    "assembled": ("in_delivery",),
     "in_delivery": ("delivered",),
     "delivered": (),
 }
@@ -54,7 +59,7 @@ def order_status_keyboard(order: dict[str, object]) -> InlineKeyboardMarkup | No
     for next_status in transitions:
         current_row.append(
             InlineKeyboardButton(
-                text=STATUS_LABELS[next_status],
+                text=STATUS_ACTION_LABELS.get(next_status, STATUS_LABELS[next_status]),
                 callback_data=f"order:status:{next_status}:{order_number}",
             )
         )

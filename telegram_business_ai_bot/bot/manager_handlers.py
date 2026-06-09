@@ -13,8 +13,12 @@ from aiogram.types import CallbackQuery, Message
 from bot.manager_access import ManagerAccessStorage
 from bot.keyboards import (
     MANAGER_DATE_BUTTON,
+    MANAGER_DONE_BUTTON,
     MANAGER_FIND_BUTTON,
+    MANAGER_IN_DELIVERY_BUTTON,
+    MANAGER_NEW_BUTTON,
     MANAGER_PROFILE_BUTTON,
+    MANAGER_READY_BUTTON,
     MANAGER_TODAY_BUTTON,
     MANAGER_YESTERDAY_BUTTON,
     manager_menu_keyboard,
@@ -60,6 +64,16 @@ def _summarize_orders(title: str, orders: list[dict[str, object]]) -> str:
         )
         lines.append(f"  Клиент: {escape(str(customer_name))}")
     return "\n".join(lines)
+
+
+def _status_list_title(status: str) -> str:
+    titles = {
+        "new": "Новые заказы",
+        "assembled": "Готовы к доставке",
+        "in_delivery": "Заказы в доставке",
+        "delivered": "Доставленные заказы",
+    }
+    return titles.get(status, "Заказы")
 
 
 def _parse_date_input(raw: str) -> datetime | None:
@@ -112,6 +126,10 @@ def create_manager_router(
                 "<b>Доступ подтвержден</b>\n\n"
                 "Заказы будут приходить в этот бот.\n"
                 "Команды:\n"
+                "<code>/new</code> — новые заказы\n"
+                "<code>/ready</code> — готовы к доставке\n"
+                "<code>/delivery</code> — в доставке\n"
+                "<code>/done</code> — доставленные\n"
                 "<code>/today</code> — заказы за сегодня\n"
                 "<code>/yesterday</code> — заказы за вчера\n"
                 "<code>/date 10.06.2026</code> — заказы по дате\n"
@@ -143,6 +161,10 @@ def create_manager_router(
             f"Смена: <b>{escape(str(record.get('shift')))}</b>\n\n"
             "Теперь заказы будут приходить в этот бот.\n"
             "Команды:\n"
+            "<code>/new</code> — новые заказы\n"
+            "<code>/ready</code> — готовы к доставке\n"
+            "<code>/delivery</code> — в доставке\n"
+            "<code>/done</code> — доставленные\n"
             "<code>/today</code> — заказы за сегодня\n"
             "<code>/yesterday</code> — заказы за вчера\n"
             "<code>/date 10.06.2026</code> — заказы по дате\n"
@@ -150,6 +172,44 @@ def create_manager_router(
             parse_mode="HTML",
             reply_markup=menu_keyboard,
         )
+
+    async def show_status_orders(message: Message, status: str) -> None:
+        if not message.from_user:
+            return
+        if not await require_verified_message(message):
+            return
+        orders = await access_storage.get_orders_for_date(datetime.now(MOSCOW_TZ).date(), status=status)
+        if not orders:
+            await message.answer(
+                f"{_status_list_title(status)}: на сегодня пусто.",
+                reply_markup=menu_keyboard,
+            )
+            return
+        await message.answer(
+            _summarize_orders(_status_list_title(status), orders),
+            parse_mode="HTML",
+            reply_markup=menu_keyboard,
+        )
+
+    @router.message(Command("new"))
+    @router.message(F.text == MANAGER_NEW_BUTTON)
+    async def show_new_orders(message: Message) -> None:
+        await show_status_orders(message, "new")
+
+    @router.message(Command("ready"))
+    @router.message(F.text == MANAGER_READY_BUTTON)
+    async def show_ready_orders(message: Message) -> None:
+        await show_status_orders(message, "assembled")
+
+    @router.message(Command("delivery"))
+    @router.message(F.text == MANAGER_IN_DELIVERY_BUTTON)
+    async def show_delivery_orders(message: Message) -> None:
+        await show_status_orders(message, "in_delivery")
+
+    @router.message(Command("done"))
+    @router.message(F.text == MANAGER_DONE_BUTTON)
+    async def show_delivered_orders(message: Message) -> None:
+        await show_status_orders(message, "delivered")
 
     @router.message(Command("today"))
     @router.message(F.text == MANAGER_TODAY_BUTTON)
@@ -378,6 +438,10 @@ def create_manager_router(
             await access_storage.touch_session(message.from_user, event="message")
             await message.answer(
                 "Команды:\n"
+                "<code>/new</code> — новые заказы\n"
+                "<code>/ready</code> — готовы к доставке\n"
+                "<code>/delivery</code> — в доставке\n"
+                "<code>/done</code> — доставленные\n"
                 "<code>/today</code> — заказы за сегодня\n"
                 "<code>/yesterday</code> — заказы за вчера\n"
                 "<code>/date 10.06.2026</code> — заказы по дате\n"

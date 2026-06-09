@@ -34,6 +34,10 @@ async def setup_manager_bot_commands(bot: Bot) -> None:
     await bot.set_my_commands(
         [
             BotCommand(command="start", description="Войти в бот заказов"),
+            BotCommand(command="new", description="Показать новые заказы"),
+            BotCommand(command="ready", description="Показать готовые к доставке"),
+            BotCommand(command="delivery", description="Показать заказы в доставке"),
+            BotCommand(command="done", description="Показать доставленные заказы"),
             BotCommand(command="today", description="Показать заказы за сегодня"),
             BotCommand(command="yesterday", description="Показать заказы за вчера"),
             BotCommand(command="date", description="Показать заказы по дате"),
