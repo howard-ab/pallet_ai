@@ -11,6 +11,7 @@ from zoneinfo import ZoneInfo
 
 from aiogram import Bot
 from aiogram.exceptions import TelegramBadRequest
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from bot.manager_access import ManagerAccessStorage
 
@@ -18,6 +19,18 @@ DEFAULT_MANAGER_CHAT_IDS = [5467423100]
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 RECIPIENTS_FILE = PROJECT_ROOT / "data" / "manager_recipients.json"
 MOSCOW_TZ = ZoneInfo("Europe/Moscow")
+STATUS_LABELS = {
+    "new": "Новый",
+    "assembled": "Собран",
+    "in_delivery": "В доставке",
+    "delivered": "Доставлен",
+}
+STATUS_TRANSITIONS = {
+    "new": ("assembled", "in_delivery", "delivered"),
+    "assembled": ("in_delivery", "delivered"),
+    "in_delivery": ("delivered",),
+    "delivered": (),
+}
 
 
 @dataclass(frozen=True)
@@ -27,6 +40,82 @@ class ManagerRecipient:
     username: str = ""
     enabled: bool = True
     role: str = ""
+
+
+def order_status_keyboard(order: dict[str, object]) -> InlineKeyboardMarkup | None:
+    order_number = str(order.get("order_number", "")).strip()
+    status = str(order.get("status", "new"))
+    transitions = STATUS_TRANSITIONS.get(status, ())
+    if not order_number or not transitions:
+        return None
+
+    inline_keyboard: list[list[InlineKeyboardButton]] = []
+    current_row: list[InlineKeyboardButton] = []
+    for next_status in transitions:
+        current_row.append(
+            InlineKeyboardButton(
+                text=STATUS_LABELS[next_status],
+                callback_data=f"order:status:{next_status}:{order_number}",
+            )
+        )
+        if len(current_row) == 2:
+            inline_keyboard.append(current_row)
+            current_row = []
+    if current_row:
+        inline_keyboard.append(current_row)
+    return InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
+
+
+def format_order_message(order: dict[str, object]) -> str:
+    customer = order.get("customer", {}) or {}
+    customer_name = customer.get("first_name") or customer.get("username") or "без имени"
+    username = customer.get("username") or "не указан"
+    phone = customer.get("phone") or "не указан"
+    updated_at = str(order.get("updated_at") or order.get("timestamp") or "")
+    updated_text = updated_at
+    if updated_at:
+        try:
+            updated_text = datetime.fromisoformat(updated_at).strftime("%d.%m.%Y %H:%M MSK")
+        except ValueError:
+            updated_text = updated_at
+    last_action_by = order.get("last_action_by") or {}
+    actor_name = last_action_by.get("first_name") or last_action_by.get("username")
+
+    lines = [
+        "<b>Заказ</b> 📦",
+        "",
+        f"Номер: <code>{escape(str(order.get('order_number', '-')))}</code>",
+        f"Статус: <b>{escape(STATUS_LABELS.get(str(order.get('status', 'new')), 'Новый'))}</b>",
+        f"Обновлен: <b>{escape(updated_text)}</b>",
+    ]
+    if actor_name:
+        lines.append(f"Последнее действие: <b>{escape(str(actor_name))}</b>")
+
+    lines.extend(
+        [
+            "",
+            f"Клиент: <b>{escape(str(customer_name))}</b>",
+            f"Telegram: @{escape(str(username))}",
+            f"Телефон: <b>{escape(str(phone))}</b>",
+        ]
+    )
+    user_id = customer.get("user_id")
+    if user_id is not None:
+        lines.append(f"User ID: <code>{escape(str(user_id))}</code>")
+
+    lines.extend(["", "<b>Что собрать</b>"])
+
+    for index, item in enumerate(order.get("items", []), start=1):
+        name = escape(str(item.get("name", "Товар")))
+        weight = escape(str(item.get("weight", "")))
+        price = escape(str(item.get("price", "")))
+        quantity = int(item.get("quantity", 1) or 1)
+        quantity_text = f" × {quantity}" if quantity > 1 else ""
+        lines.append(f"{index}. {name}{quantity_text}")
+        lines.append(f"   {weight} · <b>{price}</b>")
+
+    lines.extend(["", f"<b>Итого: {escape(str(order.get('total', '0')))} руб.</b>"])
+    return "\n".join(lines)
 
 
 class ManagerNotifier:
@@ -117,58 +206,18 @@ class ManagerNotifier:
             return
 
         delivery_bot = self._manager_bot or bot
-
-        username = None
-        first_name = None
-        user_id = None
-        if telegram_user is not None:
-            username = getattr(telegram_user, "username", None)
-            first_name = getattr(telegram_user, "first_name", None)
-            user_id = getattr(telegram_user, "id", None)
-
-        if customer:
-            username = customer.get("username") or username
-            first_name = customer.get("first_name") or first_name
-
+        user_id = getattr(telegram_user, "id", None) if telegram_user is not None else None
         now = datetime.now(MOSCOW_TZ)
         order_number = f"MS-{now.strftime('%Y%m%d-%H%M')}-{user_id or 'guest'}"
-        await self._access_storage.store_order_record(
+        order = await self._access_storage.store_order_record(
             order_number=order_number,
             customer=customer,
             telegram_user=telegram_user,
             items=items,
             total=total,
         )
-        display_name = first_name or username or "без имени"
-        phone = (customer or {}).get("phone") or "не указан"
-
-        lines = [
-            "<b>Новый заказ</b> 📦",
-            "",
-            f"Номер: <code>{escape(order_number)}</code>",
-            f"Время: <b>{escape(now.strftime('%d.%m.%Y %H:%M MSK'))}</b>",
-            "",
-            f"Клиент: <b>{escape(str(display_name))}</b>",
-            f"Telegram: @{escape(str(username or 'не указан'))}",
-            f"Телефон: <b>{escape(str(phone))}</b>",
-        ]
-
-        if user_id is not None:
-            lines.append(f"User ID: <code>{escape(str(user_id))}</code>")
-
-        lines.extend(["", "<b>Что собрать</b>"])
-
-        for index, item in enumerate(items, start=1):
-            name = escape(str(item.get("name", "Товар")))
-            weight = escape(str(item.get("weight", "")))
-            price = escape(str(item.get("price", "")))
-            quantity = int(item.get("quantity", 1) or 1)
-            quantity_text = f" × {quantity}" if quantity > 1 else ""
-            lines.append(f"{index}. {name}{quantity_text}")
-            lines.append(f"   {weight} · <b>{price}</b>")
-
-        lines.extend(["", f"<b>Итого: {escape(str(total))} руб.</b>"])
-        text = "\n".join(lines)
+        text = format_order_message(order)
+        reply_markup = order_status_keyboard(order)
 
         for recipient in recipients:
             if recipient.role != "verified_staff" and not await self._access_storage.is_verified(recipient.chat_id):
@@ -185,7 +234,12 @@ class ManagerNotifier:
                 )
                 continue
             try:
-                await delivery_bot.send_message(chat_id=recipient.chat_id, text=text, parse_mode="HTML")
+                await delivery_bot.send_message(
+                    chat_id=recipient.chat_id,
+                    text=text,
+                    parse_mode="HTML",
+                    reply_markup=reply_markup,
+                )
             except TelegramBadRequest:
                 logging.exception(
                     "Telegram rejected manager notification to chat_id=%s username=%s",

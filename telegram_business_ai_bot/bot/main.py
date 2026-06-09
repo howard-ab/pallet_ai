@@ -35,6 +35,7 @@ async def setup_manager_bot_commands(bot: Bot) -> None:
         [
             BotCommand(command="start", description="Войти в бот заказов"),
             BotCommand(command="today", description="Показать заказы за сегодня"),
+            BotCommand(command="find", description="Найти заказ по номеру"),
             BotCommand(command="whoami", description="Показать профиль сотрудника"),
         ]
     )
