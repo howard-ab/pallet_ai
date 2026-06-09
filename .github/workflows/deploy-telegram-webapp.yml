@@ -35,7 +35,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: telegram_business_ai_bot
+          path: telegram_business_ai_bot/webapp
 
       - name: Deploy to GitHub Pages
         id: deployment
