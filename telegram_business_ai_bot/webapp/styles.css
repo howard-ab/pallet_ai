@@ -410,8 +410,8 @@ h2 {
 
 .product-actions {
   display: grid;
-  grid-template-columns: minmax(0, 84px) minmax(0, 1fr);
-  gap: 8px;
+  grid-template-columns: minmax(0, 68px) minmax(0, 1fr);
+  gap: 6px;
   margin-top: auto;
 }
 
@@ -429,9 +429,11 @@ h2 {
   border-radius: 12px;
   background: var(--ink);
   color: white;
-  padding: 9px 12px;
+  padding: 8px 10px;
+  font-size: 12px;
   font-weight: 700;
   line-height: 1.1;
+  min-width: 0;
 }
 
 .info-button {
@@ -439,9 +441,11 @@ h2 {
   border-radius: 12px;
   background: white;
   color: var(--accent-strong);
-  padding: 9px 10px;
+  padding: 8px 8px;
+  font-size: 12px;
   font-weight: 700;
   line-height: 1.1;
+  min-width: 0;
 }
 
 .add-button.added {
@@ -669,6 +673,17 @@ h2 {
 }
 
 @media (max-width: 520px) {
+  .product-actions {
+    grid-template-columns: minmax(0, 60px) minmax(0, 1fr);
+    gap: 5px;
+  }
+
+  .add-button,
+  .info-button {
+    padding: 7px 6px;
+    font-size: 11px;
+  }
+
   .cart-dock {
     left: 12px;
     right: 12px;
