@@ -200,10 +200,8 @@ class ManagerNotifier:
         telegram_user: object | None,
         items: list[dict[str, object]],
         total: object,
-    ) -> None:
+    ) -> dict[str, object]:
         recipients = await self._delivery_targets()
-        if not recipients:
-            return
 
         delivery_bot = self._manager_bot or bot
         user_id = getattr(telegram_user, "id", None) if telegram_user is not None else None
@@ -218,6 +216,9 @@ class ManagerNotifier:
         )
         text = format_order_message(order)
         reply_markup = order_status_keyboard(order)
+
+        if not recipients:
+            return order
 
         for recipient in recipients:
             if recipient.role != "verified_staff" and not await self._access_storage.is_verified(recipient.chat_id):
@@ -252,3 +253,4 @@ class ManagerNotifier:
                     recipient.chat_id,
                     recipient.username,
                 )
+        return order

@@ -440,7 +440,7 @@ def create_router(
             message.chat.id if message.chat else None,
         )
         customer = await customer_storage.get(message.from_user.id) if message.from_user else None
-        await manager_notifier.send_order_notification(
+        order = await manager_notifier.send_order_notification(
             message.bot,
             customer=customer,
             telegram_user=message.from_user,
@@ -452,6 +452,7 @@ def create_router(
             message,
             storage,
             "<b>Заказ принят</b> ✨\n\n"
+            f"Номер заказа: <code>{escape(str(order.get('order_number', '-')))}</code>\n\n"
             "Мы передали его в отдел заказов. "
             "Менеджер свяжется с вами после подтверждения.",
             reply_markup=back_to_menu_keyboard(),

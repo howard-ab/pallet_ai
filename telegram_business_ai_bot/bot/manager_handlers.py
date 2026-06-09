@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from html import escape
 from zoneinfo import ZoneInfo
 
@@ -12,9 +12,11 @@ from aiogram.types import CallbackQuery, Message
 
 from bot.manager_access import ManagerAccessStorage
 from bot.keyboards import (
+    MANAGER_DATE_BUTTON,
     MANAGER_FIND_BUTTON,
     MANAGER_PROFILE_BUTTON,
     MANAGER_TODAY_BUTTON,
+    MANAGER_YESTERDAY_BUTTON,
     manager_menu_keyboard,
 )
 from bot.manager_notifications import STATUS_LABELS, format_order_message, order_status_keyboard
@@ -25,6 +27,8 @@ MOSCOW_TZ = ZoneInfo("Europe/Moscow")
 
 class ManagerAccessFlow(StatesGroup):
     waiting_for_code = State()
+    waiting_for_order_search = State()
+    waiting_for_date = State()
 
 
 def _summarize_orders(title: str, orders: list[dict[str, object]]) -> str:
@@ -56,6 +60,16 @@ def _summarize_orders(title: str, orders: list[dict[str, object]]) -> str:
         )
         lines.append(f"  Клиент: {escape(str(customer_name))}")
     return "\n".join(lines)
+
+
+def _parse_date_input(raw: str) -> datetime | None:
+    raw = raw.strip()
+    for fmt in ("%d.%m.%Y", "%Y-%m-%d"):
+        try:
+            return datetime.strptime(raw, fmt)
+        except ValueError:
+            continue
+    return None
 
 
 def create_manager_router(
@@ -99,6 +113,8 @@ def create_manager_router(
                 "Заказы будут приходить в этот бот.\n"
                 "Команды:\n"
                 "<code>/today</code> — заказы за сегодня\n"
+                "<code>/yesterday</code> — заказы за вчера\n"
+                "<code>/date 10.06.2026</code> — заказы по дате\n"
                 "<code>/find MS-...</code> — поиск по номеру заказа\n"
                 "<code>/whoami</code> — профиль сотрудника",
                 parse_mode="HTML",
@@ -128,6 +144,8 @@ def create_manager_router(
             "Теперь заказы будут приходить в этот бот.\n"
             "Команды:\n"
             "<code>/today</code> — заказы за сегодня\n"
+            "<code>/yesterday</code> — заказы за вчера\n"
+            "<code>/date 10.06.2026</code> — заказы по дате\n"
             "<code>/find MS-...</code> — поиск по номеру заказа",
             parse_mode="HTML",
             reply_markup=menu_keyboard,
@@ -150,8 +168,73 @@ def create_manager_router(
             reply_markup=menu_keyboard,
         )
 
+    @router.message(Command("yesterday"))
+    @router.message(F.text == MANAGER_YESTERDAY_BUTTON)
+    async def show_yesterday(message: Message) -> None:
+        if not message.from_user:
+            return
+        if not await require_verified_message(message):
+            return
+        target_date = (datetime.now(MOSCOW_TZ) - timedelta(days=1)).date()
+        orders = await access_storage.get_orders_for_date(target_date)
+        if not orders:
+            await message.answer("За вчера заказов нет.", reply_markup=menu_keyboard)
+            return
+        await message.answer(
+            _summarize_orders(f"Заказы за {target_date.strftime('%d.%m.%Y')}", orders),
+            parse_mode="HTML",
+            reply_markup=menu_keyboard,
+        )
+
+    @router.message(Command("date"))
+    async def show_date_command(message: Message, command: CommandObject) -> None:
+        if not message.from_user:
+            return
+        if not await require_verified_message(message):
+            return
+        raw_date = (command.args or "").strip()
+        if not raw_date:
+            await message.answer(
+                "Укажите дату после команды.\nПример: <code>/date 10.06.2026</code>",
+                parse_mode="HTML",
+                reply_markup=menu_keyboard,
+            )
+            return
+        parsed = _parse_date_input(raw_date)
+        if parsed is None:
+            await message.answer(
+                "Не удалось распознать дату. Используйте формат <code>10.06.2026</code> или <code>2026-06-10</code>.",
+                parse_mode="HTML",
+                reply_markup=menu_keyboard,
+            )
+            return
+        orders = await access_storage.get_orders_for_date(parsed.date())
+        if not orders:
+            await message.answer(
+                f"За {parsed.strftime('%d.%m.%Y')} заказов нет.",
+                reply_markup=menu_keyboard,
+            )
+            return
+        await message.answer(
+            _summarize_orders(f"Заказы за {parsed.strftime('%d.%m.%Y')}", orders),
+            parse_mode="HTML",
+            reply_markup=menu_keyboard,
+        )
+
+    @router.message(F.text == MANAGER_DATE_BUTTON)
+    async def request_date(message: Message, state: FSMContext) -> None:
+        if not message.from_user:
+            return
+        if not await require_verified_message(message):
+            return
+        await state.set_state(ManagerAccessFlow.waiting_for_date)
+        await message.answer(
+            "Введите дату, например <code>10.06.2026</code> или <code>2026-06-10</code>.",
+            parse_mode="HTML",
+            reply_markup=menu_keyboard,
+        )
+
     @router.message(Command("find"))
-    @router.message(F.text == MANAGER_FIND_BUTTON)
     async def find_order(message: Message, command: CommandObject | None = None) -> None:
         if not message.from_user:
             return
@@ -175,6 +258,65 @@ def create_manager_router(
                 parse_mode="HTML",
                 reply_markup=order_status_keyboard(order),
             )
+
+    @router.message(F.text == MANAGER_FIND_BUTTON)
+    async def request_find_order(message: Message, state: FSMContext) -> None:
+        if not message.from_user:
+            return
+        if not await require_verified_message(message):
+            return
+        await state.set_state(ManagerAccessFlow.waiting_for_order_search)
+        await message.answer(
+            "Введите номер заказа целиком или его часть.\nПример: <code>MS-20260610</code>",
+            parse_mode="HTML",
+            reply_markup=menu_keyboard,
+        )
+
+    @router.message(ManagerAccessFlow.waiting_for_order_search)
+    async def find_order_from_state(message: Message, state: FSMContext) -> None:
+        if not message.from_user or not message.text:
+            return
+        if not await require_verified_message(message):
+            return
+        orders = await access_storage.search_orders(message.text.strip())
+        await state.clear()
+        if not orders:
+            await message.answer("По этому номеру заказ не найден.", reply_markup=menu_keyboard)
+            return
+        for order in orders[:5]:
+            await message.answer(
+                format_order_message(order),
+                parse_mode="HTML",
+                reply_markup=order_status_keyboard(order),
+            )
+
+    @router.message(ManagerAccessFlow.waiting_for_date)
+    async def show_date_from_state(message: Message, state: FSMContext) -> None:
+        if not message.from_user or not message.text:
+            return
+        if not await require_verified_message(message):
+            return
+        parsed = _parse_date_input(message.text)
+        if parsed is None:
+            await message.answer(
+                "Не удалось распознать дату. Используйте формат <code>10.06.2026</code> или <code>2026-06-10</code>.",
+                parse_mode="HTML",
+                reply_markup=menu_keyboard,
+            )
+            return
+        await state.clear()
+        orders = await access_storage.get_orders_for_date(parsed.date())
+        if not orders:
+            await message.answer(
+                f"За {parsed.strftime('%d.%m.%Y')} заказов нет.",
+                reply_markup=menu_keyboard,
+            )
+            return
+        await message.answer(
+            _summarize_orders(f"Заказы за {parsed.strftime('%d.%m.%Y')}", orders),
+            parse_mode="HTML",
+            reply_markup=menu_keyboard,
+        )
 
     @router.message(Command("whoami"))
     @router.message(F.text == MANAGER_PROFILE_BUTTON)
@@ -237,6 +379,8 @@ def create_manager_router(
             await message.answer(
                 "Команды:\n"
                 "<code>/today</code> — заказы за сегодня\n"
+                "<code>/yesterday</code> — заказы за вчера\n"
+                "<code>/date 10.06.2026</code> — заказы по дате\n"
                 "<code>/find MS-...</code> — поиск по номеру заказа\n"
                 "<code>/whoami</code> — профиль сотрудника",
                 parse_mode="HTML",

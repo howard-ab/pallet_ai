@@ -14,6 +14,8 @@ PROFILE_BUTTON = "Мои контакты"
 HOME_BUTTON = "В главное меню"
 OLD_BACK_BUTTON = "Назад в меню"
 MANAGER_TODAY_BUTTON = "Заказы сегодня"
+MANAGER_YESTERDAY_BUTTON = "Заказы вчера"
+MANAGER_DATE_BUTTON = "Выбрать дату"
 MANAGER_FIND_BUTTON = "Найти заказ"
 MANAGER_PROFILE_BUTTON = "Мой профиль"
 
@@ -123,7 +125,8 @@ def contact_request_keyboard() -> ReplyKeyboardMarkup:
 def manager_menu_keyboard() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(text=MANAGER_TODAY_BUTTON), KeyboardButton(text=MANAGER_FIND_BUTTON)],
+            [KeyboardButton(text=MANAGER_TODAY_BUTTON), KeyboardButton(text=MANAGER_YESTERDAY_BUTTON)],
+            [KeyboardButton(text=MANAGER_DATE_BUTTON), KeyboardButton(text=MANAGER_FIND_BUTTON)],
             [KeyboardButton(text=MANAGER_PROFILE_BUTTON)],
         ],
         resize_keyboard=True,
