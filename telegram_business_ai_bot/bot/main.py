@@ -10,6 +10,7 @@ from bot.ai_service import HuggingFaceAIService
 from bot.config import load_settings
 from bot.customers import CustomerStorage
 from bot.handlers import create_router
+from bot.manager_notifications import ManagerNotifier
 from bot.storage import MessageLoggingMiddleware, SessionStorage, setup_file_logging
 
 
@@ -45,6 +46,7 @@ async def main() -> None:
     ai_service = HuggingFaceAIService(settings)
     storage = SessionStorage()
     customer_storage = CustomerStorage()
+    manager_notifier = ManagerNotifier(settings.manager_chat_ids)
 
     dispatcher.message.middleware(MessageLoggingMiddleware(storage))
     dispatcher.include_router(
@@ -52,6 +54,7 @@ async def main() -> None:
             ai_service=ai_service,
             storage=storage,
             customer_storage=customer_storage,
+            manager_notifier=manager_notifier,
             shop_webapp_url=settings.shop_webapp_url,
         )
     )

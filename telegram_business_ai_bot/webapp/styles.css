@@ -21,6 +21,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
+  text-align: center;
 }
 
 button {
@@ -85,14 +86,16 @@ button {
 }
 
 .topbar {
-  align-items: flex-start;
+  align-items: center;
   margin-bottom: 20px;
 }
 
 .brand-block {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 18px;
+  width: 100%;
 }
 
 .brand-logo {
@@ -102,6 +105,10 @@ button {
   box-shadow: var(--shadow);
 }
 
+.brand-copy {
+  text-align: center;
+}
+
 .brand-copy h1 {
   margin: 0;
   font-size: 32px;
@@ -109,7 +116,7 @@ button {
 }
 
 .brand-note {
-  margin: 10px 0 0;
+  margin: 10px auto 0;
   max-width: 520px;
   color: var(--muted);
   line-height: 1.5;
@@ -141,7 +148,7 @@ h2 {
 
 .hero {
   display: grid;
-  grid-template-columns: 1.2fr auto;
+  grid-template-columns: 1fr;
   gap: 18px;
   margin: 0 0 20px;
   padding: 20px 22px;
@@ -149,6 +156,7 @@ h2 {
   border-radius: 20px;
   background: linear-gradient(180deg, #ffffff 0%, #fafcff 100%);
   box-shadow: var(--shadow);
+  text-align: center;
 }
 
 .hero-title {
@@ -168,7 +176,7 @@ h2 {
   display: flex;
   flex-wrap: wrap;
   align-content: flex-start;
-  justify-content: flex-end;
+  justify-content: center;
   gap: 10px;
 }
 
@@ -187,6 +195,7 @@ h2 {
 
 .section-head {
   margin-bottom: 10px;
+  text-align: center;
 }
 
 .tabs,
@@ -196,6 +205,7 @@ h2 {
   overflow-x: auto;
   padding: 2px 0 12px;
   scrollbar-width: none;
+  justify-content: center;
 }
 
 .tabs::-webkit-scrollbar,
@@ -279,6 +289,7 @@ h2 {
 
 .product-body {
   padding: 12px 12px 14px;
+  text-align: center;
 }
 
 .product h3 {
@@ -297,7 +308,7 @@ h2 {
 
 .meta {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   gap: 10px;
   margin-bottom: 10px;
   color: var(--muted);
@@ -348,6 +359,7 @@ h2 {
   background: var(--panel);
   padding: 18px;
   box-shadow: 0 24px 48px rgb(17 24 39 / 0.18);
+  text-align: center;
 }
 
 .icon-button,
@@ -373,6 +385,10 @@ h2 {
   margin-top: 4px;
   color: var(--muted);
   font-size: 13px;
+}
+
+.cart-list {
+  text-align: center;
 }
 
 .cart-total {

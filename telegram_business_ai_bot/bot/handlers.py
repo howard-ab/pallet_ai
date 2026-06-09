@@ -18,6 +18,7 @@ from bot.catalog import (
     get_products,
 )
 from bot.customers import CustomerStorage, is_valid_phone
+from bot.manager_notifications import ManagerNotifier
 from bot.keyboards import (
     ABOUT_BUTTON,
     ASK_AI_BUTTON,
@@ -158,6 +159,7 @@ def create_router(
     ai_service: HuggingFaceAIService,
     storage: SessionStorage,
     customer_storage: CustomerStorage,
+    manager_notifier: ManagerNotifier,
     shop_webapp_url: str = "",
 ) -> Router:
     router = Router()
@@ -428,6 +430,13 @@ def create_router(
                 f"<b>{escape(str(item.get('price', '')))}</b>"
             )
         lines.extend(["", f"<b>Итого: {escape(str(total))} руб.</b>", "", "Менеджер скоро свяжется с вами."])
+        await manager_notifier.send_order_notification(
+            message.bot,
+            customer=customer,
+            telegram_user=message.from_user,
+            items=items,
+            total=total,
+        )
         await answer_and_log(
             message,
             storage,
