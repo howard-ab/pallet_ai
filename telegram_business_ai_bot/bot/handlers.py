@@ -49,8 +49,8 @@ WELCOME_TEXT = (
     "<b>Мир Сухофруктов</b> ✨\n\n"
     "Здесь можно выбрать <b>сухофрукты</b>, <b>орехи</b>, <b>финики</b>, "
     "<b>сладости</b> и подарочные наборы.\n\n"
-    "Чтобы оформить заказ, нажмите на синюю кнопку <b>Заказать сейчас</b> ниже 🛍.\n\n"
-    "Либо используйте кнопку <b>Заказать</b> в меню. "
+    "Чтобы оформить заказ, нажмите кнопку <b>Заказать</b> в нижнем меню 🛍.\n\n"
+    "Это основной путь для открытия витрины. "
     "Также можно задать вопрос AI ౨ৎ или посмотреть каталог прямо в боте."
 )
 
@@ -82,8 +82,7 @@ CONTACT_TEXT = (
 
 MAIN_MENU_TEXT = (
     "<b>Главное меню</b> ✨\n\n"
-    "Нажмите на синюю кнопку <b>Заказать сейчас</b> ниже 🛍, чтобы открыть витрину.\n\n"
-    "Также можно использовать кнопку <b>Заказать</b> в меню. "
+    "Нажмите кнопку <b>Заказать</b> в нижнем меню 🛍, чтобы открыть витрину.\n\n"
     "AI-помощник ౨ৎ, корзина и контакты — тоже здесь."
 )
 
@@ -180,7 +179,6 @@ def create_router(
 ) -> Router:
     router = Router()
     menu_keyboard = build_main_menu_keyboard(shop_webapp_url)
-    order_cta = order_cta_inline_keyboard(shop_webapp_url)
 
     @router.message(CommandStart())
     async def start(message: Message, state: FSMContext) -> None:
@@ -202,8 +200,6 @@ def create_router(
             reply_markup=menu_keyboard,
             parse_mode="HTML",
         )
-        if order_cta is not None:
-            await message.answer("👇", reply_markup=order_cta)
 
     @router.message(F.contact)
     async def save_shared_contact(message: Message, state: FSMContext) -> None:
@@ -265,8 +261,6 @@ def create_router(
             reply_markup=menu_keyboard,
             parse_mode="HTML",
         )
-        if order_cta is not None:
-            await message.answer("👇", reply_markup=order_cta)
 
     @router.message(F.text == PROFILE_BUTTON)
     async def profile(message: Message) -> None:
