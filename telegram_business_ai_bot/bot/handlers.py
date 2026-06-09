@@ -415,21 +415,7 @@ def create_router(
 
         items = payload.get("items", [])
         total = payload.get("total", 0)
-        lines = ["<b>Заказ из Mini App</b>", ""]
         customer = await customer_storage.get(message.from_user.id) if message.from_user else None
-        if customer:
-            username = customer.get("username") or "не указан"
-            phone = customer.get("phone") or "не указан"
-            lines.append(f"Клиент: @{escape(str(username))}")
-            lines.append(f"Телефон: {escape(str(phone))}")
-            lines.append("")
-        for index, item in enumerate(items, start=1):
-            lines.append(f"{index}. {escape(str(item.get('name', 'Товар')))}")
-            lines.append(
-                f"   {escape(str(item.get('weight', '')))} · "
-                f"<b>{escape(str(item.get('price', '')))}</b>"
-            )
-        lines.extend(["", f"<b>Итого: {escape(str(total))} руб.</b>", "", "Менеджер скоро свяжется с вами."])
         await manager_notifier.send_order_notification(
             message.bot,
             customer=customer,
@@ -440,7 +426,9 @@ def create_router(
         await answer_and_log(
             message,
             storage,
-            "\n".join(lines),
+            "<b>Заказ принят</b> ✨\n\n"
+            "Мы передали его в отдел заказов. "
+            "Менеджер свяжется с вами после подтверждения.",
             reply_markup=menu_keyboard,
             parse_mode="HTML",
         )
