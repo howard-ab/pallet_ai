@@ -12,6 +12,8 @@ const state = {
 };
 
 const els = {
+  splash: document.querySelector("#splashScreen"),
+  appRoot: document.querySelector("#appRoot"),
   categories: document.querySelector("#categoryTabs"),
   subcategories: document.querySelector("#subcategoryChips"),
   products: document.querySelector("#productGrid"),
@@ -23,6 +25,13 @@ const els = {
   orderButton: document.querySelector("#orderButton"),
   clearButton: document.querySelector("#clearButton"),
 };
+
+function hideSplash() {
+  window.setTimeout(() => {
+    els.splash?.classList.add("hidden");
+    els.appRoot?.classList.remove("app-hidden");
+  }, 2000);
+}
 
 function priceValue(price) {
   const match = String(price).replace(/\s/g, "").match(/\d+/);
@@ -73,7 +82,7 @@ function renderProducts() {
           <span>${product.weight}</span>
           <strong>${product.price}</strong>
         </div>
-        <button class="add-button" type="button">Добавить</button>
+        <button class="add-button" type="button">В корзину ✨</button>
       </div>
     `;
     card.querySelector("button").onclick = () => {
@@ -85,7 +94,7 @@ function renderProducts() {
 }
 
 function renderCart() {
-  els.cartButton.textContent = `Корзина · ${state.cart.length}`;
+  els.cartButton.textContent = `🧺 Корзина · ${state.cart.length}`;
   els.cartList.innerHTML = "";
   state.cart.forEach((item) => {
     const row = document.createElement("div");
@@ -146,4 +155,5 @@ fetch("./catalog.json")
     state.category = Object.keys(catalog)[0];
     state.subcategory = Object.keys(catalog[state.category])[0];
     render();
+    hideSplash();
   });

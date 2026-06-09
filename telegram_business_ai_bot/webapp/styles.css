@@ -1,13 +1,15 @@
 :root {
   color-scheme: light;
-  --bg: #f7f3eb;
-  --panel: #fffaf2;
-  --ink: #241b13;
-  --muted: #75695e;
-  --line: #e7dac8;
-  --accent: #23745a;
-  --accent-strong: #16553f;
-  --warm: #c47a3b;
+  --bg: #ffffff;
+  --panel: #ffffff;
+  --panel-soft: #f7f9fc;
+  --ink: #1f2430;
+  --muted: #667085;
+  --line: #e8ebf0;
+  --accent: #1948b8;
+  --accent-strong: #123586;
+  --warm: #d79f1e;
+  --shadow: 0 18px 40px rgb(17 24 39 / 0.08);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
@@ -23,12 +25,54 @@ body {
 
 button {
   font: inherit;
+  cursor: pointer;
 }
 
 .app {
-  max-width: 980px;
+  max-width: 1120px;
   margin: 0 auto;
-  padding: 18px 14px 104px;
+  padding: 24px 16px 112px;
+}
+
+.app-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, #ffffff 0%, #f7f9fc 100%);
+  transition: opacity 0.45s ease, visibility 0.45s ease;
+}
+
+.splash.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.splash-card {
+  display: grid;
+  gap: 18px;
+  justify-items: center;
+  text-align: center;
+}
+
+.splash-logo {
+  width: min(88vw, 360px);
+  filter: drop-shadow(0 18px 34px rgb(25 72 184 / 0.12));
+}
+
+.splash-text {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--accent-strong);
 }
 
 .topbar,
@@ -40,6 +84,37 @@ button {
   gap: 16px;
 }
 
+.topbar {
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.brand-block {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.brand-logo {
+  width: 216px;
+  max-width: 42vw;
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+}
+
+.brand-copy h1 {
+  margin: 0;
+  font-size: 32px;
+  line-height: 1.06;
+}
+
+.brand-note {
+  margin: 10px 0 0;
+  max-width: 520px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
 .eyebrow {
   margin: 0 0 3px;
   color: var(--warm);
@@ -48,7 +123,6 @@ button {
   text-transform: uppercase;
 }
 
-h1,
 h2 {
   margin: 0;
   letter-spacing: 0;
@@ -57,25 +131,62 @@ h2 {
 .cart-button,
 .order-button {
   border: 0;
-  border-radius: 8px;
+  border-radius: 999px;
   background: var(--accent);
   color: white;
-  padding: 12px 14px;
+  padding: 12px 16px;
   font-weight: 700;
+  box-shadow: 0 12px 28px rgb(25 72 184 / 0.18);
 }
 
 .hero {
-  margin: 18px 0;
-  padding: 18px;
+  display: grid;
+  grid-template-columns: 1.2fr auto;
+  gap: 18px;
+  margin: 0 0 20px;
+  padding: 20px 22px;
   border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--panel);
+  border-radius: 20px;
+  background: linear-gradient(180deg, #ffffff 0%, #fafcff 100%);
+  box-shadow: var(--shadow);
 }
 
-.hero p {
+.hero-title {
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.hero-text {
   margin: 0;
   color: var(--muted);
   line-height: 1.45;
+}
+
+.hero-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.hero-badges span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel-soft);
+  color: var(--accent-strong);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.section-head {
+  margin-bottom: 10px;
 }
 
 .tabs,
@@ -84,62 +195,69 @@ h2 {
   gap: 8px;
   overflow-x: auto;
   padding: 2px 0 12px;
+  scrollbar-width: none;
+}
+
+.tabs::-webkit-scrollbar,
+.chips::-webkit-scrollbar {
+  display: none;
 }
 
 .tab,
 .chip {
   flex: 0 0 auto;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 999px;
   background: var(--panel);
   color: var(--ink);
-  padding: 10px 12px;
+  padding: 10px 14px;
   font-weight: 650;
 }
 
 .tab.active,
 .chip.active {
   border-color: var(--accent);
-  background: #e4f2eb;
+  background: #edf3ff;
   color: var(--accent-strong);
 }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(178px, 1fr));
+  gap: 14px;
 }
 
 .product {
   overflow: hidden;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 16px;
   background: var(--panel);
+  box-shadow: 0 10px 28px rgb(31 36 48 / 0.06);
 }
 
 .product img {
   display: block;
   width: 100%;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 1 / 1;
   object-fit: cover;
-  background: #eee3d1;
+  background: #f5f7fb;
 }
 
 .product-body {
-  padding: 12px;
+  padding: 12px 12px 14px;
 }
 
 .product h3 {
-  min-height: 44px;
-  margin: 0 0 8px;
-  font-size: 16px;
+  min-height: 38px;
+  margin: 0 0 6px;
+  font-size: 14px;
   line-height: 1.35;
 }
 
 .product p {
-  margin: 0 0 12px;
+  margin: 0 0 10px;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.4;
 }
 
@@ -147,18 +265,23 @@ h2 {
   display: flex;
   justify-content: space-between;
   gap: 10px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   color: var(--muted);
+  font-size: 12px;
+}
+
+.meta strong {
+  color: var(--ink);
   font-size: 13px;
 }
 
 .add-button {
   width: 100%;
   border: 0;
-  border-radius: 8px;
+  border-radius: 12px;
   background: var(--ink);
   color: white;
-  padding: 10px;
+  padding: 10px 12px;
   font-weight: 700;
 }
 
@@ -166,7 +289,7 @@ h2 {
   position: fixed;
   inset: 0;
   display: none;
-  background: rgb(36 27 19 / 44%);
+  background: rgb(18 28 53 / 38%);
   padding: 14px;
 }
 
@@ -177,19 +300,20 @@ h2 {
 
 .cart-sheet {
   width: 100%;
-  max-width: 760px;
+  max-width: 620px;
   max-height: 86vh;
   margin: 0 auto;
   overflow: auto;
-  border-radius: 8px;
+  border-radius: 22px;
   background: var(--panel);
-  padding: 16px;
+  padding: 18px;
+  box-shadow: 0 24px 48px rgb(17 24 39 / 0.18);
 }
 
 .icon-button,
 .clear-button {
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 12px;
   background: white;
   color: var(--ink);
   padding: 10px 12px;
@@ -220,4 +344,38 @@ h2 {
 .clear-button {
   width: 100%;
   margin-top: 8px;
+}
+
+@media (max-width: 760px) {
+  .app {
+    padding: 16px 14px 104px;
+  }
+
+  .topbar,
+  .brand-block,
+  .hero {
+    display: grid;
+  }
+
+  .brand-block {
+    gap: 12px;
+  }
+
+  .brand-logo {
+    width: 180px;
+    max-width: 70vw;
+  }
+
+  .brand-copy h1 {
+    font-size: 26px;
+  }
+
+  .hero {
+    grid-template-columns: 1fr;
+    padding: 18px;
+  }
+
+  .hero-badges {
+    justify-content: flex-start;
+  }
 }
