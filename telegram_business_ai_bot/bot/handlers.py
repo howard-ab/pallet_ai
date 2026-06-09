@@ -1,3 +1,4 @@
+import logging
 from html import escape
 import json
 from pathlib import Path
@@ -419,9 +420,11 @@ def create_router(
 
     @router.message(F.web_app_data)
     async def webapp_order(message: Message) -> None:
+        logging.info("Received web_app_data from chat_id=%s", message.chat.id if message.chat else None)
         try:
             payload = json.loads(message.web_app_data.data)
         except json.JSONDecodeError:
+            logging.exception("Failed to decode web_app_data payload")
             await answer_and_log(
                 message,
                 storage,
@@ -431,10 +434,17 @@ def create_router(
             return
 
         if payload.get("type") != "order":
+            logging.info("Ignoring web_app_data with unsupported type=%s", payload.get("type"))
             return
 
         items = payload.get("items", [])
         total = payload.get("total", 0)
+        logging.info(
+            "Processing order from Mini App: items=%s total=%s chat_id=%s",
+            len(items),
+            total,
+            message.chat.id if message.chat else None,
+        )
         customer = await customer_storage.get(message.from_user.id) if message.from_user else None
         await manager_notifier.send_order_notification(
             message.bot,
@@ -443,6 +453,7 @@ def create_router(
             items=items,
             total=total,
         )
+        logging.info("Order forwarded to manager notifier successfully")
         await answer_and_log(
             message,
             storage,

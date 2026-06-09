@@ -282,8 +282,11 @@ els.orderButton.onclick = () => {
     els.orderButton.textContent = "Отправляем...";
     tg.sendData(JSON.stringify(payload));
     window.setTimeout(() => {
-      tg.close();
-    }, 600);
+      els.orderButton.textContent = "Отправлено в бот";
+      if (tg.showAlert) {
+        tg.showAlert("Заказ отправлен в бот. Дождитесь ответа в чате и закройте это окно вручную.");
+      }
+    }, 500);
   } else {
     alert("Заказ подготовлен. В Telegram он будет отправлен менеджеру.");
   }
