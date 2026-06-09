@@ -67,6 +67,20 @@ function renderSubcategories() {
   });
 }
 
+function showAddedFeedback(card, button) {
+  card.classList.remove("added");
+  button.classList.remove("added");
+  void card.offsetWidth;
+  card.classList.add("added");
+  button.classList.add("added");
+  button.textContent = "Добавлено ✓";
+  window.setTimeout(() => {
+    card.classList.remove("added");
+    button.classList.remove("added");
+    button.textContent = "В корзину ✨";
+  }, 1100);
+}
+
 function renderProducts() {
   els.products.innerHTML = "";
   const products = state.catalog[state.category]?.[state.subcategory] || [];
@@ -85,9 +99,11 @@ function renderProducts() {
         <button class="add-button" type="button">В корзину ✨</button>
       </div>
     `;
-    card.querySelector("button").onclick = () => {
+    const button = card.querySelector("button");
+    button.onclick = () => {
       state.cart.push(product);
       renderCart();
+      showAddedFeedback(card, button);
     };
     els.products.append(card);
   });
