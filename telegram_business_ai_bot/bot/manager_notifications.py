@@ -162,7 +162,9 @@ class ManagerNotifier:
             name = escape(str(item.get("name", "Товар")))
             weight = escape(str(item.get("weight", "")))
             price = escape(str(item.get("price", "")))
-            lines.append(f"{index}. {name}")
+            quantity = int(item.get("quantity", 1) or 1)
+            quantity_text = f" × {quantity}" if quantity > 1 else ""
+            lines.append(f"{index}. {name}{quantity_text}")
             lines.append(f"   {weight} · <b>{price}</b>")
 
         lines.extend(["", f"<b>Итого: {escape(str(total))} руб.</b>"])

@@ -40,8 +40,43 @@ function priceValue(price) {
   return match ? Number(match[0]) : 0;
 }
 
+function itemKey(item) {
+  return [item.name, item.weight, item.price].join("::");
+}
+
+function itemQuantity(item) {
+  return Number(item.quantity || 1);
+}
+
 function cartTotalValue() {
-  return state.cart.reduce((sum, item) => sum + priceValue(item.price), 0);
+  return state.cart.reduce((sum, item) => sum + priceValue(item.price) * itemQuantity(item), 0);
+}
+
+function cartItemsCount() {
+  return state.cart.reduce((sum, item) => sum + itemQuantity(item), 0);
+}
+
+function addToCart(product) {
+  const key = itemKey(product);
+  const existing = state.cart.find((item) => itemKey(item) === key);
+  if (existing) {
+    existing.quantity = itemQuantity(existing) + 1;
+    return;
+  }
+  state.cart.push({ ...product, quantity: 1 });
+}
+
+function changeCartQuantity(index, delta) {
+  const item = state.cart[index];
+  if (!item) return;
+  const nextQuantity = itemQuantity(item) + delta;
+  if (nextQuantity <= 0) {
+    state.cart.splice(index, 1);
+    renderCart();
+    return;
+  }
+  item.quantity = nextQuantity;
+  renderCart();
 }
 
 function showAddedFeedback(card, button) {
@@ -107,7 +142,7 @@ function renderProducts() {
     `;
     const button = card.querySelector("button");
     button.onclick = () => {
-      state.cart.push(product);
+      addToCart(product);
       renderCart();
       showAddedFeedback(card, button);
     };
@@ -115,14 +150,9 @@ function renderProducts() {
   });
 }
 
-function removeCartItem(index) {
-  state.cart.splice(index, 1);
-  renderCart();
-}
-
 function renderCart() {
   const total = cartTotalValue();
-  els.cartDockCount.textContent = String(state.cart.length);
+  els.cartDockCount.textContent = String(cartItemsCount());
   els.cartDockTotal.textContent = `${total} руб.`;
   els.cartTotal.textContent = `${total} руб.`;
 
@@ -144,10 +174,16 @@ function renderCart() {
         <span>${item.weight} · ${item.price}</span>
       </div>
       <div class="cart-item-actions">
-        <button class="cart-remove" type="button">Удалить</button>
+        <div class="qty-stepper">
+          <button class="qty-button" type="button" aria-label="Уменьшить количество">−</button>
+          <span class="qty-value">${itemQuantity(item)}</span>
+          <button class="qty-button" type="button" aria-label="Увеличить количество">+</button>
+        </div>
       </div>
     `;
-    row.querySelector("button").onclick = () => removeCartItem(index);
+    const [minusButton, plusButton] = row.querySelectorAll("button");
+    minusButton.onclick = () => changeCartQuantity(index, -1);
+    plusButton.onclick = () => changeCartQuantity(index, 1);
     els.cartList.append(row);
   });
 }
@@ -184,6 +220,7 @@ els.orderButton.onclick = () => {
       name: item.name,
       price: item.price,
       weight: item.weight,
+      quantity: itemQuantity(item),
     })),
     total: cartTotalValue(),
   };

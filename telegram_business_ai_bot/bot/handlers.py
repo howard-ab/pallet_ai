@@ -27,6 +27,7 @@ from bot.keyboards import (
     CONTACT_BUTTON,
     HOME_BUTTON,
     OLD_BACK_BUTTON,
+    OLD_SHOP_BUTTON,
     PROFILE_BUTTON,
     SHOP_BUTTON,
     back_to_menu_keyboard,
@@ -46,7 +47,8 @@ WELCOME_TEXT = (
     "<b>Мир Сухофруктов</b> ✨\n\n"
     "Здесь можно выбрать <b>сухофрукты</b>, <b>орехи</b>, <b>финики</b>, "
     "<b>сладости</b> и подарочные наборы.\n\n"
-    "Откройте витрину 🛍, задайте вопрос AI ౨ৎ или соберите заказ прямо в боте."
+    "Чтобы оформить заказ, нажмите <b>Заказать</b> 🛍. "
+    "Также можно задать вопрос AI ౨ৎ или посмотреть каталог прямо в боте."
 )
 
 ABOUT_TEXT = (
@@ -66,7 +68,8 @@ CONTACT_TEXT = (
 
 MAIN_MENU_TEXT = (
     "<b>Главное меню</b> ✨\n\n"
-    "Витрина 🛍, AI-помощник ౨ৎ, корзина и контакты — все в одном месте."
+    "Нажмите <b>Заказать</b> 🛍, чтобы открыть витрину. "
+    "AI-помощник ౨ৎ, корзина и контакты — тоже здесь."
 )
 
 
@@ -267,7 +270,7 @@ def create_router(
             parse_mode="HTML",
         )
 
-    @router.message(F.text == SHOP_BUTTON)
+    @router.message(F.text.in_({SHOP_BUTTON, OLD_SHOP_BUTTON}))
     async def shop(message: Message) -> None:
         if not shop_webapp_url:
             await answer_and_log(

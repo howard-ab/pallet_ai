@@ -510,14 +510,34 @@ h2 {
   justify-content: center;
 }
 
-.cart-remove {
+.qty-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: white;
+}
+
+.qty-button {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--panel-soft);
   color: var(--ink);
-  padding: 8px 12px;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 18px;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.qty-value {
+  min-width: 20px;
+  font-size: 14px;
+  font-weight: 700;
 }
 
 .cart-empty {
