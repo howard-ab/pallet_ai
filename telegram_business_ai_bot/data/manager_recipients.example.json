@@ -1,0 +1,11 @@
+{
+  "recipients": [
+    {
+      "name": "Warehouse manager",
+      "username": "manager_username",
+      "chat_id": 123456789,
+      "enabled": true,
+      "role": "warehouse"
+    }
+  ]
+}

@@ -10,3 +10,5 @@ logs/*.log
 data/customers.json
 !sessions/.gitkeep
 !logs/.gitkeep
+data/manager_recipients.json
+!data/manager_recipients.example.json
