@@ -89,12 +89,32 @@ async def main() -> None:
     await setup_bot_commands(bot)
     if manager_bot is not None:
         await setup_manager_bot_commands(manager_bot)
+
+    polling_tasks: list[asyncio.Task[None]] = []
     try:
-        polling_tasks = [dispatcher.start_polling(bot)]
+        polling_tasks.append(
+            asyncio.create_task(
+                dispatcher.start_polling(bot, handle_signals=False),
+                name="customer-bot-polling",
+            )
+        )
         if manager_bot is not None:
-            polling_tasks.append(manager_dispatcher.start_polling(manager_bot, handle_signals=False))
+            polling_tasks.append(
+                asyncio.create_task(
+                    manager_dispatcher.start_polling(manager_bot, handle_signals=False),
+                    name="manager-bot-polling",
+                )
+            )
         await asyncio.gather(*polling_tasks)
+    except (asyncio.CancelledError, KeyboardInterrupt):
+        logging.info("Shutdown requested, stopping bot polling tasks")
+        raise
     finally:
+        for task in polling_tasks:
+            if not task.done():
+                task.cancel()
+        if polling_tasks:
+            await asyncio.gather(*polling_tasks, return_exceptions=True)
         await bot.session.close()
         if manager_bot is not None:
             await manager_bot.session.close()

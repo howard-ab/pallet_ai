@@ -32,7 +32,7 @@ function hideSplash() {
   window.setTimeout(() => {
     els.splash?.classList.add("hidden");
     els.appRoot?.classList.remove("app-hidden");
-  }, 1800);
+  }, 3000);
 }
 
 function priceValue(price) {
