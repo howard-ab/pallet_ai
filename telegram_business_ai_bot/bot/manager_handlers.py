@@ -11,6 +11,12 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, Message
 
 from bot.manager_access import ManagerAccessStorage
+from bot.keyboards import (
+    MANAGER_FIND_BUTTON,
+    MANAGER_PROFILE_BUTTON,
+    MANAGER_TODAY_BUTTON,
+    manager_menu_keyboard,
+)
 from bot.manager_notifications import STATUS_LABELS, format_order_message, order_status_keyboard
 
 
@@ -59,6 +65,7 @@ def create_manager_router(
     access_code: str,
 ) -> Router:
     router = Router()
+    menu_keyboard = manager_menu_keyboard()
 
     async def require_verified_message(message: Message) -> bool:
         if not message.from_user:
@@ -95,12 +102,13 @@ def create_manager_router(
                 "<code>/find MS-...</code> — поиск по номеру заказа\n"
                 "<code>/whoami</code> — профиль сотрудника",
                 parse_mode="HTML",
+                reply_markup=menu_keyboard,
             )
             return
 
         await state.set_state(ManagerAccessFlow.waiting_for_code)
         await access_storage.log_access_event(message.from_user, "code_prompt_shown")
-        await message.answer("Введите код доступа для входа в бот заказов.")
+        await message.answer("Введите код доступа для входа в бот заказов.", reply_markup=menu_keyboard)
 
     @router.message(ManagerAccessFlow.waiting_for_code)
     async def check_code(message: Message, state: FSMContext) -> None:
@@ -108,7 +116,7 @@ def create_manager_router(
             return
         if message.text.strip() != access_code:
             await access_storage.log_access_event(message.from_user, "code_invalid")
-            await message.answer("Код неверный. Попробуйте еще раз.")
+            await message.answer("Код неверный. Попробуйте еще раз.", reply_markup=menu_keyboard)
             return
 
         record = await access_storage.verify_user(message.from_user)
@@ -122,9 +130,11 @@ def create_manager_router(
             "<code>/today</code> — заказы за сегодня\n"
             "<code>/find MS-...</code> — поиск по номеру заказа",
             parse_mode="HTML",
+            reply_markup=menu_keyboard,
         )
 
     @router.message(Command("today"))
+    @router.message(F.text == MANAGER_TODAY_BUTTON)
     async def show_today(message: Message) -> None:
         if not message.from_user:
             return
@@ -132,29 +142,32 @@ def create_manager_router(
             return
         orders = await access_storage.get_orders_for_date(datetime.now(MOSCOW_TZ).date())
         if not orders:
-            await message.answer("За сегодня заказов пока нет.")
+            await message.answer("За сегодня заказов пока нет.", reply_markup=menu_keyboard)
             return
         await message.answer(
             _summarize_orders("Заказы за сегодня", orders),
             parse_mode="HTML",
+            reply_markup=menu_keyboard,
         )
 
     @router.message(Command("find"))
-    async def find_order(message: Message, command: CommandObject) -> None:
+    @router.message(F.text == MANAGER_FIND_BUTTON)
+    async def find_order(message: Message, command: CommandObject | None = None) -> None:
         if not message.from_user:
             return
         if not await require_verified_message(message):
             return
-        query = (command.args or "").strip()
+        query = ((command.args if command else None) or "").strip()
         if not query:
             await message.answer(
                 "Укажите номер заказа после команды.\nПример: <code>/find MS-20260610-1200-5467423100</code>",
                 parse_mode="HTML",
+                reply_markup=menu_keyboard,
             )
             return
         orders = await access_storage.search_orders(query)
         if not orders:
-            await message.answer("По этому номеру заказ не найден.")
+            await message.answer("По этому номеру заказ не найден.", reply_markup=menu_keyboard)
             return
         for order in orders[:3]:
             await message.answer(
@@ -164,6 +177,7 @@ def create_manager_router(
             )
 
     @router.message(Command("whoami"))
+    @router.message(F.text == MANAGER_PROFILE_BUTTON)
     async def whoami(message: Message) -> None:
         if not message.from_user:
             return
@@ -171,7 +185,7 @@ def create_manager_router(
             return
         record = await access_storage.get_verified_staff(message.from_user.id)
         if not record:
-            await message.answer("Данные сотрудника не найдены.")
+            await message.answer("Данные сотрудника не найдены.", reply_markup=menu_keyboard)
             return
         actions = await access_storage.get_staff_actions(message.from_user.id)
         await message.answer(
@@ -181,6 +195,7 @@ def create_manager_router(
             f"Последний вход: <code>{escape(str(record.get('last_seen_at') or '-'))}</code>\n"
             f"Действий по заказам: <b>{len(actions)}</b>",
             parse_mode="HTML",
+            reply_markup=menu_keyboard,
         )
 
     @router.callback_query(F.data.startswith("order:status:"))
@@ -225,10 +240,11 @@ def create_manager_router(
                 "<code>/find MS-...</code> — поиск по номеру заказа\n"
                 "<code>/whoami</code> — профиль сотрудника",
                 parse_mode="HTML",
+                reply_markup=menu_keyboard,
             )
             return
         await state.set_state(ManagerAccessFlow.waiting_for_code)
         await access_storage.log_access_event(message.from_user, "code_prompt_shown")
-        await message.answer("Введите код доступа для входа в бот заказов.")
+        await message.answer("Введите код доступа для входа в бот заказов.", reply_markup=menu_keyboard)
 
     return router
