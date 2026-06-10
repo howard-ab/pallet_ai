@@ -46,29 +46,30 @@ def _summarize_orders(title: str, orders: list[dict[str, object]]) -> str:
         + status_counts.get("in_delivery", 0)
     )
 
-    lines = [f"<b>{title}</b>", ""]
-    lines.append(
-        " · ".join(
-            [
-                f"Активные: <b>{active_count}</b>",
-                f"Новые: <b>{status_counts.get('new', 0)}</b>",
-                f"Готовы: <b>{status_counts.get('assembled', 0)}</b>",
-                f"В доставке: <b>{status_counts.get('in_delivery', 0)}</b>",
-                f"Доставленные: <b>{status_counts.get('delivered', 0)}</b>",
-            ]
-        )
-    )
-    lines.append("")
+    lines = [
+        f"<b>{title}</b>",
+        "",
+        f"Активные: <b>{active_count}</b>",
+        f"Новые: <b>{status_counts.get('new', 0)}</b>",
+        f"Готовы к доставке: <b>{status_counts.get('assembled', 0)}</b>",
+        f"В доставке: <b>{status_counts.get('in_delivery', 0)}</b>",
+        f"Доставленные: <b>{status_counts.get('delivered', 0)}</b>",
+        "",
+    ]
 
-    for order in orders[-10:]:
+    for index, order in enumerate(orders[-10:], start=1):
         customer = order.get("customer", {}) or {}
         customer_name = customer.get("first_name") or customer.get("username") or "без имени"
-        lines.append(
-            f"• <code>{escape(str(order.get('order_number', '-')))}</code> "
-            f"· <b>{escape(STATUS_LABELS.get(str(order.get('status', 'new')), 'Новый'))}</b> "
-            f"· {escape(str(order.get('total', '0')))} руб."
+        lines.extend(
+            [
+                f"<b>{index}. Заказ</b>",
+                f"Номер: <code>{escape(str(order.get('order_number', '-')))}</code>",
+                f"Статус: <b>{escape(STATUS_LABELS.get(str(order.get('status', 'new')), 'Новый'))}</b>",
+                f"Клиент: {escape(str(customer_name))}",
+                f"Сумма: <b>{escape(str(order.get('total', '0')))} руб.</b>",
+                "",
+            ]
         )
-        lines.append(f"  Клиент: {escape(str(customer_name))}")
     return "\n".join(lines)
 
 
