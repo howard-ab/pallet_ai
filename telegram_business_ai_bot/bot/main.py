@@ -4,6 +4,7 @@ import os
 import time
 
 from aiogram import Bot, Dispatcher
+from aiogram.exceptions import TelegramNetworkError
 from aiogram.types import BotCommand
 
 from bot.ai_service import HuggingFaceAIService
@@ -46,6 +47,36 @@ async def setup_manager_bot_commands(bot: Bot) -> None:
             BotCommand(command="whoami", description="Показать профиль сотрудника"),
         ]
     )
+
+
+async def setup_bot_commands_with_retry(
+    bot: Bot,
+    *,
+    label: str,
+    setup_func,
+    retries: int = 3,
+) -> None:
+    for attempt in range(1, retries + 1):
+        try:
+            await setup_func(bot)
+            if attempt > 1:
+                logging.info("%s commands configured on retry %s", label, attempt)
+            return
+        except TelegramNetworkError as exc:
+            logging.warning(
+                "Failed to configure %s commands on attempt %s/%s: %s",
+                label,
+                attempt,
+                retries,
+                exc,
+            )
+            if attempt == retries:
+                logging.warning(
+                    "Skipping %s command setup for now. The bot can still continue if Telegram API becomes reachable.",
+                    label,
+                )
+                return
+            await asyncio.sleep(min(2 * attempt, 5))
 
 
 async def main() -> None:
@@ -103,9 +134,17 @@ async def main() -> None:
             )
         )
 
-    await setup_bot_commands(bot)
+    await setup_bot_commands_with_retry(
+        bot,
+        label="customer bot",
+        setup_func=setup_bot_commands,
+    )
     if manager_bot is not None:
-        await setup_manager_bot_commands(manager_bot)
+        await setup_bot_commands_with_retry(
+            manager_bot,
+            label="manager bot",
+            setup_func=setup_manager_bot_commands,
+        )
     await checkout_server.start()
 
     polling_tasks: list[asyncio.Task[None]] = []
