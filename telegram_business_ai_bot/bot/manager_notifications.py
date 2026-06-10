@@ -82,13 +82,20 @@ def format_order_message(order: dict[str, object]) -> str:
     customer_name = customer.get("first_name") or customer.get("username") or "без имени"
     username = customer.get("username") or "не указан"
     phone = customer.get("phone") or "не указан"
+    created_at = str(order.get("created_at") or order.get("timestamp") or "")
+    created_text = str(order.get("created_at_text") or created_at)
+    if created_at:
+        try:
+            created_text = datetime.fromisoformat(created_at).strftime("%d.%m.%Y %H:%M MSK")
+        except ValueError:
+            created_text = str(order.get("created_at_text") or created_at)
     updated_at = str(order.get("updated_at") or order.get("timestamp") or "")
-    updated_text = updated_at
+    updated_text = str(order.get("updated_at_text") or updated_at)
     if updated_at:
         try:
             updated_text = datetime.fromisoformat(updated_at).strftime("%d.%m.%Y %H:%M MSK")
         except ValueError:
-            updated_text = updated_at
+            updated_text = str(order.get("updated_at_text") or updated_at)
     last_action_by = order.get("last_action_by") or {}
     actor_name = last_action_by.get("first_name") or last_action_by.get("username")
 
@@ -97,6 +104,7 @@ def format_order_message(order: dict[str, object]) -> str:
         "",
         f"Номер: <code>{escape(str(order.get('order_number', '-')))}</code>",
         f"Статус: <b>{escape(STATUS_LABELS.get(str(order.get('status', 'new')), 'Новый'))}</b>",
+        f"Оформлен: <b>{escape(created_text)}</b>",
         f"Обновлен: <b>{escape(updated_text)}</b>",
     ]
     if actor_name:

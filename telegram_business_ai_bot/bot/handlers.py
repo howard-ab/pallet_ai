@@ -44,6 +44,8 @@ from bot.storage import SessionStorage
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+MANAGER_PHONE = "+7-928-199-38-00"
+MANAGER_LABEL = "Менеджер"
 
 WELCOME_TEXT = (
     "<b>Добро пожаловать в Мир Сухофруктов</b> ✨\n\n"
@@ -147,6 +149,29 @@ def registration_text(message: Message) -> str:
     )
 
 
+def format_moscow_datetime(raw: object) -> str:
+    value = str(raw or "")
+    if not value:
+        return "-"
+    try:
+        from datetime import datetime
+        from zoneinfo import ZoneInfo
+
+        return datetime.fromisoformat(value).astimezone(ZoneInfo("Europe/Moscow")).strftime("%d.%m.%Y %H:%M MSK")
+    except ValueError:
+        return value
+
+
+def build_welcome_actions_text(shop_webapp_url: str) -> str:
+    text = WELCOME_ACTIONS_TEXT
+    if shop_webapp_url:
+        text += (
+            "\n\n"
+            f"🔗 <a href=\"{escape(shop_webapp_url)}\">Открыть витрину в один тап</a>"
+        )
+    return text
+
+
 def profile_text(customer: dict[str, object]) -> str:
     username = customer.get("username") or "не указан"
     phone = customer.get("phone") or "не указан"
@@ -220,10 +245,19 @@ def create_router(
         await answer_and_log(
             message,
             storage,
-            WELCOME_ACTIONS_TEXT,
+            build_welcome_actions_text(shop_webapp_url),
             reply_markup=menu_keyboard,
             parse_mode="HTML",
         )
+        cta_keyboard = order_cta_inline_keyboard(shop_webapp_url)
+        if cta_keyboard is not None:
+            await answer_and_log(
+                message,
+                storage,
+                "<b>🛍 Быстрый заказ</b>\n\nНажмите синюю кнопку ниже, чтобы сразу открыть витрину.",
+                reply_markup=cta_keyboard,
+                parse_mode="HTML",
+            )
 
     @router.message(F.contact)
     async def save_shared_contact(message: Message, state: FSMContext) -> None:
@@ -285,6 +319,15 @@ def create_router(
             reply_markup=menu_keyboard,
             parse_mode="HTML",
         )
+        cta_keyboard = order_cta_inline_keyboard(shop_webapp_url)
+        if cta_keyboard is not None:
+            await answer_and_log(
+                message,
+                storage,
+                "<b>🛍 Быстрый заказ</b>\n\nЕсли хотите сразу перейти к покупке, нажмите кнопку ниже.",
+                reply_markup=cta_keyboard,
+                parse_mode="HTML",
+            )
 
     @router.message(F.text == PROFILE_BUTTON)
     async def profile(message: Message) -> None:
@@ -321,8 +364,12 @@ def create_router(
         await answer_and_log(
             message,
             storage,
-            "<b>Покупки</b>\n\nНажмите кнопку «Покупки» в меню, чтобы открыть витрину.",
-            reply_markup=back_to_menu_keyboard(),
+            "<b>Покупки</b>\n\n"
+            "Откройте витрину любым удобным способом:\n"
+            f"• кнопкой <b>{SHOP_BUTTON}</b> в нижнем меню\n"
+            "• синей кнопкой ниже\n"
+            f"• ссылкой: <a href=\"{escape(shop_webapp_url)}\">открыть витрину</a>",
+            reply_markup=order_cta_inline_keyboard(shop_webapp_url),
             parse_mode="HTML",
         )
 
@@ -472,13 +519,16 @@ def create_router(
             total=total,
         )
         logging.info("Order forwarded to manager notifier successfully")
+        created_text = format_moscow_datetime(order.get("created_at") or order.get("timestamp"))
         await answer_and_log(
             message,
             storage,
             "<b>✅ Заказ принят</b> ✨\n\n"
-            f"Номер заказа: <code>{escape(str(order.get('order_number', '-')))}</code>\n\n"
-            "Мы передали его в отдел заказов. "
-            "Менеджер свяжется с вами после подтверждения.",
+            f"Номер заказа: <code>{escape(str(order.get('order_number', '-')))}</code>\n"
+            f"Оформлен: <b>{escape(created_text)}</b>\n\n"
+            "Мы передали его в отдел заказов.\n"
+            f"{MANAGER_LABEL}: <b>{escape(MANAGER_PHONE)}</b>\n\n"
+            "Если понадобится, вы можете сразу связаться с менеджером по этому номеру.",
             reply_markup=back_to_menu_keyboard(),
             parse_mode="HTML",
         )

@@ -24,6 +24,10 @@ MOSCOW_TZ = ZoneInfo("Europe/Moscow")
 ORDER_STATUS_FLOW = ("new", "assembled", "in_delivery", "delivered")
 
 
+def format_moscow_datetime(moment: datetime) -> str:
+    return moment.astimezone(MOSCOW_TZ).strftime("%d.%m.%Y %H:%M MSK")
+
+
 def current_shift(moment: datetime | None = None) -> str:
     now = moment or datetime.now(MOSCOW_TZ)
     hour = now.hour
@@ -65,7 +69,9 @@ class ManagerAccessStorage:
             "first_name": user.first_name,
             "last_name": user.last_name,
             "verified_at": now.isoformat(),
+            "verified_at_text": format_moscow_datetime(now),
             "last_seen_at": now.isoformat(),
+            "last_seen_at_text": format_moscow_datetime(now),
             "shift": current_shift(now),
         }
         staff[str(user.id)] = record
@@ -79,6 +85,7 @@ class ManagerAccessStorage:
         existing = staff.get(str(user.id))
         if existing is not None:
             existing["last_seen_at"] = now.isoformat()
+            existing["last_seen_at_text"] = format_moscow_datetime(now)
             existing["shift"] = current_shift(now)
             staff[str(user.id)] = existing
             await asyncio.to_thread(self._write_verified_staff_sync, staff)
@@ -93,6 +100,7 @@ class ManagerAccessStorage:
         now = datetime.now(MOSCOW_TZ)
         record = {
             "timestamp": now.isoformat(),
+            "timestamp_text": format_moscow_datetime(now),
             "event": event,
             "shift": current_shift(now),
             "user": {
@@ -125,7 +133,10 @@ class ManagerAccessStorage:
 
         record = {
             "timestamp": now.isoformat(),
+            "created_at": now.isoformat(),
+            "created_at_text": format_moscow_datetime(now),
             "updated_at": now.isoformat(),
+            "updated_at_text": format_moscow_datetime(now),
             "date": now.date().isoformat(),
             "order_number": order_number,
             "status": "new",
@@ -140,6 +151,7 @@ class ManagerAccessStorage:
             "history": [
                 {
                     "timestamp": now.isoformat(),
+                    "timestamp_text": format_moscow_datetime(now),
                     "event": "created",
                     "status": "new",
                     "actor": {
@@ -353,11 +365,13 @@ class ManagerAccessStorage:
         previous_status = str(record.get("status", "new"))
         record["status"] = status
         record["updated_at"] = now.isoformat()
+        record["updated_at_text"] = format_moscow_datetime(now)
         record["last_action_by"] = actor
         history = list(record.get("history", []))
         history.append(
             {
                 "timestamp": now.isoformat(),
+                "timestamp_text": format_moscow_datetime(now),
                 "event": "status_changed",
                 "from_status": previous_status,
                 "status": status,
@@ -373,6 +387,7 @@ class ManagerAccessStorage:
             legacy_log_file,
             {
                 "timestamp": now.isoformat(),
+                "timestamp_text": format_moscow_datetime(now),
                 "event": "status_changed",
                 "order_number": order_number,
                 "from_status": previous_status,
@@ -400,6 +415,8 @@ class ManagerAccessStorage:
                 self._staff_actions_path(int(actor["user_id"])),
                 {
                     "timestamp": now.isoformat(),
+                    "timestamp_text": format_moscow_datetime(now),
+                    "event": "status_changed",
                     "order_number": order_number,
                     "status": status,
                     "from_status": previous_status,

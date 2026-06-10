@@ -35,6 +35,16 @@ class ManagerAccessFlow(StatesGroup):
     waiting_for_date = State()
 
 
+def _format_datetime(raw: object) -> str:
+    value = str(raw or "")
+    if not value:
+        return "-"
+    try:
+        return datetime.fromisoformat(value).astimezone(MOSCOW_TZ).strftime("%d.%m.%Y %H:%M MSK")
+    except ValueError:
+        return value
+
+
 def _summarize_orders(title: str, orders: list[dict[str, object]]) -> str:
     status_counts = {status: 0 for status in STATUS_LABELS}
     for order in orders:
@@ -60,11 +70,13 @@ def _summarize_orders(title: str, orders: list[dict[str, object]]) -> str:
     for index, order in enumerate(orders[-10:], start=1):
         customer = order.get("customer", {}) or {}
         customer_name = customer.get("first_name") or customer.get("username") or "без имени"
+        created_text = _format_datetime(order.get("created_at") or order.get("timestamp"))
         lines.extend(
             [
                 f"<b>{index}. Заказ</b>",
                 f"Номер: <code>{escape(str(order.get('order_number', '-')))}</code>",
                 f"Статус: <b>{escape(STATUS_LABELS.get(str(order.get('status', 'new')), 'Новый'))}</b>",
+                f"Оформлен: <b>{escape(created_text)}</b>",
                 f"Клиент: {escape(str(customer_name))}",
                 f"Сумма: <b>{escape(str(order.get('total', '0')))} руб.</b>",
                 "",
@@ -401,7 +413,7 @@ def create_manager_router(
             "<b>Профиль сотрудника</b>\n\n"
             f"Telegram: @{escape(str(record.get('username') or 'не указан'))}\n"
             f"Смена: <b>{escape(str(record.get('shift') or '-'))}</b>\n"
-            f"Последний вход: <code>{escape(str(record.get('last_seen_at') or '-'))}</code>\n"
+            f"Последний вход: <code>{escape(str(record.get('last_seen_at_text') or record.get('last_seen_at') or '-'))}</code>\n"
             f"Действий по заказам: <b>{len(actions)}</b>",
             parse_mode="HTML",
             reply_markup=menu_keyboard,
@@ -437,7 +449,8 @@ def create_manager_router(
             )
             await callback.message.answer(
                 f"✅ Заказ <code>{escape(str(order_number))}</code> переведен в статус "
-                f"<b>{escape(STATUS_LABELS.get(next_status, next_status))}</b>.",
+                f"<b>{escape(STATUS_LABELS.get(next_status, next_status))}</b>.\n"
+                f"Время: <code>{escape(_format_datetime(order.get('updated_at')))}</code>",
                 parse_mode="HTML",
                 reply_markup=menu_keyboard,
             )
