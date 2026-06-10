@@ -400,6 +400,66 @@ h2 {
   font-size: 13px;
 }
 
+.weight-picker {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.weight-presets {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.weight-chip {
+  min-height: 30px;
+  padding: 5px 4px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--accent-strong);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.weight-chip.active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+.weight-custom {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px;
+}
+
+.weight-input {
+  min-width: 0;
+  min-height: 32px;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-size: 11px;
+  text-align: center;
+}
+
+.weight-apply {
+  min-height: 32px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--panel-soft);
+  color: var(--accent-strong);
+  font-size: 11px;
+  font-weight: 700;
+}
+
 .product-actions {
   display: grid;
   grid-template-columns: minmax(0, 68px) minmax(0, 1fr);
@@ -669,6 +729,16 @@ h2 {
 }
 
 @media (max-width: 520px) {
+  .weight-chip {
+    font-size: 9px;
+    padding: 5px 2px;
+  }
+
+  .weight-input,
+  .weight-apply {
+    font-size: 10px;
+  }
+
   .product-actions {
     grid-template-columns: minmax(0, 60px) minmax(0, 1fr);
     gap: 5px;

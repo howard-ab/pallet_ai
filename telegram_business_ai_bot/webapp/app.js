@@ -14,6 +14,8 @@ const state = {
   cart: [],
 };
 
+const QUICK_WEIGHT_OPTIONS_KG = [0.25, 0.5, 1];
+
 const els = {
   splash: document.querySelector("#splashScreen"),
   appRoot: document.querySelector("#appRoot"),
@@ -48,6 +50,42 @@ function hideSplash() {
 function priceValue(price) {
   const match = String(price).replace(/\s/g, "").match(/\d+/);
   return match ? Number(match[0]) : 0;
+}
+
+function parseWeightKg(weight) {
+  const normalized = String(weight).trim().toLowerCase().replace(",", ".");
+  const match = normalized.match(/(\d+(?:\.\d+)?)/);
+  if (!match) return 1;
+  const value = Number(match[1]);
+  if (!Number.isFinite(value) || value <= 0) return 1;
+  if (normalized.includes("г") && !normalized.includes("кг")) {
+    return value / 1000;
+  }
+  return value;
+}
+
+function formatWeightKg(value) {
+  const rounded = Math.round(value * 100) / 100;
+  const text = Number.isInteger(rounded) ? String(rounded) : String(rounded).replace(".", ",");
+  return `${text} кг`;
+}
+
+function formatRub(value) {
+  return `${Math.round(value)} руб.`;
+}
+
+function buildWeightedProduct(product, selectedWeightKg) {
+  const baseWeightKg = parseWeightKg(product.weight);
+  const unitPricePerKg = priceValue(product.price) / baseWeightKg;
+  const totalPrice = Math.round(unitPricePerKg * selectedWeightKg);
+  return {
+    ...product,
+    unitPricePerKg,
+    selectedWeightKg,
+    selectedWeightLabel: formatWeightKg(selectedWeightKg),
+    weight: formatWeightKg(selectedWeightKg),
+    price: formatRub(totalPrice),
+  };
 }
 
 function itemKey(item) {
@@ -142,6 +180,8 @@ function renderProducts() {
   els.products.innerHTML = "";
   const products = state.catalog[state.category]?.[state.subcategory] || [];
   products.forEach((product) => {
+    const defaultWeightKg = parseWeightKg(product.weight);
+    let selectedWeightKg = defaultWeightKg;
     const card = document.createElement("article");
     card.className = "product";
     card.innerHTML = `
@@ -150,8 +190,21 @@ function renderProducts() {
         <h3>${product.name}</h3>
         <div class="meta">
           <span>${product.origin}</span>
-          <span>${product.weight}</span>
-          <strong>${product.price}</strong>
+          <span class="selected-weight">${formatWeightKg(selectedWeightKg)}</span>
+          <strong class="selected-price">${product.price}</strong>
+        </div>
+        <div class="weight-picker">
+          <div class="weight-presets">
+            ${QUICK_WEIGHT_OPTIONS_KG.map((value) => `
+              <button class="weight-chip${Math.abs(value - selectedWeightKg) < 0.001 ? " active" : ""}" type="button" data-weight="${value}">
+                ${formatWeightKg(value)}
+              </button>
+            `).join("")}
+          </div>
+          <div class="weight-custom">
+            <input class="weight-input" type="text" inputmode="decimal" placeholder="Свой вес, кг">
+            <button class="weight-apply" type="button">OK</button>
+          </div>
         </div>
         <div class="product-actions">
           <button class="info-button" type="button">Инфо</button>
@@ -161,12 +214,51 @@ function renderProducts() {
     `;
     const infoButton = card.querySelector(".info-button");
     const addButton = card.querySelector(".add-button");
+    const selectedWeightEl = card.querySelector(".selected-weight");
+    const selectedPriceEl = card.querySelector(".selected-price");
+    const weightChips = Array.from(card.querySelectorAll(".weight-chip"));
+    const weightInput = card.querySelector(".weight-input");
+    const weightApply = card.querySelector(".weight-apply");
+
+    function refreshSelection() {
+      const weighted = buildWeightedProduct(product, selectedWeightKg);
+      selectedWeightEl.textContent = weighted.weight;
+      selectedPriceEl.textContent = weighted.price;
+      weightChips.forEach((chip) => {
+        const chipWeight = Number(chip.dataset.weight || 0);
+        chip.classList.toggle("active", Math.abs(chipWeight - selectedWeightKg) < 0.001);
+      });
+    }
+
+    weightChips.forEach((chip) => {
+      chip.onclick = () => {
+        selectedWeightKg = Number(chip.dataset.weight || defaultWeightKg);
+        refreshSelection();
+      };
+    });
+
+    weightApply.onclick = () => {
+      const raw = String(weightInput.value || "").trim().replace(",", ".");
+      const customWeight = Number(raw);
+      if (!Number.isFinite(customWeight) || customWeight <= 0) {
+        if (tg?.showAlert) {
+          tg.showAlert("Введите вес в килограммах, например 0.5 или 1.5");
+        } else {
+          alert("Введите вес в килограммах, например 0.5 или 1.5");
+        }
+        return;
+      }
+      selectedWeightKg = Math.round(customWeight * 100) / 100;
+      refreshSelection();
+    };
+
     infoButton.onclick = () => openProductInfo(product);
     addButton.onclick = () => {
-      addToCart(product);
+      addToCart(buildWeightedProduct(product, selectedWeightKg));
       renderCart();
       showAddedFeedback(card, addButton);
     };
+    refreshSelection();
     els.products.append(card);
   });
 }

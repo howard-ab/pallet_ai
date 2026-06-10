@@ -36,7 +36,7 @@ from bot.keyboards import (
     catalog_keyboard,
     cart_actions_keyboard,
     contact_request_keyboard,
-    order_cta_inline_keyboard,
+    #order_cta_inline_keyboard,
     product_actions_keyboard,
     subcategory_keyboard,
 )
@@ -47,19 +47,20 @@ from bot.storage import SessionStorage
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 WELCOME_TEXT = (
-    "<b>Добро пожаловать в Мир Сухофруктов</b> ✨\n\n"
-    "У нас можно выбрать <b>сухофрукты</b>, <b>орехи</b>, <b>финики</b>, "
-    "<b>сладости</b> и подарочные наборы для дома, офиса и подарков."
+    "<b>Вас приветствует Мир Сухофруктов!</b>\n"
+    "----------------------------------------\n\n"
+    "Мы - сеть магазинов продукций высокого качества, такие как <b>сухофрукты</b>, <b>орехи</b>, <b>финики</b>, "
+    "<b>сладости</b> и подарочные наборы для дома, офиса и подарков и еще многое другое."
 )
 
 WELCOME_ACTIONS_TEXT = (
-    "<b>Что можно сделать в боте</b>\n\n"
+    "<b>Что можно сделать в боте:</b>\n\n"
     "• <b>Заказать</b>\n"
     "Открыть витрину, собрать корзину и оформить заказ.\n\n"
     "• <b>Каталог</b>\n"
     "Посмотреть товары прямо в боте по категориям.\n\n"
-    "• <b>Задать вопрос ИИ</b>\n"
-    "Уточнить состав, вкус, отличия и полезные свойства продуктов.\n\n"
+    "• <b>Задать вопрос Искусственному Интеллекту</b>\n"
+    "Уточнить состав, вкус, отличия и полезные свойства продуктов, или попросить рекомендовать Вам что-то из каталога.\n\n"
     "• <b>Корзина</b>\n"
     "Проверить выбранные позиции перед оформлением.\n\n"
     "• <b>Связаться с менеджером</b>\n"
@@ -162,13 +163,13 @@ def format_moscow_datetime(raw: object) -> str:
 
 
 def build_welcome_actions_text(shop_webapp_url: str) -> str:
-    text = WELCOME_ACTIONS_TEXT
-    if shop_webapp_url:
-        text += (
-            "\n\n"
-            f"🔗 <a href=\"{escape(shop_webapp_url)}\">Открыть витрину в один тап</a>"
-        )
-    return text
+    # text = WELCOME_ACTIONS_TEXT
+    # if shop_webapp_url:
+    #     text += (
+    #         "\n\n"
+    #         f"🔗 <a href=\"{escape(shop_webapp_url)}\">Открыть витрину в один тап</a>"
+    #     )
+    return WELCOME_ACTIONS_TEXT
 
 
 def profile_text(customer: dict[str, object]) -> str:
@@ -249,15 +250,6 @@ def create_router(
             reply_markup=menu_keyboard,
             parse_mode="HTML",
         )
-        cta_keyboard = order_cta_inline_keyboard(shop_webapp_url, checkout_api_url)
-        if cta_keyboard is not None:
-            await answer_and_log(
-                message,
-                storage,
-                "<b>🛍 Быстрый заказ</b>\n\nНажмите синюю кнопку ниже, чтобы сразу открыть витрину.",
-                reply_markup=cta_keyboard,
-                parse_mode="HTML",
-            )
 
     @router.message(F.contact)
     async def save_shared_contact(message: Message, state: FSMContext) -> None:
@@ -319,15 +311,15 @@ def create_router(
             reply_markup=menu_keyboard,
             parse_mode="HTML",
         )
-        cta_keyboard = order_cta_inline_keyboard(shop_webapp_url, checkout_api_url)
-        if cta_keyboard is not None:
-            await answer_and_log(
-                message,
-                storage,
-                "<b>🛍 Быстрый заказ</b>\n\nЕсли хотите сразу перейти к покупке, нажмите кнопку ниже.",
-                reply_markup=cta_keyboard,
-                parse_mode="HTML",
-            )
+        # cta_keyboard = order_cta_inline_keyboard(shop_webapp_url, checkout_api_url)
+        # if cta_keyboard is not None:
+        #     await answer_and_log(
+        #         message,
+        #         storage,
+        #         "<b>🛍 Быстрый заказ</b>\n\nЕсли хотите сразу перейти к покупке, нажмите кнопку ниже.",
+        #         reply_markup=cta_keyboard,
+        #         parse_mode="HTML",
+        #     )
 
     @router.message(F.text == PROFILE_BUTTON)
     async def profile(message: Message) -> None:
@@ -361,17 +353,17 @@ def create_router(
                 parse_mode="HTML",
             )
             return
-        await answer_and_log(
-            message,
-            storage,
-            "<b>Покупки</b>\n\n"
-            "Откройте витрину любым удобным способом:\n"
-            f"• кнопкой <b>{SHOP_BUTTON}</b> в нижнем меню\n"
-            "• синей кнопкой ниже\n"
-            f"• ссылкой: <a href=\"{escape(shop_webapp_url)}\">открыть витрину</a>",
-            reply_markup=order_cta_inline_keyboard(shop_webapp_url, checkout_api_url),
-            parse_mode="HTML",
-        )
+        # await answer_and_log(
+        #     message,
+        #     storage,
+        #     "<b>Покупки</b>\n\n"
+        #     "Откройте витрину любым удобным способом:\n"
+        #     f"• кнопкой <b>{SHOP_BUTTON}</b> в нижнем меню\n"
+        #     "• синей кнопкой ниже\n"
+        #     f"• ссылкой: <a href=\"{escape(shop_webapp_url)}\">открыть витрину</a>",
+        #     reply_markup=order_cta_inline_keyboard(shop_webapp_url, checkout_api_url),
+        #     parse_mode="HTML",
+        # )
 
     @router.message(Command("catalog"))
     @router.message(F.text == CATALOG_BUTTON)

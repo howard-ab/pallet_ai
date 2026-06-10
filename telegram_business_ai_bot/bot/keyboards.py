@@ -104,20 +104,20 @@ def product_actions_keyboard(product_id: int) -> InlineKeyboardMarkup:
     )
 
 
-def order_cta_inline_keyboard(shop_webapp_url: str = "", checkout_api_url: str = "") -> InlineKeyboardMarkup | None:
-    launch_url = build_webapp_launch_url(shop_webapp_url, checkout_api_url)
-    if not launch_url:
-        return None
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(
-                    text="Заказать сейчас",
-                    web_app=WebAppInfo(url=launch_url),
-                )
-            ]
-        ]
-    )
+# def order_cta_inline_keyboard(shop_webapp_url: str = "", checkout_api_url: str = "") -> InlineKeyboardMarkup | None:
+#     launch_url = build_webapp_launch_url(shop_webapp_url, checkout_api_url)
+#     if not launch_url:
+#         return None
+#     return InlineKeyboardMarkup(
+#         inline_keyboard=[
+#             [
+#                 InlineKeyboardButton(
+#                     text="Заказать сейчас",
+#                     web_app=WebAppInfo(url=launch_url),
+#                 )
+#             ]
+#         ]
+#     )
 
 
 def cart_actions_keyboard() -> InlineKeyboardMarkup:
