@@ -7,6 +7,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.types import BotCommand
 
 from bot.ai_service import HuggingFaceAIService
+from bot.checkout_api import MiniAppCheckoutServer
 from bot.config import load_settings
 from bot.customers import CustomerStorage
 from bot.handlers import create_router
@@ -73,6 +74,14 @@ async def main() -> None:
         manager_bot=manager_bot,
         access_storage=manager_access_storage,
     )
+    checkout_server = MiniAppCheckoutServer(
+        bot=bot,
+        telegram_bot_token=settings.telegram_bot_token,
+        manager_notifier=manager_notifier,
+        customer_storage=customer_storage,
+        host=settings.checkout_api_bind_host,
+        port=settings.checkout_api_port,
+    )
 
     dispatcher.message.middleware(MessageLoggingMiddleware(storage))
     dispatcher.include_router(
@@ -82,6 +91,7 @@ async def main() -> None:
             customer_storage=customer_storage,
             manager_notifier=manager_notifier,
             shop_webapp_url=settings.shop_webapp_url,
+            checkout_api_url=settings.checkout_api_url,
         )
     )
     if manager_bot is not None:
@@ -96,6 +106,7 @@ async def main() -> None:
     await setup_bot_commands(bot)
     if manager_bot is not None:
         await setup_manager_bot_commands(manager_bot)
+    await checkout_server.start()
 
     polling_tasks: list[asyncio.Task[None]] = []
     try:
@@ -122,6 +133,7 @@ async def main() -> None:
                 task.cancel()
         if polling_tasks:
             await asyncio.gather(*polling_tasks, return_exceptions=True)
+        await checkout_server.stop()
         await bot.session.close()
         if manager_bot is not None:
             await manager_bot.session.close()

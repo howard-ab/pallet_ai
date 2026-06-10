@@ -14,6 +14,9 @@ class Settings:
     huggingface_api_token: str
     huggingface_model: str = DEFAULT_HUGGINGFACE_MODEL
     shop_webapp_url: str = ""
+    checkout_api_url: str = ""
+    checkout_api_bind_host: str = "127.0.0.1"
+    checkout_api_port: int = 8081
     manager_chat_ids: tuple[int, ...] = ()
     manager_bot_token: str = ""
     manager_access_code: str = DEFAULT_MANAGER_ACCESS_CODE
@@ -29,6 +32,9 @@ def load_settings() -> Settings:
         or DEFAULT_HUGGINGFACE_MODEL
     )
     shop_webapp_url = os.getenv("SHOP_WEBAPP_URL", "").strip()
+    checkout_api_url = os.getenv("CHECKOUT_API_URL", "").strip()
+    checkout_api_bind_host = os.getenv("CHECKOUT_API_BIND_HOST", "127.0.0.1").strip() or "127.0.0.1"
+    checkout_api_port = int((os.getenv("CHECKOUT_API_PORT", "8081").strip() or "8081"))
     raw_manager_chat_ids = os.getenv("MANAGER_CHAT_IDS", "").strip()
     manager_chat_ids = tuple(
         int(item.strip())
@@ -52,6 +58,9 @@ def load_settings() -> Settings:
         huggingface_api_token=huggingface_api_token,
         huggingface_model=huggingface_model,
         shop_webapp_url=shop_webapp_url,
+        checkout_api_url=checkout_api_url,
+        checkout_api_bind_host=checkout_api_bind_host,
+        checkout_api_port=checkout_api_port,
         manager_chat_ids=manager_chat_ids,
         manager_bot_token=manager_bot_token,
         manager_access_code=manager_access_code,

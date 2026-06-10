@@ -1,3 +1,5 @@
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
+
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup, WebAppInfo
 
 from bot.catalog import get_categories, get_subcategories
@@ -28,11 +30,24 @@ def main_menu_keyboard() -> ReplyKeyboardMarkup:
     return build_main_menu_keyboard()
 
 
-def build_main_menu_keyboard(shop_webapp_url: str = "") -> ReplyKeyboardMarkup:
+def build_webapp_launch_url(shop_webapp_url: str = "", checkout_api_url: str = "") -> str:
+    if not shop_webapp_url:
+        return ""
+    if not checkout_api_url:
+        return shop_webapp_url
+
+    parts = urlsplit(shop_webapp_url)
+    query = dict(parse_qsl(parts.query, keep_blank_values=True))
+    query["api"] = checkout_api_url
+    return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment))
+
+
+def build_main_menu_keyboard(shop_webapp_url: str = "", checkout_api_url: str = "") -> ReplyKeyboardMarkup:
+    launch_url = build_webapp_launch_url(shop_webapp_url, checkout_api_url)
     shop_button = KeyboardButton(
         text=SHOP_BUTTON,
-        web_app=WebAppInfo(url=shop_webapp_url),
-    ) if shop_webapp_url else KeyboardButton(text=SHOP_BUTTON)
+        web_app=WebAppInfo(url=launch_url),
+    ) if launch_url else KeyboardButton(text=SHOP_BUTTON)
 
     return ReplyKeyboardMarkup(
         keyboard=[
@@ -89,15 +104,16 @@ def product_actions_keyboard(product_id: int) -> InlineKeyboardMarkup:
     )
 
 
-def order_cta_inline_keyboard(shop_webapp_url: str = "") -> InlineKeyboardMarkup | None:
-    if not shop_webapp_url:
+def order_cta_inline_keyboard(shop_webapp_url: str = "", checkout_api_url: str = "") -> InlineKeyboardMarkup | None:
+    launch_url = build_webapp_launch_url(shop_webapp_url, checkout_api_url)
+    if not launch_url:
         return None
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
                 InlineKeyboardButton(
                     text="Заказать сейчас",
-                    web_app=WebAppInfo(url=shop_webapp_url),
+                    web_app=WebAppInfo(url=launch_url),
                 )
             ]
         ]

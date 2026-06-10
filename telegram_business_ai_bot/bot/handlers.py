@@ -40,12 +40,11 @@ from bot.keyboards import (
     product_actions_keyboard,
     subcategory_keyboard,
 )
+from bot.order_messages import format_customer_order_confirmation
 from bot.storage import SessionStorage
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-MANAGER_PHONE = "+7-928-199-38-00"
-MANAGER_LABEL = "Менеджер"
 
 WELCOME_TEXT = (
     "<b>Добро пожаловать в Мир Сухофруктов</b> ✨\n\n"
@@ -219,9 +218,10 @@ def create_router(
     customer_storage: CustomerStorage,
     manager_notifier: ManagerNotifier,
     shop_webapp_url: str = "",
+    checkout_api_url: str = "",
 ) -> Router:
     router = Router()
-    menu_keyboard = build_main_menu_keyboard(shop_webapp_url)
+    menu_keyboard = build_main_menu_keyboard(shop_webapp_url, checkout_api_url)
 
     @router.message(CommandStart())
     async def start(message: Message, state: FSMContext) -> None:
@@ -249,7 +249,7 @@ def create_router(
             reply_markup=menu_keyboard,
             parse_mode="HTML",
         )
-        cta_keyboard = order_cta_inline_keyboard(shop_webapp_url)
+        cta_keyboard = order_cta_inline_keyboard(shop_webapp_url, checkout_api_url)
         if cta_keyboard is not None:
             await answer_and_log(
                 message,
@@ -319,7 +319,7 @@ def create_router(
             reply_markup=menu_keyboard,
             parse_mode="HTML",
         )
-        cta_keyboard = order_cta_inline_keyboard(shop_webapp_url)
+        cta_keyboard = order_cta_inline_keyboard(shop_webapp_url, checkout_api_url)
         if cta_keyboard is not None:
             await answer_and_log(
                 message,
@@ -369,7 +369,7 @@ def create_router(
             f"• кнопкой <b>{SHOP_BUTTON}</b> в нижнем меню\n"
             "• синей кнопкой ниже\n"
             f"• ссылкой: <a href=\"{escape(shop_webapp_url)}\">открыть витрину</a>",
-            reply_markup=order_cta_inline_keyboard(shop_webapp_url),
+            reply_markup=order_cta_inline_keyboard(shop_webapp_url, checkout_api_url),
             parse_mode="HTML",
         )
 
@@ -519,16 +519,10 @@ def create_router(
             total=total,
         )
         logging.info("Order forwarded to manager notifier successfully")
-        created_text = format_moscow_datetime(order.get("created_at") or order.get("timestamp"))
         await answer_and_log(
             message,
             storage,
-            "<b>✅ Заказ принят</b> ✨\n\n"
-            f"Номер заказа: <code>{escape(str(order.get('order_number', '-')))}</code>\n"
-            f"Оформлен: <b>{escape(created_text)}</b>\n\n"
-            "Мы передали его в отдел заказов.\n"
-            f"{MANAGER_LABEL}: <b>{escape(MANAGER_PHONE)}</b>\n\n"
-            "Если понадобится, вы можете сразу связаться с менеджером по этому номеру.",
+            format_customer_order_confirmation(order),
             reply_markup=back_to_menu_keyboard(),
             parse_mode="HTML",
         )

@@ -4,6 +4,9 @@ if (tg) {
   tg.expand();
 }
 
+const searchParams = new URLSearchParams(window.location.search);
+const checkoutApiUrl = searchParams.get("api") || "";
+
 const state = {
   catalog: {},
   category: "",
@@ -277,6 +280,47 @@ els.orderButton.onclick = () => {
     })),
     total: cartTotalValue(),
   };
+  if (tg && checkoutApiUrl && tg.initData) {
+    els.orderButton.disabled = true;
+    els.orderButton.textContent = "Отправляем...";
+    fetch(checkoutApiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        ...payload,
+        init_data: tg.initData,
+        launch_source: "webapp",
+      }),
+    })
+      .then(async (response) => {
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !data.ok) {
+          throw new Error(data.error || "checkout_failed");
+        }
+        els.orderButton.textContent = "Заказ принят ✓";
+        state.cart = [];
+        renderCart();
+        closeCart();
+        if (tg.showAlert) {
+          tg.showAlert(`Заказ принят. Номер: ${data.order_number || "-"}. Ответ придет в чат бота.`);
+        } else {
+          alert(`Заказ принят. Номер: ${data.order_number || "-"}.`);
+        }
+      })
+      .catch(() => {
+        els.orderButton.disabled = false;
+        els.orderButton.textContent = "Оформить заказ";
+        if (tg.showAlert) {
+          tg.showAlert("Не удалось отправить заказ через витрину. Попробуйте снова или откройте заказ через нижнюю кнопку Заказать.");
+        } else {
+          alert("Не удалось отправить заказ.");
+        }
+      });
+    return;
+  }
+
   if (tg) {
     els.orderButton.disabled = true;
     els.orderButton.textContent = "Отправляем...";
