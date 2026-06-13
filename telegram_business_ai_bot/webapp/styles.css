@@ -431,8 +431,9 @@ h2 {
 }
 
 .product-badge.discount {
-  background: #ffe4e4;
-  color: #bd1b1b;
+  background: linear-gradient(180deg, #ffebe9 0%, #ffd8d4 100%);
+  color: #b61d1d;
+  box-shadow: 0 8px 16px rgb(182 29 29 / 0.12);
 }
 
 .meta {
@@ -446,6 +447,28 @@ h2 {
 .meta strong {
   color: var(--ink);
   font-size: 13px;
+}
+
+.selected-price-block {
+  display: grid;
+  gap: 2px;
+  justify-items: center;
+}
+
+.selected-price-block.has-discount {
+  margin-top: 2px;
+}
+
+.selected-price-old {
+  color: #9a8e80;
+  font-size: 11px;
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+}
+
+.selected-price {
+  color: var(--ink);
+  font-size: 15px;
 }
 
 .weight-picker {
@@ -610,6 +633,29 @@ h2 {
   padding: 18px;
   border-radius: 28px;
   text-align: center;
+}
+
+.cart-item-price {
+  display: grid;
+  gap: 2px;
+  margin-top: 4px;
+}
+
+.cart-item-price.discounted {
+  gap: 1px;
+}
+
+.cart-old-price {
+  color: #9a8e80;
+  font-size: 12px;
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+}
+
+.cart-current-price {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .info-sheet {

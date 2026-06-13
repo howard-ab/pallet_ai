@@ -27,6 +27,7 @@ const EMPTY_CATEGORY_COPY = {
 };
 
 const QUICK_WEIGHT_OPTIONS_KG = [0.25, 0.5, 1];
+const DISCOUNT_RATE = 0.10;
 
 const state = {
   rawCatalog: {},
@@ -37,6 +38,7 @@ const state = {
   searchQuery: "",
   featured: [],
   flatProducts: [],
+  discountedProductKeys: new Set(),
 };
 
 const els = {
@@ -116,14 +118,20 @@ function formatRub(value) {
 function buildWeightedProduct(product, selectedWeightKg) {
   const baseWeightKg = parseWeightKg(product.weight);
   const unitPricePerKg = priceValue(product.price) / baseWeightKg;
-  const totalPrice = Math.round(unitPricePerKg * selectedWeightKg);
+  const originalPriceValue = Math.round(unitPricePerKg * selectedWeightKg);
+  const discountedPriceValue = product.isDiscounted
+    ? Math.max(1, Math.round(originalPriceValue * (1 - DISCOUNT_RATE)))
+    : originalPriceValue;
   return {
     ...product,
     unitPricePerKg,
     selectedWeightKg,
     selectedWeightLabel: formatWeightKg(selectedWeightKg),
     weight: formatWeightKg(selectedWeightKg),
-    price: formatRub(totalPrice),
+    originalPriceValue,
+    discountedPriceValue,
+    originalPrice: formatRub(originalPriceValue),
+    price: formatRub(discountedPriceValue),
   };
 }
 
@@ -189,6 +197,36 @@ function dedupeProducts(products) {
     }
   });
   return Array.from(seen.values());
+}
+
+function productIdentityKey(product) {
+  return [
+    normalizeText(product.name),
+    normalizeText(product.origin),
+    normalizeText(product.rawCategory || ""),
+    normalizeText(product.rawSubcategory || ""),
+  ].join("::");
+}
+
+function applyDiscountFlag(products, discountedKeys) {
+  return products.map((product) => ({
+    ...product,
+    isDiscounted: discountedKeys.has(productIdentityKey(product)),
+  }));
+}
+
+function applyDiscountFlagToCatalog(catalog, discountedKeys) {
+  return Object.fromEntries(
+    Object.entries(catalog).map(([category, subcategories]) => [
+      category,
+      Object.fromEntries(
+        Object.entries(subcategories).map(([subcategory, products]) => [
+          subcategory,
+          applyDiscountFlag(products, discountedKeys),
+        ])
+      ),
+    ])
+  );
 }
 
 function flattenCatalog(rawCatalog) {
@@ -481,6 +519,7 @@ function renderSubcategories() {
 
 function createProductCard(product, options = {}) {
   const { featured = false } = options;
+  const hasDiscount = Boolean(product.isDiscounted);
   const defaultWeightKg = parseWeightKg(product.weight);
   let selectedWeightKg = defaultWeightKg;
   const card = document.createElement("article");
@@ -488,17 +527,20 @@ function createProductCard(product, options = {}) {
   card.innerHTML = `
     <img src="${product.photo || product.photo_url || ""}" alt="${product.name}">
     <div class="product-body">
-      ${featured ? `
+      ${(featured || hasDiscount) ? `
         <div class="product-badges">
-          <span class="product-badge discount">-10%</span>
-          <span class="product-badge">Товар недели</span>
+          ${hasDiscount ? '<span class="product-badge discount">-10% скидка</span>' : ''}
+          ${featured ? '<span class="product-badge">Товар недели</span>' : ''}
         </div>
       ` : ""}
       <h3>${product.name}</h3>
       <div class="meta">
         <span>${product.origin}</span>
         <span class="selected-weight">${formatWeightKg(selectedWeightKg)}</span>
-        <strong class="selected-price">${product.price}</strong>
+        <div class="selected-price-block${hasDiscount ? ' has-discount' : ''}">
+          ${hasDiscount ? '<span class="selected-price-old"></span>' : ''}
+          <strong class="selected-price"></strong>
+        </div>
       </div>
       <div class="weight-picker">
         <div class="weight-presets">
@@ -524,6 +566,7 @@ function createProductCard(product, options = {}) {
   const addButton = card.querySelector(".add-button");
   const selectedWeightEl = card.querySelector(".selected-weight");
   const selectedPriceEl = card.querySelector(".selected-price");
+  const selectedOldPriceEl = card.querySelector(".selected-price-old");
   const weightChips = Array.from(card.querySelectorAll(".weight-chip"));
   const weightInput = card.querySelector(".weight-input");
   const weightApply = card.querySelector(".weight-apply");
@@ -532,6 +575,9 @@ function createProductCard(product, options = {}) {
     const weighted = buildWeightedProduct(product, selectedWeightKg);
     selectedWeightEl.textContent = weighted.weight;
     selectedPriceEl.textContent = weighted.price;
+    if (selectedOldPriceEl) {
+      selectedOldPriceEl.textContent = weighted.originalPrice;
+    }
     weightChips.forEach((chip) => {
       const chipWeight = Number(chip.dataset.weight || 0);
       chip.classList.toggle("active", Math.abs(chipWeight - selectedWeightKg) < 0.001);
@@ -643,7 +689,10 @@ function renderCart() {
     row.innerHTML = `
       <div class="cart-item-copy">
         <strong>${item.name}</strong>
-        <span>${item.weight} · ${item.price}</span>
+        <div class="cart-item-price${item.isDiscounted ? " discounted" : ""}">
+          ${item.isDiscounted ? `<span class="cart-old-price">${item.weight} · ${item.originalPrice}</span>` : ""}
+          <span class="cart-current-price">${item.weight} · ${item.price}</span>
+        </div>
       </div>
       <div class="cart-item-actions">
         <div class="qty-stepper">
@@ -822,9 +871,12 @@ fetch("./catalog.json")
   .then((response) => response.json())
   .then((rawCatalog) => {
     state.rawCatalog = rawCatalog;
-    state.flatProducts = flattenCatalog(rawCatalog);
-    state.catalog = buildDisplayCatalog(rawCatalog);
-    state.featured = pickFeaturedProducts(state.flatProducts);
+    const flatProducts = flattenCatalog(rawCatalog);
+    const featuredProducts = pickFeaturedProducts(flatProducts);
+    state.discountedProductKeys = new Set(featuredProducts.map((product) => productIdentityKey(product)));
+    state.flatProducts = applyDiscountFlag(flatProducts, state.discountedProductKeys);
+    state.catalog = applyDiscountFlagToCatalog(buildDisplayCatalog(rawCatalog), state.discountedProductKeys);
+    state.featured = applyDiscountFlag(featuredProducts, state.discountedProductKeys);
     state.category = CATEGORY_ORDER.find((category) => state.catalog[category]) || Object.keys(state.catalog)[0] || "";
     state.subcategory = Object.keys(state.catalog[state.category] || {})[0] || "";
     render();
