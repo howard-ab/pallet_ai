@@ -12,6 +12,7 @@ from aiogram.types import User
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = PROJECT_ROOT / "data"
 CUSTOMERS_FILE = DATA_DIR / "customers.json"
+PENDING_ORDERS_FILE = DATA_DIR / "pending_orders.json"
 MOSCOW_TZ = ZoneInfo("Europe/Moscow")
 
 
@@ -26,12 +27,30 @@ class CustomerStorage:
 
     async def upsert(self, user: User, phone: str) -> dict[str, Any]:
         customers = await self._read_all()
+        existing = customers.get(str(user.id), {})
         record = {
             "user_id": user.id,
             "username": user.username,
             "first_name": user.first_name,
             "last_name": user.last_name,
             "phone": normalize_phone(phone),
+            "address": existing.get("address"),
+            "updated_at": datetime.now(MOSCOW_TZ).isoformat(),
+        }
+        customers[str(user.id)] = record
+        await asyncio.to_thread(self._write_all_sync, customers)
+        return record
+
+    async def update_address(self, user: User, address: str) -> dict[str, Any]:
+        customers = await self._read_all()
+        existing = customers.get(str(user.id), {})
+        record = {
+            "user_id": user.id,
+            "username": user.username,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "phone": existing.get("phone"),
+            "address": normalize_address(address),
             "updated_at": datetime.now(MOSCOW_TZ).isoformat(),
         }
         customers[str(user.id)] = record
@@ -66,3 +85,70 @@ def normalize_phone(phone: str) -> str:
 def is_valid_phone(phone: str) -> bool:
     digits = re.sub(r"\D", "", phone)
     return 10 <= len(digits) <= 15
+
+
+def normalize_address(address: str) -> str:
+    return " ".join(address.strip().split())
+
+
+def is_valid_rostov_address(address: str) -> bool:
+    normalized = normalize_address(address)
+    lowered = normalized.lower()
+    if len(normalized) < 10:
+        return False
+    if not any(char.isdigit() for char in normalized):
+        return False
+    blocked_cities = (
+        "москва",
+        "санкт-петербург",
+        "спб",
+        "краснодар",
+        "сочи",
+        "ставрополь",
+        "батайск",
+        "азов",
+        "таганрог",
+        "новочеркасск",
+    )
+    return not any(city in lowered for city in blocked_cities)
+
+
+class PendingOrderStorage:
+    def __init__(self, file_path: Path = PENDING_ORDERS_FILE) -> None:
+        self._file_path = file_path
+        self._file_path.parent.mkdir(parents=True, exist_ok=True)
+
+    async def get(self, user_id: int) -> dict[str, Any] | None:
+        payload = await self._read_all()
+        return payload.get(str(user_id))
+
+    async def set(self, user_id: int, order_payload: dict[str, Any]) -> None:
+        payload = await self._read_all()
+        payload[str(user_id)] = order_payload
+        await asyncio.to_thread(self._write_all_sync, payload)
+
+    async def pop(self, user_id: int) -> dict[str, Any] | None:
+        payload = await self._read_all()
+        item = payload.pop(str(user_id), None)
+        await asyncio.to_thread(self._write_all_sync, payload)
+        return item
+
+    async def clear(self, user_id: int) -> None:
+        await self.pop(user_id)
+
+    async def _read_all(self) -> dict[str, dict[str, Any]]:
+        return await asyncio.to_thread(self._read_all_sync)
+
+    def _read_all_sync(self) -> dict[str, dict[str, Any]]:
+        if not self._file_path.exists():
+            return {}
+        try:
+            return json.loads(self._file_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            return {}
+
+    def _write_all_sync(self, payload: dict[str, dict[str, Any]]) -> None:
+        self._file_path.write_text(
+            json.dumps(payload, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )

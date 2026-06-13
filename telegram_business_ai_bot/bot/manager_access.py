@@ -21,7 +21,7 @@ STAFF_DIR = STAFF_ACCESS_DIR / "staff"
 ORDER_INDEX_FILE = STAFF_ACCESS_DIR / "orders_index.json"
 MOSCOW_TZ = ZoneInfo("Europe/Moscow")
 
-ORDER_STATUS_FLOW = ("new", "assembled", "in_delivery", "delivered")
+ORDER_STATUS_FLOW = ("new", "assembled", "in_delivery", "delivered", "cancelled")
 
 
 def format_moscow_datetime(moment: datetime) -> str:

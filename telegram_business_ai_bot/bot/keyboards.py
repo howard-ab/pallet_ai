@@ -21,7 +21,7 @@ MANAGER_DATE_BUTTON = "Выбрать дату"
 MANAGER_FIND_BUTTON = "Найти заказ"
 MANAGER_PROFILE_BUTTON = "Мой профиль"
 MANAGER_NEW_BUTTON = "Новые заказы"
-MANAGER_READY_BUTTON = "Готовы к доставке"
+MANAGER_READY_BUTTON = "В доставку"
 MANAGER_IN_DELIVERY_BUTTON = "В доставке"
 MANAGER_DONE_BUTTON = "Доставленные"
 
@@ -130,6 +130,17 @@ def cart_actions_keyboard() -> InlineKeyboardMarkup:
     )
 
 
+def address_confirmation_keyboard() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="Да, адрес верный", callback_data="order:address_confirm"),
+                InlineKeyboardButton(text="Изменить адрес", callback_data="order:address_change"),
+            ]
+        ]
+    )
+
+
 def contact_request_keyboard() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[
@@ -145,12 +156,31 @@ def contact_request_keyboard() -> ReplyKeyboardMarkup:
 def manager_menu_keyboard() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(text=MANAGER_NEW_BUTTON), KeyboardButton(text=MANAGER_READY_BUTTON)],
-            [KeyboardButton(text=MANAGER_IN_DELIVERY_BUTTON), KeyboardButton(text=MANAGER_DONE_BUTTON)],
-            [KeyboardButton(text=MANAGER_TODAY_BUTTON), KeyboardButton(text=MANAGER_YESTERDAY_BUTTON)],
-            [KeyboardButton(text=MANAGER_DATE_BUTTON), KeyboardButton(text=MANAGER_FIND_BUTTON)],
+            [KeyboardButton(text=MANAGER_NEW_BUTTON), KeyboardButton(text=MANAGER_IN_DELIVERY_BUTTON)],
+            [KeyboardButton(text=MANAGER_READY_BUTTON), KeyboardButton(text=MANAGER_DONE_BUTTON)],
+            [KeyboardButton(text=MANAGER_TODAY_BUTTON), KeyboardButton(text=MANAGER_FIND_BUTTON)],
+            [KeyboardButton(text=MANAGER_YESTERDAY_BUTTON), KeyboardButton(text=MANAGER_DATE_BUTTON)],
             [KeyboardButton(text=MANAGER_PROFILE_BUTTON)],
         ],
         resize_keyboard=True,
         input_field_placeholder="Выберите действие",
     )
+
+
+def order_list_keyboard(orders: list[dict[str, object]]) -> InlineKeyboardMarkup | None:
+    rows: list[list[InlineKeyboardButton]] = []
+    for index, order in enumerate(orders[:10], start=1):
+        order_number = str(order.get("order_number", "")).strip()
+        if not order_number:
+            continue
+        rows.append(
+            [
+                InlineKeyboardButton(
+                    text=f"Заказ {index}: {order_number}",
+                    callback_data=f"order:view:{order_number}",
+                )
+            ]
+        )
+    if not rows:
+        return None
+    return InlineKeyboardMarkup(inline_keyboard=rows)

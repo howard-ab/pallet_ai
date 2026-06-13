@@ -13,6 +13,8 @@ def format_customer_order_confirmation(order: dict[str, object]) -> str:
         f"Номер заказа: <code>{escape(str(order.get('order_number', '-')))}</code>\n"
         f"Оформлен: <b>{escape(str(order.get('created_at_text') or order.get('timestamp') or '-'))}</b>\n\n"
         "Мы передали его в отдел заказов.\n"
+        "Доставка осуществляется в течение суток.\n"
+        "Если у вас срочный заказ, пожалуйста, свяжитесь с менеджером.\n"
         f"{MANAGER_LABEL}: <b>{escape(MANAGER_PHONE)}</b>\n\n"
         "Если понадобится, вы можете сразу связаться с менеджером по этому номеру."
     )

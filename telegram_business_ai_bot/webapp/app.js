@@ -391,14 +391,22 @@ els.orderButton.onclick = () => {
         if (!response.ok || !data.ok) {
           throw new Error(data.error || "checkout_failed");
         }
-        els.orderButton.textContent = "Заказ принят ✓";
+        const waitingForConfirmation = Boolean(
+          data.awaiting_address_confirmation || data.awaiting_profile,
+        );
+        els.orderButton.textContent = waitingForConfirmation
+          ? "Проверьте чат ✓"
+          : "Заказ принят ✓";
         state.cart = [];
         renderCart();
         closeCart();
+        const successMessage = waitingForConfirmation
+          ? (data.message || "Проверьте чат бота и подтвердите адрес доставки.")
+          : `Заказ принят. Номер: ${data.order_number || "-"}. Ответ придет в чат бота.`;
         if (tg.showAlert) {
-          tg.showAlert(`Заказ принят. Номер: ${data.order_number || "-"}. Ответ придет в чат бота.`);
+          tg.showAlert(successMessage);
         } else {
-          alert(`Заказ принят. Номер: ${data.order_number || "-"}.`);
+          alert(successMessage);
         }
       })
       .catch(() => {

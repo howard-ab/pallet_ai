@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import random
 from dataclasses import dataclass
 from datetime import datetime
 from html import escape
@@ -21,26 +22,29 @@ RECIPIENTS_FILE = PROJECT_ROOT / "data" / "manager_recipients.json"
 MOSCOW_TZ = ZoneInfo("Europe/Moscow")
 STATUS_LABELS = {
     "new": "Новый",
-    "assembled": "Готов к доставке",
+    "assembled": "В доставку",
     "in_delivery": "В доставке",
     "delivered": "Доставлен",
+    "cancelled": "Отменен",
 }
 STATUS_ICONS = {
     "new": "🆕",
     "assembled": "✅",
     "in_delivery": "🚚",
     "delivered": "✅",
+    "cancelled": "⛔",
 }
 STATUS_ACTION_LABELS = {
-    "assembled": "Готов к доставке",
-    "in_delivery": "Передать в доставку",
-    "delivered": "Отметить доставленным",
+    "assembled": "В доставку",
+    "in_delivery": "Принят в доставку",
+    "delivered": "Доставлен",
 }
 STATUS_TRANSITIONS = {
     "new": ("assembled",),
     "assembled": ("in_delivery",),
     "in_delivery": ("delivered",),
     "delivered": (),
+    "cancelled": (),
 }
 
 
@@ -57,7 +61,7 @@ def order_status_keyboard(order: dict[str, object]) -> InlineKeyboardMarkup | No
     order_number = str(order.get("order_number", "")).strip()
     status = str(order.get("status", "new"))
     transitions = STATUS_TRANSITIONS.get(status, ())
-    if not order_number or not transitions:
+    if not order_number:
         return None
 
     inline_keyboard: list[list[InlineKeyboardButton]] = []
@@ -74,7 +78,33 @@ def order_status_keyboard(order: dict[str, object]) -> InlineKeyboardMarkup | No
             current_row = []
     if current_row:
         inline_keyboard.append(current_row)
+    if status not in {"cancelled", "delivered"}:
+        inline_keyboard.append(
+            [
+                InlineKeyboardButton(
+                    text="Отменить заказ",
+                    callback_data=f"order:cancel_confirm:{order_number}",
+                )
+            ]
+        )
     return InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
+
+
+def order_cancel_confirmation_keyboard(order_number: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text="Да, отменить",
+                    callback_data=f"order:status:cancelled:{order_number}",
+                ),
+                InlineKeyboardButton(
+                    text="Нет, оставить",
+                    callback_data=f"order:cancel_abort:{order_number}",
+                ),
+            ]
+        ]
+    )
 
 
 def format_order_message(order: dict[str, object]) -> str:
@@ -223,9 +253,8 @@ class ManagerNotifier:
         recipients = await self._delivery_targets()
 
         delivery_bot = self._manager_bot or bot
-        user_id = getattr(telegram_user, "id", None) if telegram_user is not None else None
         now = datetime.now(MOSCOW_TZ)
-        order_number = f"MS-{now.strftime('%Y%m%d-%H%M')}-{user_id or 'guest'}"
+        order_number = f"MS-{now.strftime('%Y%m%d-%H%M')}-{random.randint(1000, 9999)}"
         order = await self._access_storage.store_order_record(
             order_number=order_number,
             customer=customer,

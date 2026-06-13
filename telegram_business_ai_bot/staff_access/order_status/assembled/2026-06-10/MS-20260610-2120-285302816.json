@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-06-10T21:20:11.818620+03:00",
+  "created_at": "2026-06-10T21:20:11.818620+03:00",
+  "created_at_text": "10.06.2026 21:20 MSK",
+  "updated_at": "2026-06-10T21:20:33.854989+03:00",
+  "updated_at_text": "10.06.2026 21:20 MSK",
+  "date": "2026-06-10",
+  "order_number": "MS-20260610-2120-285302816",
+  "status": "assembled",
+  "customer": {
+    "user_id": 285302816,
+    "username": "kholisterin",
+    "first_name": "Kholis",
+    "phone": "+79289047505"
+  },
+  "items": [
+    {
+      "name": "Ядра абрикосовых косточек, Таджикистан, 500г",
+      "price": "810 руб.",
+      "weight": "0,5 кг",
+      "quantity": 3
+    }
+  ],
+  "total": 2430,
+  "history": [
+    {
+      "timestamp": "2026-06-10T21:20:11.818620+03:00",
+      "timestamp_text": "10.06.2026 21:20 MSK",
+      "event": "created",
+      "status": "new",
+      "actor": {
+        "source": "customer_bot",
+        "user_id": 285302816,
+        "username": "kholisterin",
+        "first_name": "Kholis"
+      }
+    },
+    {
+      "timestamp": "2026-06-10T21:20:33.854989+03:00",
+      "timestamp_text": "10.06.2026 21:20 MSK",
+      "event": "status_changed",
+      "from_status": "new",
+      "status": "assembled",
+      "actor": {
+        "user_id": 285302816,
+        "username": "kholisterin",
+        "first_name": "Kholis",
+        "last_name": "A."
+      }
+    }
+  ],
+  "last_action_by": {
+    "user_id": 285302816,
+    "username": "kholisterin",
+    "first_name": "Kholis",
+    "last_name": "A."
+  }
+}

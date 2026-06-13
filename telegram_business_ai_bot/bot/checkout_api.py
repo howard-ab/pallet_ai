@@ -5,16 +5,19 @@ import hmac
 import json
 import logging
 from dataclasses import dataclass
+from datetime import datetime
+from html import escape
 from typing import Any
 from urllib.parse import parse_qsl
+from zoneinfo import ZoneInfo
 
 from aiohttp import web
 from aiogram import Bot
 
-from bot.customers import CustomerStorage
-from bot.keyboards import back_to_menu_keyboard
-from bot.manager_notifications import ManagerNotifier
-from bot.order_messages import format_customer_order_confirmation
+from bot.customers import CustomerStorage, PendingOrderStorage
+from bot.keyboards import address_confirmation_keyboard, contact_request_keyboard
+
+MOSCOW_TZ = ZoneInfo("Europe/Moscow")
 
 
 @dataclass(frozen=True)
@@ -47,13 +50,37 @@ def validate_telegram_init_data(init_data: str, bot_token: str) -> dict[str, Any
     return result
 
 
+def profile_completion_text() -> str:
+    return (
+        "<b>Перед оформлением заказа сохраните контакты</b>\n\n"
+        "Поделитесь номером телефона в чате бота, затем укажите адрес доставки в Ростове-на-Дону. "
+        "После этого заказ отправится менеджеру автоматически."
+    )
+
+
+def address_request_text() -> str:
+    return (
+        "<b>Укажите адрес доставки</b>\n\n"
+        "Введите адрес в пределах Ростова-на-Дону: улица, дом, квартира или подъезд, если нужно.\n\n"
+        "Например: Ростов-на-Дону, ул. Пойменная, 21, кв. 14."
+    )
+
+
+def address_confirmation_text(address: str) -> str:
+    return (
+        "<b>Подтвердите адрес доставки</b>\n\n"
+        f"{escape(address)}\n\n"
+        "Если адрес актуален, подтвердите его. Если нет, введите новый адрес в пределах Ростова-на-Дону."
+    )
+
+
 class MiniAppCheckoutServer:
     def __init__(
         self,
         *,
         bot: Bot,
         telegram_bot_token: str,
-        manager_notifier: ManagerNotifier,
+        manager_notifier,
         customer_storage: CustomerStorage,
         host: str,
         port: int,
@@ -62,6 +89,7 @@ class MiniAppCheckoutServer:
         self._telegram_bot_token = telegram_bot_token
         self._manager_notifier = manager_notifier
         self._customer_storage = customer_storage
+        self._pending_orders = PendingOrderStorage()
         self._host = host
         self._port = port
         self._runner: web.AppRunner | None = None
@@ -117,22 +145,54 @@ class MiniAppCheckoutServer:
             return self._json_response({"ok": False, "error": "empty_cart"}, status=400)
 
         customer = await self._customer_storage.get(telegram_user.id)
-        order = await self._manager_notifier.send_order_notification(
-            self._bot,
-            customer=customer,
-            telegram_user=telegram_user,
-            items=items,
-            total=total,
+        await self._pending_orders.set(
+            telegram_user.id,
+            {
+                "items": items,
+                "total": total,
+                "requested_at": datetime.now(MOSCOW_TZ).isoformat(),
+                "source": "checkout_api",
+            },
         )
+
+        if customer is None or not customer.get("phone"):
+            await self._bot.send_message(
+                chat_id=telegram_user.id,
+                text=profile_completion_text(),
+                parse_mode="HTML",
+                reply_markup=contact_request_keyboard(),
+            )
+            return self._json_response(
+                {
+                    "ok": True,
+                    "awaiting_profile": True,
+                    "message": "Откройте чат бота и сохраните номер телефона, затем укажите адрес доставки.",
+                }
+            )
+
+        address = customer.get("address")
+        if address:
+            await self._bot.send_message(
+                chat_id=telegram_user.id,
+                text=address_confirmation_text(str(address)),
+                parse_mode="HTML",
+                reply_markup=address_confirmation_keyboard(),
+            )
+            return self._json_response(
+                {
+                    "ok": True,
+                    "awaiting_address_confirmation": True,
+                    "message": "Подтвердите адрес доставки в чате бота, и заказ сразу уйдет менеджеру.",
+                }
+            )
+
         await self._bot.send_message(
             chat_id=telegram_user.id,
-            text=format_customer_order_confirmation(order),
+            text=address_request_text(),
             parse_mode="HTML",
-            reply_markup=back_to_menu_keyboard(),
         )
         logging.info(
-            "Checkout API processed Mini App order order_number=%s user_id=%s items=%s total=%s",
-            order.get("order_number"),
+            "Checkout API queued Mini App order for address confirmation user_id=%s items=%s total=%s",
             telegram_user.id,
             len(items),
             total,
@@ -140,9 +200,8 @@ class MiniAppCheckoutServer:
         return self._json_response(
             {
                 "ok": True,
-                "order_number": order.get("order_number"),
-                "created_at": order.get("created_at_text") or order.get("timestamp"),
-                "message": "Заказ принят",
+                "awaiting_address_confirmation": True,
+                "message": "Откройте чат бота и укажите адрес доставки, после этого заказ отправится менеджеру.",
             }
         )
 

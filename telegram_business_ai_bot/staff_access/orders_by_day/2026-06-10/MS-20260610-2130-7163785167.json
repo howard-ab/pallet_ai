@@ -1,0 +1,52 @@
+{
+  "timestamp": "2026-06-10T21:30:02.720448+03:00",
+  "created_at": "2026-06-10T21:30:02.720448+03:00",
+  "created_at_text": "10.06.2026 21:30 MSK",
+  "updated_at": "2026-06-10T21:30:02.720448+03:00",
+  "updated_at_text": "10.06.2026 21:30 MSK",
+  "date": "2026-06-10",
+  "order_number": "MS-20260610-2130-7163785167",
+  "status": "new",
+  "customer": {
+    "user_id": 7163785167,
+    "username": null,
+    "first_name": "Рафф",
+    "phone": "79286660525"
+  },
+  "items": [
+    {
+      "name": "Изюм жёлтый кисло-сладкий, Узбекистан 500г",
+      "price": "460 руб.",
+      "weight": "0,5 кг",
+      "quantity": 1
+    },
+    {
+      "name": "Финики сушёные тунисские, 1кг",
+      "price": "275 руб.",
+      "weight": "0,5 кг",
+      "quantity": 1
+    },
+    {
+      "name": "Ядра фисташек очищенные крупные, 1кг",
+      "price": "610 руб.",
+      "weight": "0,5 кг",
+      "quantity": 1
+    }
+  ],
+  "total": 1345,
+  "history": [
+    {
+      "timestamp": "2026-06-10T21:30:02.720448+03:00",
+      "timestamp_text": "10.06.2026 21:30 MSK",
+      "event": "created",
+      "status": "new",
+      "actor": {
+        "source": "customer_bot",
+        "user_id": 7163785167,
+        "username": null,
+        "first_name": "Рафф"
+      }
+    }
+  ],
+  "last_action_by": null
+}

@@ -19,6 +19,7 @@ from bot.catalog import (
     get_products,
 )
 from bot.customers import CustomerStorage, is_valid_phone
+from bot.customers import PendingOrderStorage, is_valid_rostov_address
 from bot.manager_notifications import ManagerNotifier
 from bot.keyboards import (
     ABOUT_BUTTON,
@@ -36,6 +37,7 @@ from bot.keyboards import (
     catalog_keyboard,
     cart_actions_keyboard,
     contact_request_keyboard,
+    address_confirmation_keyboard,
     #order_cta_inline_keyboard,
     product_actions_keyboard,
     subcategory_keyboard,
@@ -110,6 +112,7 @@ MAIN_MENU_TEXT = (
 class UserFlow(StatesGroup):
     waiting_for_ai_question = State()
     waiting_for_manual_phone = State()
+    waiting_for_address = State()
 
 
 async def answer_and_log(
@@ -175,11 +178,29 @@ def build_welcome_actions_text(shop_webapp_url: str) -> str:
 def profile_text(customer: dict[str, object]) -> str:
     username = customer.get("username") or "не указан"
     phone = customer.get("phone") or "не указан"
+    address = customer.get("address") or "не указан"
     return (
         "<b>Ваши контакты</b>\n\n"
         f"Telegram: @{escape(str(username))}\n"
-        f"Телефон: {escape(str(phone))}\n\n"
-        "Если номер изменился, поделитесь контактом снова или введите новый номер вручную."
+        f"Телефон: {escape(str(phone))}\n"
+        f"Адрес: {escape(str(address))}\n\n"
+        "Если данные изменились, поделитесь контактом снова или отправьте новый адрес."
+    )
+
+
+def address_request_text() -> str:
+    return (
+        "<b>Укажите адрес доставки</b>\n\n"
+        "Введите адрес в пределах Ростова-на-Дону: улица, дом, квартира или подъезд, если нужно.\n\n"
+        "Например: Ростов-на-Дону, ул. Пойменная, 21, кв. 14."
+    )
+
+
+def address_confirmation_text(address: str) -> str:
+    return (
+        "<b>Подтвердите адрес доставки</b>\n\n"
+        f"{escape(address)}\n\n"
+        "Если адрес актуален, подтвердите его. Если нет, введите новый адрес в пределах Ростова-на-Дону."
     )
 
 async def show_cart(
@@ -223,16 +244,122 @@ def create_router(
 ) -> Router:
     router = Router()
     menu_keyboard = build_main_menu_keyboard(shop_webapp_url, checkout_api_url)
+    pending_orders = PendingOrderStorage()
+
+    async def request_address_for_pending_order(
+        message: Message,
+        state: FSMContext | None = None,
+    ) -> None:
+        if state is not None:
+            await state.set_state(UserFlow.waiting_for_address)
+        await answer_and_log(
+            message,
+            storage,
+            address_request_text(),
+            reply_markup=back_to_menu_keyboard(),
+            parse_mode="HTML",
+        )
+
+    async def finalize_pending_order(
+        message: Message,
+        pending_order: dict[str, object],
+        state: FSMContext | None = None,
+    ) -> None:
+        if not message.from_user:
+            return
+        customer = await customer_storage.get(message.from_user.id)
+        if customer is None or not customer.get("phone"):
+            if state is not None:
+                await state.clear()
+            await answer_and_log(
+                message,
+                storage,
+                "<b>Нужен номер телефона</b>\n\nПоделитесь контактом, затем укажите адрес доставки. После этого мы автоматически завершим заказ.",
+                reply_markup=contact_request_keyboard(),
+                parse_mode="HTML",
+            )
+            return
+        order = await manager_notifier.send_order_notification(
+            message.bot,
+            customer=customer,
+            telegram_user=message.from_user,
+            items=list(pending_order.get("items", [])),
+            total=pending_order.get("total", 0),
+        )
+        await pending_orders.clear(message.from_user.id)
+        if state is not None:
+            await state.clear()
+        await answer_and_log(
+            message,
+            storage,
+            format_customer_order_confirmation(order),
+            reply_markup=back_to_menu_keyboard(),
+            parse_mode="HTML",
+        )
+
+    async def begin_order_address_confirmation(
+        message: Message,
+        *,
+        items: list[dict[str, object]],
+        total: object,
+        state: FSMContext | None = None,
+    ) -> None:
+        if not message.from_user:
+            return
+        await pending_orders.set(
+            message.from_user.id,
+            {
+                "items": items,
+                "total": total,
+                "requested_at": format_moscow_datetime(message.date.isoformat() if getattr(message, "date", None) else ""),
+            },
+        )
+        customer = await customer_storage.get(message.from_user.id)
+        if customer is None or not customer.get("phone"):
+            if state is not None:
+                await state.clear()
+            await answer_and_log(
+                message,
+                storage,
+                "<b>Перед оформлением заказа сохраните контакты</b>\n\nПоделитесь номером телефона, затем укажите адрес доставки в Ростове-на-Дону. После этого заказ отправится менеджеру автоматически.",
+                reply_markup=contact_request_keyboard(),
+                parse_mode="HTML",
+            )
+            return
+        address = (customer or {}).get("address")
+        if address:
+            if state is not None:
+                await state.set_state(UserFlow.waiting_for_address)
+            await answer_and_log(
+                message,
+                storage,
+                address_confirmation_text(str(address)),
+                reply_markup=address_confirmation_keyboard(),
+                parse_mode="HTML",
+            )
+            return
+        await request_address_for_pending_order(message, state)
 
     @router.message(CommandStart())
     async def start(message: Message, state: FSMContext) -> None:
         await state.clear()
-        if message.from_user and await customer_storage.get(message.from_user.id) is None:
+        customer = await customer_storage.get(message.from_user.id) if message.from_user else None
+        if message.from_user and customer is None:
             await answer_and_log(
                 message,
                 storage,
                 registration_text(message),
                 reply_markup=contact_request_keyboard(),
+                parse_mode="HTML",
+            )
+            return
+        if customer is not None and not customer.get("address"):
+            await state.set_state(UserFlow.waiting_for_address)
+            await answer_and_log(
+                message,
+                storage,
+                address_request_text(),
+                reply_markup=back_to_menu_keyboard(),
                 parse_mode="HTML",
             )
             return
@@ -259,14 +386,14 @@ def create_router(
             user=message.from_user,
             phone=message.contact.phone_number,
         )
-        await state.clear()
         await answer_and_log(
             message,
             storage,
-            profile_text(customer) + "\n\n<b>Готово.</b> Теперь можно перейти к покупкам.",
-            reply_markup=menu_keyboard,
+            profile_text(customer) + "\n\nТеперь укажите адрес доставки.",
+            reply_markup=back_to_menu_keyboard(),
             parse_mode="HTML",
         )
+        await request_address_for_pending_order(message, state)
 
     @router.message(F.text == "Ввести номер вручную")
     async def request_manual_phone(message: Message, state: FSMContext) -> None:
@@ -291,14 +418,16 @@ def create_router(
             )
             return
         customer = await customer_storage.upsert(user=message.from_user, phone=message.text)
-        await state.clear()
         await answer_and_log(
             message,
             storage,
-            profile_text(customer) + "\n\n<b>Готово.</b> Контакты обновлены.",
-            reply_markup=menu_keyboard,
+            profile_text(customer) + "\n\nТеперь укажите адрес доставки.",
+            reply_markup=back_to_menu_keyboard(),
             parse_mode="HTML",
         )
+        await request_address_for_pending_order(message, state)
+
+
 
     @router.message(Command("menu"))
     @router.message(F.text.in_({HOME_BUTTON, OLD_BACK_BUTTON}))
@@ -476,7 +605,7 @@ def create_router(
         await show_cart(message, state, storage)
 
     @router.message(F.web_app_data)
-    async def webapp_order(message: Message) -> None:
+    async def webapp_order(message: Message, state: FSMContext) -> None:
         logging.info("Received web_app_data from chat_id=%s", message.chat.id if message.chat else None)
         try:
             payload = json.loads(message.web_app_data.data)
@@ -502,21 +631,11 @@ def create_router(
             total,
             message.chat.id if message.chat else None,
         )
-        customer = await customer_storage.get(message.from_user.id) if message.from_user else None
-        order = await manager_notifier.send_order_notification(
-            message.bot,
-            customer=customer,
-            telegram_user=message.from_user,
+        await begin_order_address_confirmation(
+            message,
             items=items,
             total=total,
-        )
-        logging.info("Order forwarded to manager notifier successfully")
-        await answer_and_log(
-            message,
-            storage,
-            format_customer_order_confirmation(order),
-            reply_markup=back_to_menu_keyboard(),
-            parse_mode="HTML",
+            state=state,
         )
 
     @router.message(Command("about"))
@@ -573,8 +692,74 @@ def create_router(
                 parse_mode="HTML",
             )
 
+    @router.callback_query(F.data == "order:address_confirm")
+    async def confirm_saved_address(callback: CallbackQuery, state: FSMContext) -> None:
+        if not callback.from_user or not callback.message:
+            return
+        pending_order = await pending_orders.get(callback.from_user.id)
+        if not pending_order:
+            await callback.answer("Активный заказ не найден.", show_alert=True)
+            return
+        await callback.answer("Адрес подтвержден")
+        await finalize_pending_order(callback.message, pending_order, state)
+
+    @router.callback_query(F.data == "order:address_change")
+    async def request_new_address(callback: CallbackQuery, state: FSMContext) -> None:
+        if not callback.message:
+            return
+        await callback.answer("Введите новый адрес")
+        await request_address_for_pending_order(callback.message, state)
+
     @router.message()
-    async def unknown_message(message: Message) -> None:
+    async def unknown_message(message: Message, state: FSMContext) -> None:
+        if message.from_user and message.text:
+            customer = await customer_storage.get(message.from_user.id)
+            pending_order = await pending_orders.get(message.from_user.id)
+            if pending_order is not None and (customer is None or not customer.get("phone")):
+                await answer_and_log(
+                    message,
+                    storage,
+                    "<b>Сначала нужен номер телефона</b>\n\nПоделитесь контактом, затем укажите адрес доставки, и мы завершим оформление заказа.",
+                    reply_markup=contact_request_keyboard(),
+                    parse_mode="HTML",
+                )
+                return
+
+            expects_address = pending_order is not None or (
+                customer is not None
+                and customer.get("phone")
+                and not customer.get("address")
+            )
+            if expects_address:
+                if not is_valid_rostov_address(message.text):
+                    await answer_and_log(
+                        message,
+                        storage,
+                        "Адрес выглядит неполным. Укажите адрес в пределах Ростова-на-Дону: улица, дом, квартира или подъезд. Например: Ростов-на-Дону, ул. Пойменная, 21, кв. 14.",
+                        reply_markup=back_to_menu_keyboard(),
+                    )
+                    return
+                saved_customer = await customer_storage.update_address(message.from_user, message.text)
+                if pending_order is not None:
+                    await answer_and_log(
+                        message,
+                        storage,
+                        f"<b>Адрес сохранен</b>\n\n{escape(str(saved_customer.get('address') or '-'))}\n\nПодтверждение получено, передаю заказ менеджеру.",
+                        reply_markup=back_to_menu_keyboard(),
+                        parse_mode="HTML",
+                    )
+                    await finalize_pending_order(message, pending_order, state)
+                    return
+                await state.clear()
+                await answer_and_log(
+                    message,
+                    storage,
+                    profile_text(saved_customer) + "\n\n<b>Готово.</b> Адрес сохранен.",
+                    reply_markup=menu_keyboard,
+                    parse_mode="HTML",
+                )
+                return
+
         await answer_and_log(
             message,
             storage,

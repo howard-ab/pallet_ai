@@ -1,0 +1,40 @@
+{
+  "timestamp": "2026-06-10T21:12:56.192035+03:00",
+  "created_at": "2026-06-10T21:12:56.192035+03:00",
+  "created_at_text": "10.06.2026 21:12 MSK",
+  "updated_at": "2026-06-10T21:12:56.192035+03:00",
+  "updated_at_text": "10.06.2026 21:12 MSK",
+  "date": "2026-06-10",
+  "order_number": "MS-20260610-2112-5467423100",
+  "status": "new",
+  "customer": {
+    "user_id": 5467423100,
+    "username": "Hoowieeee",
+    "first_name": "Ховар",
+    "phone": "79281704450"
+  },
+  "items": [
+    {
+      "name": "Абрикос сушёный (урюк) отборный, Таджикистан 1кг",
+      "price": "345 руб.",
+      "weight": "0,5 кг",
+      "quantity": 1
+    }
+  ],
+  "total": 345,
+  "history": [
+    {
+      "timestamp": "2026-06-10T21:12:56.192035+03:00",
+      "timestamp_text": "10.06.2026 21:12 MSK",
+      "event": "created",
+      "status": "new",
+      "actor": {
+        "source": "customer_bot",
+        "user_id": 5467423100,
+        "username": "Hoowieeee",
+        "first_name": "Ховар"
+      }
+    }
+  ],
+  "last_action_by": null
+}

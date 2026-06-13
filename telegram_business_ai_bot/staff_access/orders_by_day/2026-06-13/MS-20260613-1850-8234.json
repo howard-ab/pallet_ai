@@ -1,0 +1,71 @@
+{
+  "timestamp": "2026-06-13T18:50:15.730654+03:00",
+  "created_at": "2026-06-13T18:50:15.730654+03:00",
+  "created_at_text": "13.06.2026 18:50 MSK",
+  "updated_at": "2026-06-13T18:51:01.094411+03:00",
+  "updated_at_text": "13.06.2026 18:51 MSK",
+  "date": "2026-06-13",
+  "order_number": "MS-20260613-1850-8234",
+  "status": "in_delivery",
+  "customer": {
+    "user_id": 5467423100,
+    "username": "Hoowieeee",
+    "first_name": "Ховар",
+    "phone": "79281704450"
+  },
+  "items": [
+    {
+      "name": "Курага жёлтая, отборная, Таджикистан, 1кг",
+      "price": "720 руб.",
+      "weight": "1 кг",
+      "quantity": 1
+    }
+  ],
+  "total": 720,
+  "history": [
+    {
+      "timestamp": "2026-06-13T18:50:15.730654+03:00",
+      "timestamp_text": "13.06.2026 18:50 MSK",
+      "event": "created",
+      "status": "new",
+      "actor": {
+        "source": "customer_bot",
+        "user_id": 5467423100,
+        "username": "Hoowieeee",
+        "first_name": "Ховар"
+      }
+    },
+    {
+      "timestamp": "2026-06-13T18:50:52.404681+03:00",
+      "timestamp_text": "13.06.2026 18:50 MSK",
+      "event": "status_changed",
+      "from_status": "new",
+      "status": "assembled",
+      "actor": {
+        "user_id": 5467423100,
+        "username": "Hoowieeee",
+        "first_name": "Ховар",
+        "last_name": null
+      }
+    },
+    {
+      "timestamp": "2026-06-13T18:51:01.094411+03:00",
+      "timestamp_text": "13.06.2026 18:51 MSK",
+      "event": "status_changed",
+      "from_status": "assembled",
+      "status": "in_delivery",
+      "actor": {
+        "user_id": 5467423100,
+        "username": "Hoowieeee",
+        "first_name": "Ховар",
+        "last_name": null
+      }
+    }
+  ],
+  "last_action_by": {
+    "user_id": 5467423100,
+    "username": "Hoowieeee",
+    "first_name": "Ховар",
+    "last_name": null
+  }
+}

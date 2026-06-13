@@ -5,6 +5,7 @@ from html import escape
 from zoneinfo import ZoneInfo
 
 from aiogram import F, Router
+from aiogram.exceptions import TelegramBadRequest, TelegramNetworkError
 from aiogram.filters import Command, CommandObject, CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
@@ -22,8 +23,14 @@ from bot.keyboards import (
     MANAGER_TODAY_BUTTON,
     MANAGER_YESTERDAY_BUTTON,
     manager_menu_keyboard,
+    order_list_keyboard,
 )
-from bot.manager_notifications import STATUS_LABELS, format_order_message, order_status_keyboard
+from bot.manager_notifications import (
+    STATUS_LABELS,
+    format_order_message,
+    order_cancel_confirmation_keyboard,
+    order_status_keyboard,
+)
 
 
 MOSCOW_TZ = ZoneInfo("Europe/Moscow")
@@ -61,7 +68,7 @@ def _summarize_orders(title: str, orders: list[dict[str, object]]) -> str:
         "",
         f"Активные: <b>{active_count}</b>",
         f"Новые: <b>{status_counts.get('new', 0)}</b>",
-        f"Готовы к доставке: <b>{status_counts.get('assembled', 0)}</b>",
+        f"В доставку: <b>{status_counts.get('assembled', 0)}</b>",
         f"В доставке: <b>{status_counts.get('in_delivery', 0)}</b>",
         f"Доставленные: <b>{status_counts.get('delivered', 0)}</b>",
         "",
@@ -88,7 +95,7 @@ def _summarize_orders(title: str, orders: list[dict[str, object]]) -> str:
 def _status_list_title(status: str) -> str:
     titles = {
         "new": "Новые заказы",
-        "assembled": "Готовы к доставке",
+        "assembled": "В доставку",
         "in_delivery": "Заказы в доставке",
         "delivered": "Доставленные заказы",
     }
@@ -103,6 +110,26 @@ def _parse_date_input(raw: str) -> datetime | None:
         except ValueError:
             continue
     return None
+
+
+async def _send_order_list(
+    message: Message,
+    *,
+    title: str,
+    orders: list[dict[str, object]],
+    menu_keyboard,
+) -> None:
+    await message.answer(
+        _summarize_orders(title, orders),
+        parse_mode="HTML",
+        reply_markup=menu_keyboard,
+    )
+    keyboard = order_list_keyboard(orders)
+    if keyboard is not None:
+        await message.answer(
+            "Откройте нужный заказ по номеру:",
+            reply_markup=keyboard,
+        )
 
 
 def create_manager_router(
@@ -144,10 +171,11 @@ def create_manager_router(
             await message.answer(
                 "<b>✅ Доступ подтвержден</b>\n\n"
                 "Заказы будут приходить в этот бот.\n"
+                "Левый столбец кнопок — для сборки, правый — для доставки.\n\n"
                 "Команды:\n"
                 "<code>/new</code> — новые заказы\n"
-                "<code>/ready</code> — готовы к доставке\n"
-                "<code>/delivery</code> — в доставке\n"
+                "<code>/ready</code> — передать в доставку\n"
+                "<code>/delivery</code> — заказы в доставке\n"
                 "<code>/done</code> — доставленные\n"
                 "<code>/today</code> — заказы за сегодня\n"
                 "<code>/yesterday</code> — заказы за вчера\n"
@@ -179,10 +207,11 @@ def create_manager_router(
             f"Сотрудник: <b>{escape(str(record.get('first_name') or record.get('username') or 'без имени'))}</b>\n"
             f"Смена: <b>{escape(str(record.get('shift')))}</b>\n\n"
             "Теперь заказы будут приходить в этот бот.\n"
+            "Левый столбец кнопок — для сборки, правый — для доставки.\n\n"
             "Команды:\n"
             "<code>/new</code> — новые заказы\n"
-            "<code>/ready</code> — готовы к доставке\n"
-            "<code>/delivery</code> — в доставке\n"
+            "<code>/ready</code> — передать в доставку\n"
+            "<code>/delivery</code> — заказы в доставке\n"
             "<code>/done</code> — доставленные\n"
             "<code>/today</code> — заказы за сегодня\n"
             "<code>/yesterday</code> — заказы за вчера\n"
@@ -204,10 +233,11 @@ def create_manager_router(
                 reply_markup=menu_keyboard,
             )
             return
-        await message.answer(
-            _summarize_orders(_status_list_title(status), orders),
-            parse_mode="HTML",
-            reply_markup=menu_keyboard,
+        await _send_order_list(
+            message,
+            title=_status_list_title(status),
+            orders=orders,
+            menu_keyboard=menu_keyboard,
         )
 
     @router.message(Command("new"))
@@ -241,10 +271,11 @@ def create_manager_router(
         if not orders:
             await message.answer("✅ За сегодня заказов пока нет.", reply_markup=menu_keyboard)
             return
-        await message.answer(
-            _summarize_orders("Заказы за сегодня", orders),
-            parse_mode="HTML",
-            reply_markup=menu_keyboard,
+        await _send_order_list(
+            message,
+            title="Заказы за сегодня",
+            orders=orders,
+            menu_keyboard=menu_keyboard,
         )
 
     @router.message(Command("yesterday"))
@@ -259,10 +290,11 @@ def create_manager_router(
         if not orders:
             await message.answer("✅ За вчера заказов нет.", reply_markup=menu_keyboard)
             return
-        await message.answer(
-            _summarize_orders(f"Заказы за {target_date.strftime('%d.%m.%Y')}", orders),
-            parse_mode="HTML",
-            reply_markup=menu_keyboard,
+        await _send_order_list(
+            message,
+            title=f"Заказы за {target_date.strftime('%d.%m.%Y')}",
+            orders=orders,
+            menu_keyboard=menu_keyboard,
         )
 
     @router.message(Command("date"))
@@ -294,10 +326,11 @@ def create_manager_router(
                 reply_markup=menu_keyboard,
             )
             return
-        await message.answer(
-            _summarize_orders(f"Заказы за {parsed.strftime('%d.%m.%Y')}", orders),
-            parse_mode="HTML",
-            reply_markup=menu_keyboard,
+        await _send_order_list(
+            message,
+            title=f"Заказы за {parsed.strftime('%d.%m.%Y')}",
+            orders=orders,
+            menu_keyboard=menu_keyboard,
         )
 
     @router.message(F.text == MANAGER_DATE_BUTTON)
@@ -322,7 +355,7 @@ def create_manager_router(
         query = ((command.args if command else None) or "").strip()
         if not query:
             await message.answer(
-                "Укажите номер заказа после команды.\nПример: <code>/find MS-20260610-1200-5467423100</code>",
+                "Укажите номер заказа или его префикс.\nПример: <code>/find MS-20260613-1819</code>",
                 parse_mode="HTML",
                 reply_markup=menu_keyboard,
             )
@@ -346,7 +379,7 @@ def create_manager_router(
             return
         await state.set_state(ManagerAccessFlow.waiting_for_order_search)
         await message.answer(
-            "Введите номер заказа целиком или его часть.\nПример: <code>MS-20260610</code>",
+            "Введите номер заказа или его начало.\nПример: <code>MS-20260613-1819</code>",
             parse_mode="HTML",
             reply_markup=menu_keyboard,
         )
@@ -391,10 +424,11 @@ def create_manager_router(
                 reply_markup=menu_keyboard,
             )
             return
-        await message.answer(
-            _summarize_orders(f"Заказы за {parsed.strftime('%d.%m.%Y')}", orders),
-            parse_mode="HTML",
-            reply_markup=menu_keyboard,
+        await _send_order_list(
+            message,
+            title=f"Заказы за {parsed.strftime('%d.%m.%Y')}",
+            orders=orders,
+            menu_keyboard=menu_keyboard,
         )
 
     @router.message(Command("whoami"))
@@ -441,20 +475,95 @@ def create_manager_router(
             await callback.answer("Заказ не найден.", show_alert=True)
             return
 
+        try:
+            await callback.answer(f"Статус обновлен: {STATUS_LABELS.get(next_status, next_status)}")
+        except TelegramNetworkError:
+            pass
+
         if callback.message:
-            await callback.message.edit_text(
+            try:
+                await callback.message.edit_text(
+                    format_order_message(order),
+                    parse_mode="HTML",
+                    reply_markup=order_status_keyboard(order),
+                )
+            except TelegramBadRequest:
+                # The message may be outdated or already changed; the status is still saved.
+                pass
+            except TelegramNetworkError:
+                pass
+
+    @router.callback_query(F.data.startswith("order:view:"))
+    async def view_order(callback: CallbackQuery) -> None:
+        if not callback.from_user:
+            return
+        if not await require_verified_callback(callback):
+            return
+
+        parts = (callback.data or "").split(":", 2)
+        if len(parts) != 3:
+            await callback.answer("Не удалось открыть заказ.", show_alert=True)
+            return
+        order_number = parts[2]
+        order = await access_storage.get_order(order_number)
+        if not order:
+            await callback.answer("Заказ не найден.", show_alert=True)
+            return
+
+        if callback.message:
+            await callback.message.answer(
                 format_order_message(order),
                 parse_mode="HTML",
                 reply_markup=order_status_keyboard(order),
             )
-            await callback.message.answer(
-                f"✅ Заказ <code>{escape(str(order_number))}</code> переведен в статус "
-                f"<b>{escape(STATUS_LABELS.get(next_status, next_status))}</b>.\n"
-                f"Время: <code>{escape(_format_datetime(order.get('updated_at')))}</code>",
-                parse_mode="HTML",
-                reply_markup=menu_keyboard,
-            )
-        await callback.answer(f"Статус обновлен: {STATUS_LABELS.get(next_status, next_status)}")
+        try:
+            await callback.answer("Заказ открыт")
+        except TelegramNetworkError:
+            pass
+
+    @router.callback_query(F.data.startswith("order:cancel_confirm:"))
+    async def confirm_cancel_order(callback: CallbackQuery) -> None:
+        if not callback.from_user:
+            return
+        if not await require_verified_callback(callback):
+            return
+
+        parts = (callback.data or "").split(":", 2)
+        if len(parts) != 3:
+            await callback.answer("Не удалось открыть подтверждение.", show_alert=True)
+            return
+        order_number = parts[2]
+        if callback.message:
+            try:
+                await callback.message.answer(
+                    f"Подтверждаете отмену заказа <code>{escape(order_number)}</code>?",
+                    parse_mode="HTML",
+                    reply_markup=order_cancel_confirmation_keyboard(order_number),
+                )
+            except TelegramNetworkError:
+                pass
+        try:
+            await callback.answer("Нужно подтверждение отмены")
+        except TelegramNetworkError:
+            pass
+
+    @router.callback_query(F.data.startswith("order:cancel_abort:"))
+    async def abort_cancel_order(callback: CallbackQuery) -> None:
+        try:
+            await callback.answer("Отмена заказа не выполнена")
+        except TelegramNetworkError:
+            pass
+
+            try:
+                await callback.message.answer(
+                    f"✅ Заказ <code>{escape(str(order_number))}</code> переведен в статус "
+                    f"<b>{escape(STATUS_LABELS.get(next_status, next_status))}</b>.\n"
+                    f"Время: <code>{escape(_format_datetime(order.get('updated_at')))}</code>",
+                    parse_mode="HTML",
+                    reply_markup=menu_keyboard,
+                )
+            except TelegramNetworkError:
+                pass
 
     @router.message(F.text)
     async def fallback(message: Message, state: FSMContext) -> None:
@@ -465,8 +574,8 @@ def create_manager_router(
             await message.answer(
                 "Команды:\n"
                 "<code>/new</code> — новые заказы\n"
-                "<code>/ready</code> — готовы к доставке\n"
-                "<code>/delivery</code> — в доставке\n"
+                "<code>/ready</code> — передать в доставку\n"
+                "<code>/delivery</code> — заказы в доставке\n"
                 "<code>/done</code> — доставленные\n"
                 "<code>/today</code> — заказы за сегодня\n"
                 "<code>/yesterday</code> — заказы за вчера\n"

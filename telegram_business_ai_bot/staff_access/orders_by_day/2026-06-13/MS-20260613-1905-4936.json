@@ -1,0 +1,84 @@
+{
+  "timestamp": "2026-06-13T19:05:44.859558+03:00",
+  "created_at": "2026-06-13T19:05:44.859558+03:00",
+  "created_at_text": "13.06.2026 19:05 MSK",
+  "updated_at": "2026-06-13T19:06:01.955560+03:00",
+  "updated_at_text": "13.06.2026 19:06 MSK",
+  "date": "2026-06-13",
+  "order_number": "MS-20260613-1905-4936",
+  "status": "cancelled",
+  "customer": {
+    "user_id": 5467423100,
+    "username": "Hoowieeee",
+    "first_name": "Ховар",
+    "phone": "79281704450"
+  },
+  "items": [
+    {
+      "name": "Курага жёлтая, отборная, Таджикистан, 1кг",
+      "price": "720 руб.",
+      "weight": "1 кг",
+      "quantity": 1
+    }
+  ],
+  "total": 720,
+  "history": [
+    {
+      "timestamp": "2026-06-13T19:05:44.859558+03:00",
+      "timestamp_text": "13.06.2026 19:05 MSK",
+      "event": "created",
+      "status": "new",
+      "actor": {
+        "source": "customer_bot",
+        "user_id": 5467423100,
+        "username": "Hoowieeee",
+        "first_name": "Ховар"
+      }
+    },
+    {
+      "timestamp": "2026-06-13T19:05:51.822740+03:00",
+      "timestamp_text": "13.06.2026 19:05 MSK",
+      "event": "status_changed",
+      "from_status": "new",
+      "status": "assembled",
+      "actor": {
+        "user_id": 1864481853,
+        "username": "wannabeiteng",
+        "first_name": "amigo",
+        "last_name": null
+      }
+    },
+    {
+      "timestamp": "2026-06-13T19:05:54.584726+03:00",
+      "timestamp_text": "13.06.2026 19:05 MSK",
+      "event": "status_changed",
+      "from_status": "assembled",
+      "status": "in_delivery",
+      "actor": {
+        "user_id": 1864481853,
+        "username": "wannabeiteng",
+        "first_name": "amigo",
+        "last_name": null
+      }
+    },
+    {
+      "timestamp": "2026-06-13T19:06:01.955560+03:00",
+      "timestamp_text": "13.06.2026 19:06 MSK",
+      "event": "status_changed",
+      "from_status": "in_delivery",
+      "status": "cancelled",
+      "actor": {
+        "user_id": 1864481853,
+        "username": "wannabeiteng",
+        "first_name": "amigo",
+        "last_name": null
+      }
+    }
+  ],
+  "last_action_by": {
+    "user_id": 1864481853,
+    "username": "wannabeiteng",
+    "first_name": "amigo",
+    "last_name": null
+  }
+}
