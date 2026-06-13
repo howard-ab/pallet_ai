@@ -46,6 +46,7 @@ const els = {
   subcategories: document.querySelector("#subcategoryChips"),
   products: document.querySelector("#productGrid"),
   searchInput: document.querySelector("#searchInput"),
+  searchSubmitButton: document.querySelector("#searchSubmitButton"),
   clearSearchButton: document.querySelector("#clearSearchButton"),
   featuredSection: document.querySelector("#featuredSection"),
   weeklyGrid: document.querySelector("#weeklyGrid"),
@@ -416,6 +417,22 @@ function updateCatalogHeading(resultCount = 0) {
   els.catalogTitle.textContent = "Выберите категорию и соберите корзину";
 }
 
+function applySearch() {
+  const query = String(els.searchInput?.value || "").trim();
+  state.searchQuery = query;
+  els.searchInput?.blur();
+  render();
+}
+
+function resetSearch() {
+  state.searchQuery = "";
+  if (els.searchInput) {
+    els.searchInput.value = "";
+    els.searchInput.blur();
+  }
+  render();
+}
+
 function renderCategories() {
   els.categories.innerHTML = "";
   CATEGORY_ORDER.filter((category) => state.catalog[category]).forEach((category) => {
@@ -686,19 +703,23 @@ els.clearButton.onclick = () => {
 };
 
 if (els.searchInput) {
-  els.searchInput.addEventListener("input", (event) => {
-    state.searchQuery = String(event.target.value || "").trim();
-    render();
+  els.searchInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      applySearch();
+    }
   });
+}
+
+if (els.searchSubmitButton) {
+  els.searchSubmitButton.onclick = () => {
+    applySearch();
+  };
 }
 
 if (els.clearSearchButton) {
   els.clearSearchButton.onclick = () => {
-    state.searchQuery = "";
-    if (els.searchInput) {
-      els.searchInput.value = "";
-    }
-    render();
+    resetSearch();
   };
 }
 
