@@ -57,17 +57,19 @@ WELCOME_TEXT = (
 
 WELCOME_ACTIONS_TEXT = (
     "<b>Что можно сделать в боте:</b>\n\n"
+    "• <b>Заказать</b>\n"
+    "Открыть витрину, собрать корзину и оформить заказ.\n\n"
     "• <b>Каталог</b>\n"
-    "Открыть Mini App, посмотреть товары недели, воспользоваться поиском и оформить заказ.\n\n"
+    "Посмотреть товары прямо в боте по категориям.\n\n"
     "• <b>Задать вопрос Искусственному Интеллекту</b>\n"
-    "Уточнить состав, вкус, отличия и полезные свойства продуктов, или попросить рекомендацию.\n\n"
+    "Уточнить состав, вкус, отличия и полезные свойства продуктов, или попросить рекомендовать Вам что-то из каталога.\n\n"
     "• <b>Корзина</b>\n"
     "Проверить выбранные позиции перед оформлением.\n\n"
     "• <b>Связаться с менеджером</b>\n"
     "Быстро задать вопрос по заказу и доставке.\n\n"
     "• <b>О магазине</b>\n"
     "Посмотреть адреса и контакты.\n\n"
-    "👇 Чтобы оформить заказ, нажмите кнопку <b>Каталог</b> в нижнем меню."
+    "👇 Чтобы оформить заказ, нажмите кнопку <b>Заказать</b> в нижнем меню."
 )
 
 ABOUT_TEXT = (
@@ -98,12 +100,14 @@ CONTACT_TEXT = (
 
 MAIN_MENU_TEXT = (
     "<b>Главное меню</b> ✨\n\n"
-    "• <b>Каталог</b> — открыть витрину и оформить заказ\n"
+    "• <b>Заказать</b> — открыть витрину\n"
+    "• <b>Каталог</b> — посмотреть товары в боте\n"
     "• <b>Задать вопрос ИИ</b> — уточнить состав и свойства\n"
     "• <b>Корзина</b> — проверить выбранные позиции\n"
     "• <b>Связаться с менеджером</b> — быстро написать по заказу\n\n"
-    "👇 Нажмите кнопку <b>Каталог</b> в нижнем меню 🛍."
+    "👇 Нажмите кнопку <b>Заказать</b> в нижнем меню 🛍."
 )
+
 
 class UserFlow(StatesGroup):
     waiting_for_ai_question = State()
@@ -187,8 +191,8 @@ def profile_text(customer: dict[str, object]) -> str:
 def address_request_text() -> str:
     return (
         "<b>Укажите адрес доставки</b>\n\n"
-        "Введите адрес в пределах Ростова-на-Дону: улица, дом, квартира, подъезд или домофон, если нужно.\n\n"
-        "Например: Ростов-на-Дону, ул. Пойменная, 21, кв. 14."
+        "Введите адрес в пределах Ростова-на-Дону: улица, дом, квартира, подъезд, этаж или домофон, если нужно.\n\n"
+        "Например: Ростов-на-Дону, ул. Пойменная, 1, подъезд 1, этаж 3, кв. 14, домофон 14."
     )
 
 
@@ -382,38 +386,6 @@ def create_router(
             user=message.from_user,
             phone=message.contact.phone_number,
         )
-        pending_order = await pending_orders.get(message.from_user.id)
-        if pending_order is not None:
-            if customer.get("address"):
-                await answer_and_log(
-                    message,
-                    storage,
-                    profile_text(customer) + "\n\n<b>Контакты сохранены.</b> Передаю заказ менеджеру.",
-                    reply_markup=back_to_menu_keyboard(),
-                    parse_mode="HTML",
-                )
-                await finalize_pending_order(message, pending_order, state)
-                return
-            await answer_and_log(
-                message,
-                storage,
-                profile_text(customer) + "\n\nТеперь укажите адрес доставки.",
-                reply_markup=back_to_menu_keyboard(),
-                parse_mode="HTML",
-            )
-            await request_address_for_pending_order(message, state)
-            return
-
-        if customer.get("address"):
-            await state.clear()
-            await answer_and_log(
-                message,
-                storage,
-                profile_text(customer) + "\n\n<b>Готово.</b> Контакты сохранены.",
-                reply_markup=menu_keyboard,
-                parse_mode="HTML",
-            )
-            return
         await answer_and_log(
             message,
             storage,
@@ -446,38 +418,6 @@ def create_router(
             )
             return
         customer = await customer_storage.upsert(user=message.from_user, phone=message.text)
-        pending_order = await pending_orders.get(message.from_user.id)
-        if pending_order is not None:
-            if customer.get("address"):
-                await answer_and_log(
-                    message,
-                    storage,
-                    profile_text(customer) + "\n\n<b>Контакты сохранены.</b> Передаю заказ менеджеру.",
-                    reply_markup=back_to_menu_keyboard(),
-                    parse_mode="HTML",
-                )
-                await finalize_pending_order(message, pending_order, state)
-                return
-            await answer_and_log(
-                message,
-                storage,
-                profile_text(customer) + "\n\nТеперь укажите адрес доставки.",
-                reply_markup=back_to_menu_keyboard(),
-                parse_mode="HTML",
-            )
-            await request_address_for_pending_order(message, state)
-            return
-
-        if customer.get("address"):
-            await state.clear()
-            await answer_and_log(
-                message,
-                storage,
-                profile_text(customer) + "\n\n<b>Готово.</b> Контакты сохранены.",
-                reply_markup=menu_keyboard,
-                parse_mode="HTML",
-            )
-            return
         await answer_and_log(
             message,
             storage,
@@ -536,7 +476,7 @@ def create_router(
             await answer_and_log(
                 message,
                 storage,
-                "<b>Каталог</b>\n\nMini App готов в папке <code>webapp/</code>. "
+                "<b>Покупки</b>\n\nMini App готов в папке <code>webapp/</code>. "
                 "Чтобы открыть его из Telegram, укажите HTTPS-ссылку в <code>SHOP_WEBAPP_URL</code>.",
                 reply_markup=back_to_menu_keyboard(),
                 parse_mode="HTML",
@@ -556,17 +496,77 @@ def create_router(
 
     @router.message(Command("catalog"))
     @router.message(F.text == CATALOG_BUTTON)
-    @router.message(F.text.in_(get_categories()))
-    @router.message(lambda message: bool(message.text and find_category_by_subcategory(message.text)))
-    async def show_catalog_redirect(message: Message, state: FSMContext) -> None:
+    async def show_catalog(message: Message, state: FSMContext) -> None:
         await state.clear()
         await answer_and_log(
             message,
             storage,
-            "<b>Каталог в боте временно отключен</b>\n\nОткройте витрину через кнопку <b>Каталог</b> в нижнем меню. Там доступны поиск, товары недели, категории и оформление заказа.",
-            reply_markup=menu_keyboard,
+            "<b>Каталог</b>\n\nВыберите категорию.",
+            reply_markup=catalog_keyboard(),
             parse_mode="HTML",
         )
+
+    @router.message(F.text.in_(get_categories()))
+    async def show_subcategories(message: Message) -> None:
+        category = message.text or ""
+        await answer_and_log(
+            message,
+            storage,
+            f"<b>{escape(category)}</b>\n\nВыберите подкатегорию.",
+            reply_markup=subcategory_keyboard(category),
+            parse_mode="HTML",
+        )
+
+    @router.message(lambda message: bool(message.text and find_category_by_subcategory(message.text)))
+    async def show_subcategory_products(message: Message) -> None:
+        subcategory = message.text or ""
+        category = find_category_by_subcategory(subcategory)
+        if category is None:
+            await answer_and_log(message, storage, "Подкатегория не найдена.", reply_markup=catalog_keyboard())
+            return
+
+        products = get_products(category, subcategory)
+        if not products:
+            await answer_and_log(
+                message,
+                storage,
+                "В этой подкатегории пока нет товаров.",
+                reply_markup=subcategory_keyboard(category),
+            )
+            return
+
+        await answer_and_log(
+            message,
+            storage,
+            f"<b>{escape(category)} / {escape(subcategory)}</b>\n\n"
+            "Подборка товаров. Нажмите «В корзину» под нужной карточкой.",
+            reply_markup=back_to_menu_keyboard(),
+            parse_mode="HTML",
+        )
+
+        for index, product in enumerate(products, start=1):
+            caption = product_caption(index, product)
+            product_id = get_product_id(category, subcategory, index - 1)
+            actions = product_actions_keyboard(product_id or 0)
+            photo_path = PROJECT_ROOT / product["photo"]
+            if product.get("photo") and photo_path.exists():
+                await message.answer_photo(
+                    photo=FSInputFile(photo_path),
+                    caption=caption,
+                    reply_markup=actions,
+                    parse_mode="HTML",
+                )
+                await storage.log_bot_text(message, caption, metadata={"photo": product["photo"]})
+            elif product.get("photo_url"):
+                await message.answer_photo(
+                    photo=product["photo_url"],
+                    caption=caption,
+                    reply_markup=actions,
+                    parse_mode="HTML",
+                )
+                await storage.log_bot_text(message, caption, metadata={"photo_url": product["photo_url"]})
+            else:
+                await answer_and_log(message, storage, caption, reply_markup=actions, parse_mode="HTML")
 
     @router.message(Command("ai"))
     @router.message(F.text == ASK_AI_BUTTON)
