@@ -7,14 +7,37 @@ if (tg) {
 const searchParams = new URLSearchParams(window.location.search);
 const checkoutApiUrl = searchParams.get("api") || "";
 
+const CATEGORY_ORDER = [
+  "Сухофрукты",
+  "Орехи",
+  "Сушёные ягоды",
+  "Специи и пряности",
+  "Восточные сладости",
+  "Орехи и фрукты в шоколаде",
+  "Бобовые и семена",
+  "Натуральные масла",
+  "Восточная керамика",
+  "Подарочные наборы",
+];
+
+const EMPTY_CATEGORY_COPY = {
+  "Натуральные масла": "Скоро добавим натуральные масла в витрину. Пока можно выбрать другие позиции и оформить заказ через менеджера.",
+  "Восточная керамика": "Раздел с восточной керамикой готовится. Если нужна пиала, блюдо или сервировочная керамика, напишите менеджеру.",
+  "Подарочные наборы": "Подарочные наборы собираются вручную под запрос. Напишите менеджеру, и мы подберем красивый вариант под бюджет.",
+};
+
+const QUICK_WEIGHT_OPTIONS_KG = [0.25, 0.5, 1];
+
 const state = {
+  rawCatalog: {},
   catalog: {},
   category: "",
   subcategory: "",
   cart: [],
+  searchQuery: "",
+  featured: [],
+  flatProducts: [],
 };
-
-const QUICK_WEIGHT_OPTIONS_KG = [0.25, 0.5, 1];
 
 const els = {
   splash: document.querySelector("#splashScreen"),
@@ -22,6 +45,12 @@ const els = {
   categories: document.querySelector("#categoryTabs"),
   subcategories: document.querySelector("#subcategoryChips"),
   products: document.querySelector("#productGrid"),
+  searchInput: document.querySelector("#searchInput"),
+  clearSearchButton: document.querySelector("#clearSearchButton"),
+  featuredSection: document.querySelector("#featuredSection"),
+  weeklyGrid: document.querySelector("#weeklyGrid"),
+  catalogEyebrow: document.querySelector("#catalogEyebrow"),
+  catalogTitle: document.querySelector("#catalogTitle"),
   cartDockButton: document.querySelector("#cartDockButton"),
   cartDockCount: document.querySelector("#cartDockCount"),
   cartDockTotal: document.querySelector("#cartDockTotal"),
@@ -45,6 +74,15 @@ function hideSplash() {
     els.splash?.classList.add("hidden");
     els.appRoot?.classList.remove("app-hidden");
   }, 3000);
+}
+
+function normalizeText(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/ё/g, "е")
+    .replace(/[^a-zа-я0-9\s]/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function priceValue(price) {
@@ -141,15 +179,256 @@ function showAddedFeedback(card, button) {
   }, 900);
 }
 
+function dedupeProducts(products) {
+  const seen = new Map();
+  products.forEach((product) => {
+    const key = [product.name, product.origin, product.photo || product.photo_url || "", product.rawCategory || "", product.rawSubcategory || ""].join("::");
+    if (!seen.has(key)) {
+      seen.set(key, product);
+    }
+  });
+  return Array.from(seen.values());
+}
+
+function flattenCatalog(rawCatalog) {
+  const products = [];
+  Object.entries(rawCatalog).forEach(([category, subcategories]) => {
+    Object.entries(subcategories).forEach(([subcategory, items]) => {
+      items.forEach((item) => {
+        products.push({
+          ...item,
+          rawCategory: category,
+          rawSubcategory: subcategory,
+        });
+      });
+    });
+  });
+  return products;
+}
+
+function productText(product) {
+  return normalizeText([
+    product.name,
+    product.description,
+    product.origin,
+    product.rawCategory,
+    product.rawSubcategory,
+  ].join(" "));
+}
+
+function matchesKeywords(product, keywords) {
+  const haystack = productText(product);
+  return keywords.some((keyword) => haystack.includes(normalizeText(keyword)));
+}
+
+function isChocolateProduct(product) {
+  return matchesKeywords(product, ["шоколад", "глазур", "драже"]);
+}
+
+function takeRawProducts(rawCatalog, category, subcategory, predicate = null) {
+  const items = (rawCatalog[category]?.[subcategory] || []).map((item) => ({
+    ...item,
+    rawCategory: category,
+    rawSubcategory: subcategory,
+  }));
+  return predicate ? items.filter(predicate) : items;
+}
+
+function buildDisplayCatalog(rawCatalog) {
+  const allProducts = flattenCatalog(rawCatalog);
+  const sweetsProducts = takeRawProducts(rawCatalog, "Напитки и сладости", "Сладости");
+  const spiceProducts = takeRawProducts(rawCatalog, "Бакалея", "Специи");
+  const grainProducts = takeRawProducts(rawCatalog, "Бакалея", "Крупы и бобовые");
+  const seedProducts = takeRawProducts(rawCatalog, "Бакалея", "Семена");
+  const chocolateProducts = dedupeProducts([
+    ...allProducts.filter(isChocolateProduct),
+    ...takeRawProducts(rawCatalog, "Орехи", "Орехи в глазури"),
+  ]);
+  const driedBerryProducts = dedupeProducts([
+    ...takeRawProducts(rawCatalog, "Сухофрукты", "Изюм"),
+    ...allProducts.filter((product) => matchesKeywords(product, ["клубник", "ягод", "вишн", "клюкв", "смородин", "черешн"])),
+  ]);
+  const naturalOilProducts = dedupeProducts(
+    allProducts.filter((product) => matchesKeywords(product, ["масло", "оливков", "кунжутн", "льнян"]))
+  );
+  const ceramicProducts = dedupeProducts(
+    allProducts.filter((product) => matchesKeywords(product, ["керамик", "пиала", "блюдо", "тарел", "чаша"]))
+  );
+  const giftProducts = dedupeProducts(
+    allProducts.filter((product) => {
+      const nameOnly = normalizeText(product.name);
+      return nameOnly.includes("подар") || nameOnly.includes("набор") || nameOnly.includes("корзин");
+    })
+  );
+
+  return {
+    "Сухофрукты": {
+      "Курага": takeRawProducts(rawCatalog, "Сухофрукты", "Курага"),
+      "Изюм": takeRawProducts(rawCatalog, "Сухофрукты", "Изюм"),
+      "Финики": takeRawProducts(rawCatalog, "Сухофрукты", "Финики"),
+      "Цукаты": takeRawProducts(rawCatalog, "Сухофрукты", "Цукаты"),
+      "Прочие сухофрукты": takeRawProducts(rawCatalog, "Сухофрукты", "Прочие сухофрукты"),
+    },
+    "Орехи": {
+      "Фисташки": takeRawProducts(rawCatalog, "Орехи", "Фисташки", (product) => !isChocolateProduct(product)),
+      "Миндаль и фундук": takeRawProducts(rawCatalog, "Орехи", "Миндаль и фундук", (product) => !isChocolateProduct(product)),
+      "Грецкий орех": takeRawProducts(rawCatalog, "Орехи", "Грецкий орех", (product) => !isChocolateProduct(product)),
+      "Ореховые смеси": takeRawProducts(rawCatalog, "Орехи", "Ореховые смеси", (product) => !isChocolateProduct(product)),
+    },
+    "Сушёные ягоды": {
+      "Изюм и ягоды": driedBerryProducts,
+    },
+    "Специи и пряности": {
+      "Специи": spiceProducts,
+    },
+    "Восточные сладости": {
+      "Сладости": dedupeProducts(sweetsProducts.filter((product) => !isChocolateProduct(product))),
+    },
+    "Орехи и фрукты в шоколаде": {
+      "Шоколад и глазурь": chocolateProducts,
+    },
+    "Бобовые и семена": {
+      "Семена": seedProducts,
+      "Бобовые и крупы": grainProducts,
+    },
+    "Натуральные масла": {
+      "Масла": naturalOilProducts,
+    },
+    "Восточная керамика": {
+      "Керамика": ceramicProducts,
+    },
+    "Подарочные наборы": {
+      "Подарки": giftProducts,
+    },
+  };
+}
+
+function pickFeaturedProducts(allProducts) {
+  const selected = [];
+  const wanted = [
+    ["курага", "урюк"],
+    ["фисташ"],
+    ["финик"],
+    ["шоколад"],
+    ["нут", "семен", "чиа"],
+  ];
+
+  wanted.forEach((keywords) => {
+    const found = allProducts.find((product) => matchesKeywords(product, keywords) && !selected.includes(product));
+    if (found) {
+      selected.push(found);
+    }
+  });
+
+  if (selected.length < 5) {
+    allProducts.forEach((product) => {
+      if (selected.length >= 5) return;
+      if (!selected.includes(product)) {
+        selected.push(product);
+      }
+    });
+  }
+
+  return selected.slice(0, 5);
+}
+
+function isSubsequence(query, target) {
+  let position = 0;
+  for (const char of target) {
+    if (char === query[position]) {
+      position += 1;
+      if (position === query.length) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+function searchScore(product, query) {
+  const normalizedQuery = normalizeText(query);
+  if (!normalizedQuery) return 0;
+
+  const haystack = productText(product);
+  const compactQuery = normalizedQuery.replace(/\s/g, "");
+  const compactHaystack = haystack.replace(/\s/g, "");
+  const name = normalizeText(product.name);
+  let score = 0;
+
+  if (name.startsWith(normalizedQuery)) {
+    score += 120;
+  }
+  if (haystack.includes(normalizedQuery)) {
+    score += 90;
+    score += Math.max(0, 20 - haystack.indexOf(normalizedQuery));
+  }
+
+  normalizedQuery.split(" ").filter(Boolean).forEach((token) => {
+    if (name.includes(token)) score += 28;
+    else if (haystack.includes(token)) score += 14;
+  });
+
+  if (compactQuery && isSubsequence(compactQuery, compactHaystack)) {
+    score += 18;
+  }
+
+  return score;
+}
+
+function getSearchResults(query) {
+  const normalizedQuery = normalizeText(query);
+  if (!normalizedQuery) return [];
+
+  return dedupeProducts(state.flatProducts)
+    .map((product) => ({ product, score: searchScore(product, normalizedQuery) }))
+    .filter((entry) => entry.score > 0)
+    .sort((left, right) => right.score - left.score || left.product.name.localeCompare(right.product.name, "ru"))
+    .map((entry) => entry.product)
+    .slice(0, 24);
+}
+
+function setDefaultCategory() {
+  const categories = Object.keys(state.catalog);
+  if (!categories.length) return;
+  if (!state.catalog[state.category]) {
+    state.category = categories[0];
+  }
+  const subcategories = Object.keys(state.catalog[state.category] || {});
+  if (!subcategories.length) {
+    state.subcategory = "";
+    return;
+  }
+  if (!state.catalog[state.category][state.subcategory]) {
+    state.subcategory = subcategories[0];
+  }
+}
+
+function updateCatalogHeading(resultCount = 0) {
+  if (state.searchQuery) {
+    els.catalogEyebrow.textContent = "Поиск";
+    els.catalogTitle.textContent = resultCount
+      ? `Найдено ${resultCount} товаров`
+      : "Ничего не найдено";
+    return;
+  }
+
+  els.catalogEyebrow.textContent = "Каталог";
+  els.catalogTitle.textContent = "Выберите категорию и соберите корзину";
+}
+
 function renderCategories() {
   els.categories.innerHTML = "";
-  Object.keys(state.catalog).forEach((category) => {
+  CATEGORY_ORDER.filter((category) => state.catalog[category]).forEach((category) => {
     const button = document.createElement("button");
     button.className = `tab${category === state.category ? " active" : ""}`;
     button.textContent = category;
     button.onclick = () => {
       state.category = category;
-      state.subcategory = Object.keys(state.catalog[category])[0];
+      state.subcategory = Object.keys(state.catalog[category] || {})[0] || "";
+      state.searchQuery = "";
+      if (els.searchInput) {
+        els.searchInput.value = "";
+      }
       render();
     };
     els.categories.append(button);
@@ -161,6 +440,12 @@ function renderCategories() {
 
 function renderSubcategories() {
   els.subcategories.innerHTML = "";
+  const hidden = Boolean(state.searchQuery);
+  els.subcategories.classList.toggle("is-hidden", hidden);
+  if (hidden) {
+    return;
+  }
+
   Object.keys(state.catalog[state.category] || {}).forEach((subcategory) => {
     const button = document.createElement("button");
     button.className = `chip${subcategory === state.subcategory ? " active" : ""}`;
@@ -171,95 +456,152 @@ function renderSubcategories() {
     };
     els.subcategories.append(button);
   });
+
   window.requestAnimationFrame(() => {
     els.subcategories.scrollLeft = 0;
   });
 }
 
-function renderProducts() {
-  els.products.innerHTML = "";
-  const products = state.catalog[state.category]?.[state.subcategory] || [];
-  products.forEach((product) => {
-    const defaultWeightKg = parseWeightKg(product.weight);
-    let selectedWeightKg = defaultWeightKg;
-    const card = document.createElement("article");
-    card.className = "product";
-    card.innerHTML = `
-      <img src="${product.photo}" alt="${product.name}">
-      <div class="product-body">
-        <h3>${product.name}</h3>
-        <div class="meta">
-          <span>${product.origin}</span>
-          <span class="selected-weight">${formatWeightKg(selectedWeightKg)}</span>
-          <strong class="selected-price">${product.price}</strong>
+function createProductCard(product, options = {}) {
+  const { featured = false } = options;
+  const defaultWeightKg = parseWeightKg(product.weight);
+  let selectedWeightKg = defaultWeightKg;
+  const card = document.createElement("article");
+  card.className = `product${featured ? " featured" : ""}`;
+  card.innerHTML = `
+    <img src="${product.photo || product.photo_url || ""}" alt="${product.name}">
+    <div class="product-body">
+      ${featured ? `
+        <div class="product-badges">
+          <span class="product-badge discount">-10%</span>
+          <span class="product-badge">Товар недели</span>
         </div>
-        <div class="weight-picker">
-          <div class="weight-presets">
-            ${QUICK_WEIGHT_OPTIONS_KG.map((value) => `
-              <button class="weight-chip${Math.abs(value - selectedWeightKg) < 0.001 ? " active" : ""}" type="button" data-weight="${value}">
-                ${formatWeightKg(value)}
-              </button>
-            `).join("")}
-          </div>
-          <div class="weight-custom">
-            <input class="weight-input" type="text" inputmode="decimal" placeholder="Свой вес, кг">
-            <button class="weight-apply" type="button">OK</button>
-          </div>
+      ` : ""}
+      <h3>${product.name}</h3>
+      <div class="meta">
+        <span>${product.origin}</span>
+        <span class="selected-weight">${formatWeightKg(selectedWeightKg)}</span>
+        <strong class="selected-price">${product.price}</strong>
+      </div>
+      <div class="weight-picker">
+        <div class="weight-presets">
+          ${QUICK_WEIGHT_OPTIONS_KG.map((value) => `
+            <button class="weight-chip${Math.abs(value - selectedWeightKg) < 0.001 ? " active" : ""}" type="button" data-weight="${value}">
+              ${formatWeightKg(value)}
+            </button>
+          `).join("")}
         </div>
-        <div class="product-actions">
-          <button class="info-button" type="button">Инфо</button>
-          <button class="add-button" type="button">В корзину</button>
+        <div class="weight-custom">
+          <input class="weight-input" type="text" inputmode="decimal" placeholder="Свой вес, кг">
+          <button class="weight-apply" type="button">OK</button>
         </div>
       </div>
-    `;
-    const infoButton = card.querySelector(".info-button");
-    const addButton = card.querySelector(".add-button");
-    const selectedWeightEl = card.querySelector(".selected-weight");
-    const selectedPriceEl = card.querySelector(".selected-price");
-    const weightChips = Array.from(card.querySelectorAll(".weight-chip"));
-    const weightInput = card.querySelector(".weight-input");
-    const weightApply = card.querySelector(".weight-apply");
+      <div class="product-actions">
+        <button class="info-button" type="button">Инфо</button>
+        <button class="add-button" type="button">В корзину</button>
+      </div>
+    </div>
+  `;
 
-    function refreshSelection() {
-      const weighted = buildWeightedProduct(product, selectedWeightKg);
-      selectedWeightEl.textContent = weighted.weight;
-      selectedPriceEl.textContent = weighted.price;
-      weightChips.forEach((chip) => {
-        const chipWeight = Number(chip.dataset.weight || 0);
-        chip.classList.toggle("active", Math.abs(chipWeight - selectedWeightKg) < 0.001);
-      });
-    }
+  const infoButton = card.querySelector(".info-button");
+  const addButton = card.querySelector(".add-button");
+  const selectedWeightEl = card.querySelector(".selected-weight");
+  const selectedPriceEl = card.querySelector(".selected-price");
+  const weightChips = Array.from(card.querySelectorAll(".weight-chip"));
+  const weightInput = card.querySelector(".weight-input");
+  const weightApply = card.querySelector(".weight-apply");
 
+  function refreshSelection() {
+    const weighted = buildWeightedProduct(product, selectedWeightKg);
+    selectedWeightEl.textContent = weighted.weight;
+    selectedPriceEl.textContent = weighted.price;
     weightChips.forEach((chip) => {
-      chip.onclick = () => {
-        selectedWeightKg = Number(chip.dataset.weight || defaultWeightKg);
-        refreshSelection();
-      };
+      const chipWeight = Number(chip.dataset.weight || 0);
+      chip.classList.toggle("active", Math.abs(chipWeight - selectedWeightKg) < 0.001);
     });
+  }
 
-    weightApply.onclick = () => {
-      const raw = String(weightInput.value || "").trim().replace(",", ".");
-      const customWeight = Number(raw);
-      if (!Number.isFinite(customWeight) || customWeight <= 0) {
-        if (tg?.showAlert) {
-          tg.showAlert("Введите вес в килограммах, например 0.5 или 1.5");
-        } else {
-          alert("Введите вес в килограммах, например 0.5 или 1.5");
-        }
-        return;
-      }
-      selectedWeightKg = Math.round(customWeight * 100) / 100;
+  weightChips.forEach((chip) => {
+    chip.onclick = () => {
+      selectedWeightKg = Number(chip.dataset.weight || defaultWeightKg);
       refreshSelection();
     };
+  });
 
-    infoButton.onclick = () => openProductInfo(product);
-    addButton.onclick = () => {
-      addToCart(buildWeightedProduct(product, selectedWeightKg));
-      renderCart();
-      showAddedFeedback(card, addButton);
-    };
+  weightApply.onclick = () => {
+    const raw = String(weightInput.value || "").trim().replace(",", ".");
+    const customWeight = Number(raw);
+    if (!Number.isFinite(customWeight) || customWeight <= 0) {
+      if (tg?.showAlert) {
+        tg.showAlert("Введите вес в килограммах, например 0.5 или 1.5");
+      } else {
+        alert("Введите вес в килограммах, например 0.5 или 1.5");
+      }
+      return;
+    }
+    selectedWeightKg = Math.round(customWeight * 100) / 100;
     refreshSelection();
-    els.products.append(card);
+  };
+
+  infoButton.onclick = () => openProductInfo(product);
+  addButton.onclick = () => {
+    addToCart(buildWeightedProduct(product, selectedWeightKg));
+    renderCart();
+    showAddedFeedback(card, addButton);
+  };
+
+  return card;
+}
+
+function renderFeaturedProducts() {
+  if (!els.weeklyGrid) return;
+  els.weeklyGrid.innerHTML = "";
+  state.featured.forEach((product) => {
+    els.weeklyGrid.append(createProductCard(product, { featured: true }));
+  });
+}
+
+function renderEmptyState(title, description) {
+  const card = document.createElement("article");
+  card.className = "empty-catalog";
+  card.innerHTML = `
+    <strong>${title}</strong>
+    <p>${description}</p>
+  `;
+  els.products.append(card);
+}
+
+function renderProducts() {
+  els.products.innerHTML = "";
+
+  if (state.searchQuery) {
+    const results = getSearchResults(state.searchQuery);
+    updateCatalogHeading(results.length);
+    if (!results.length) {
+      renderEmptyState(
+        "Ничего не найдено",
+        "Попробуйте другое слово или часть названия. Например: курага, финики, шоколад, фундук.",
+      );
+      return;
+    }
+    results.forEach((product) => {
+      els.products.append(createProductCard(product));
+    });
+    return;
+  }
+
+  updateCatalogHeading();
+  const products = state.catalog[state.category]?.[state.subcategory] || [];
+  if (!products.length) {
+    renderEmptyState(
+      `${state.category} скоро появятся в витрине`,
+      EMPTY_CATEGORY_COPY[state.category] || "Раздел наполняется. Напишите менеджеру, если хотите уточнить наличие заранее.",
+    );
+    return;
+  }
+
+  products.forEach((product) => {
+    els.products.append(createProductCard(product));
   });
 }
 
@@ -302,8 +644,10 @@ function renderCart() {
 }
 
 function render() {
+  setDefaultCategory();
   renderCategories();
   renderSubcategories();
+  renderFeaturedProducts();
   renderProducts();
   renderCart();
 }
@@ -340,6 +684,23 @@ els.clearButton.onclick = () => {
   state.cart = [];
   renderCart();
 };
+
+if (els.searchInput) {
+  els.searchInput.addEventListener("input", (event) => {
+    state.searchQuery = String(event.target.value || "").trim();
+    render();
+  });
+}
+
+if (els.clearSearchButton) {
+  els.clearSearchButton.onclick = () => {
+    state.searchQuery = "";
+    if (els.searchInput) {
+      els.searchInput.value = "";
+    }
+    render();
+  };
+}
 
 els.infoPanel.onclick = (event) => {
   if (event.target === els.infoPanel) {
@@ -413,7 +774,7 @@ els.orderButton.onclick = () => {
         els.orderButton.disabled = false;
         els.orderButton.textContent = "Оформить заказ";
         if (tg.showAlert) {
-          tg.showAlert("Не удалось отправить заказ через витрину. Попробуйте снова или откройте заказ через нижнюю кнопку Заказать.");
+          tg.showAlert("Не удалось отправить заказ через витрину. Попробуйте снова или откройте каталог заново.");
         } else {
           alert("Не удалось отправить заказ.");
         }
@@ -438,10 +799,13 @@ els.orderButton.onclick = () => {
 
 fetch("./catalog.json")
   .then((response) => response.json())
-  .then((catalog) => {
-    state.catalog = catalog;
-    state.category = Object.keys(catalog)[0];
-    state.subcategory = Object.keys(catalog[state.category])[0];
+  .then((rawCatalog) => {
+    state.rawCatalog = rawCatalog;
+    state.flatProducts = flattenCatalog(rawCatalog);
+    state.catalog = buildDisplayCatalog(rawCatalog);
+    state.featured = pickFeaturedProducts(state.flatProducts);
+    state.category = CATEGORY_ORDER.find((category) => state.catalog[category]) || Object.keys(state.catalog)[0] || "";
+    state.subcategory = Object.keys(state.catalog[state.category] || {})[0] || "";
     render();
     hideSplash();
   });

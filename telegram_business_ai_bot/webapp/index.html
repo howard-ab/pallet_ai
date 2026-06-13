@@ -79,9 +79,26 @@
         </article>
       </section>
 
+      <section class="search-panel">
+        <div class="search-shell">
+          <input class="search-input" id="searchInput" type="search" placeholder="Поиск по витрине: курага, финики, фундук..." autocomplete="off" />
+          <button class="search-clear" id="clearSearchButton" type="button">Сбросить</button>
+        </div>
+        <p class="search-hint">Поиск понимает похожие слова и частичные совпадения.</p>
+      </section>
+
+      <section class="featured-section" id="featuredSection">
+        <div class="section-head">
+          <p class="eyebrow">Акции</p>
+          <h2>Товары недели</h2>
+        </div>
+        <p class="featured-note">Подборка недели с акцентом на любимые позиции витрины и промо-метками.</p>
+        <section class="grid featured-grid" id="weeklyGrid"></section>
+      </section>
+
       <section class="section-head">
-        <p class="eyebrow">Каталог</p>
-        <h2>Выберите категорию и соберите корзину</h2>
+        <p class="eyebrow" id="catalogEyebrow">Каталог</p>
+        <h2 id="catalogTitle">Выберите категорию и соберите корзину</h2>
       </section>
 
       <nav class="tabs" id="categoryTabs" aria-label="Категории"></nav>

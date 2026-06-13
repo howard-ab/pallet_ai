@@ -11,7 +11,7 @@ ABOUT_BUTTON = "О магазине"
 CONTACT_BUTTON = "Связаться с менеджером"
 CART_BUTTON = "Корзина"
 OLD_SHOP_BUTTON = "Покупки"
-SHOP_BUTTON = "Заказать"
+SHOP_BUTTON = "Каталог"
 PROFILE_BUTTON = "Мои контакты"
 HOME_BUTTON = "В главное меню"
 OLD_BACK_BUTTON = "Назад в меню"
@@ -52,9 +52,8 @@ def build_main_menu_keyboard(shop_webapp_url: str = "", checkout_api_url: str = 
     return ReplyKeyboardMarkup(
         keyboard=[
             [shop_button, KeyboardButton(text=ASK_AI_BUTTON)],
-            [KeyboardButton(text=CATALOG_BUTTON), KeyboardButton(text=PROFILE_BUTTON)],
-            [KeyboardButton(text=CART_BUTTON), KeyboardButton(text=CONTACT_BUTTON)],
-            [KeyboardButton(text=ABOUT_BUTTON)],
+            [KeyboardButton(text=PROFILE_BUTTON), KeyboardButton(text=CONTACT_BUTTON)],
+            [KeyboardButton(text=CART_BUTTON), KeyboardButton(text=ABOUT_BUTTON)],
         ],
         resize_keyboard=True,
         input_field_placeholder="Выберите действие",
@@ -84,7 +83,7 @@ def subcategory_keyboard(category: str) -> ReplyKeyboardMarkup:
 def back_to_menu_keyboard() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(text=CART_BUTTON), KeyboardButton(text=CATALOG_BUTTON)],
+            [KeyboardButton(text=CART_BUTTON), KeyboardButton(text=SHOP_BUTTON)],
             [KeyboardButton(text=HOME_BUTTON)],
         ],
         resize_keyboard=True,
