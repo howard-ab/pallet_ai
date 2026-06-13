@@ -51,9 +51,9 @@ def build_main_menu_keyboard(shop_webapp_url: str = "", checkout_api_url: str = 
 
     return ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(text=ASK_AI_BUTTON)],
+            [shop_button, KeyboardButton(text=ASK_AI_BUTTON)],
             [KeyboardButton(text=PROFILE_BUTTON), KeyboardButton(text=CONTACT_BUTTON)],
-            [KeyboardButton(text=CART_BUTTON), KeyboardButton(text=ABOUT_BUTTON)],
+            [KeyboardButton(text=ABOUT_BUTTON)],
         ],
         resize_keyboard=True,
         input_field_placeholder="Выберите действие",
