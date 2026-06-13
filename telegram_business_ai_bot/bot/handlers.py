@@ -57,10 +57,8 @@ WELCOME_TEXT = (
 
 WELCOME_ACTIONS_TEXT = (
     "<b>Что можно сделать в боте:</b>\n\n"
-    "• <b>Заказать</b>\n"
-    "Открыть витрину, собрать корзину и оформить заказ.\n\n"
     "• <b>Каталог</b>\n"
-    "Посмотреть товары прямо в боте по категориям.\n\n"
+    "Посмотреть и заказать товары прямо на сайте по категориям.\n\n"
     "• <b>Задать вопрос Искусственному Интеллекту</b>\n"
     "Уточнить состав, вкус, отличия и полезные свойства продуктов, или попросить рекомендовать Вам что-то из каталога.\n\n"
     "• <b>Корзина</b>\n"
@@ -264,10 +262,12 @@ def create_router(
         message: Message,
         pending_order: dict[str, object],
         state: FSMContext | None = None,
+        telegram_user = None,
     ) -> None:
-        if not message.from_user:
+        user = telegram_user or message.from_user
+        if not user:
             return
-        customer = await customer_storage.get(message.from_user.id)
+        customer = await customer_storage.get(user.id)
         if customer is None or not customer.get("phone"):
             if state is not None:
                 await state.clear()
@@ -282,11 +282,11 @@ def create_router(
         order = await manager_notifier.send_order_notification(
             message.bot,
             customer=customer,
-            telegram_user=message.from_user,
+            telegram_user=user,
             items=list(pending_order.get("items", [])),
             total=pending_order.get("total", 0),
         )
-        await pending_orders.clear(message.from_user.id)
+        await pending_orders.clear(user.id)
         if state is not None:
             await state.clear()
         await answer_and_log(
@@ -701,7 +701,12 @@ def create_router(
             await callback.answer("Активный заказ не найден.", show_alert=True)
             return
         await callback.answer("Адрес подтвержден")
-        await finalize_pending_order(callback.message, pending_order, state)
+        await finalize_pending_order(
+            callback.message,
+            pending_order,
+            state,
+            telegram_user=callback.from_user,
+        )
 
     @router.callback_query(F.data == "order:address_change")
     async def request_new_address(callback: CallbackQuery, state: FSMContext) -> None:

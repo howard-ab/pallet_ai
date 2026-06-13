@@ -21,7 +21,7 @@ MANAGER_DATE_BUTTON = "Выбрать дату"
 MANAGER_FIND_BUTTON = "Найти заказ"
 MANAGER_PROFILE_BUTTON = "Мой профиль"
 MANAGER_NEW_BUTTON = "Новые заказы"
-MANAGER_READY_BUTTON = "В доставку"
+MANAGER_READY_BUTTON = "Готовы к доставке"
 MANAGER_IN_DELIVERY_BUTTON = "В доставке"
 MANAGER_DONE_BUTTON = "Доставленные"
 
@@ -51,7 +51,7 @@ def build_main_menu_keyboard(shop_webapp_url: str = "", checkout_api_url: str = 
 
     return ReplyKeyboardMarkup(
         keyboard=[
-            [shop_button, KeyboardButton(text=ASK_AI_BUTTON)],
+            [KeyboardButton(text=ASK_AI_BUTTON)],
             [KeyboardButton(text=PROFILE_BUTTON), KeyboardButton(text=CONTACT_BUTTON)],
             [KeyboardButton(text=CART_BUTTON), KeyboardButton(text=ABOUT_BUTTON)],
         ],
