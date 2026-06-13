@@ -1,31 +1,31 @@
 {
-  "timestamp": "2026-06-13T18:32:54.406561+03:00",
-  "created_at": "2026-06-13T18:32:54.406561+03:00",
-  "created_at_text": "13.06.2026 18:32 MSK",
-  "updated_at": "2026-06-13T21:20:25.914902+03:00",
+  "timestamp": "2026-06-13T21:19:55.280335+03:00",
+  "created_at": "2026-06-13T21:19:55.280335+03:00",
+  "created_at_text": "13.06.2026 21:19 MSK",
+  "updated_at": "2026-06-13T21:20:38.720982+03:00",
   "updated_at_text": "13.06.2026 21:20 MSK",
   "date": "2026-06-13",
-  "order_number": "MS-20260613-1832-5467423100",
-  "status": "cancelled",
+  "order_number": "MS-20260613-2119-7653",
+  "status": "assembled",
   "customer": {
     "user_id": 5467423100,
     "username": "Hoowieeee",
     "first_name": "Ховар",
-    "phone": "79281704450"
+    "phone": "+79281704450"
   },
   "items": [
     {
-      "name": "Курага жёлтая, отборная, Таджикистан, 1кг",
-      "price": "720 руб.",
+      "name": "Абрикос сушёный (урюк) отборный, Таджикистан 1кг",
+      "price": "621 руб.",
       "weight": "1 кг",
       "quantity": 1
     }
   ],
-  "total": 720,
+  "total": 621,
   "history": [
     {
-      "timestamp": "2026-06-13T18:32:54.406561+03:00",
-      "timestamp_text": "13.06.2026 18:32 MSK",
+      "timestamp": "2026-06-13T21:19:55.280335+03:00",
+      "timestamp_text": "13.06.2026 21:19 MSK",
       "event": "created",
       "status": "new",
       "actor": {
@@ -36,11 +36,11 @@
       }
     },
     {
-      "timestamp": "2026-06-13T21:20:25.914902+03:00",
+      "timestamp": "2026-06-13T21:20:38.720982+03:00",
       "timestamp_text": "13.06.2026 21:20 MSK",
       "event": "status_changed",
       "from_status": "new",
-      "status": "cancelled",
+      "status": "assembled",
       "actor": {
         "user_id": 5467423100,
         "username": "Hoowieeee",

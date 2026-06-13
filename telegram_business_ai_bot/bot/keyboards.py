@@ -155,9 +155,9 @@ def contact_request_keyboard() -> ReplyKeyboardMarkup:
 def manager_menu_keyboard() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(text=MANAGER_NEW_BUTTON), KeyboardButton(text=MANAGER_IN_DELIVERY_BUTTON)],
-            [KeyboardButton(text=MANAGER_READY_BUTTON), KeyboardButton(text=MANAGER_DONE_BUTTON)],
-            [KeyboardButton(text=MANAGER_TODAY_BUTTON), KeyboardButton(text=MANAGER_FIND_BUTTON)],
+            [KeyboardButton(text=MANAGER_NEW_BUTTON), KeyboardButton(text=MANAGER_READY_BUTTON)],
+            [KeyboardButton(text=MANAGER_FIND_BUTTON), KeyboardButton(text=MANAGER_DONE_BUTTON)],
+            [KeyboardButton(text=MANAGER_TODAY_BUTTON), KeyboardButton(text=MANAGER_IN_DELIVERY_BUTTON)],
             [KeyboardButton(text=MANAGER_YESTERDAY_BUTTON), KeyboardButton(text=MANAGER_DATE_BUTTON)],
             [KeyboardButton(text=MANAGER_PROFILE_BUTTON)],
         ],

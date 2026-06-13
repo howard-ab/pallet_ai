@@ -2,11 +2,11 @@
   "timestamp": "2026-06-13T18:32:54.406561+03:00",
   "created_at": "2026-06-13T18:32:54.406561+03:00",
   "created_at_text": "13.06.2026 18:32 MSK",
-  "updated_at": "2026-06-13T18:32:54.406561+03:00",
-  "updated_at_text": "13.06.2026 18:32 MSK",
+  "updated_at": "2026-06-13T21:20:25.914902+03:00",
+  "updated_at_text": "13.06.2026 21:20 MSK",
   "date": "2026-06-13",
   "order_number": "MS-20260613-1832-5467423100",
-  "status": "new",
+  "status": "cancelled",
   "customer": {
     "user_id": 5467423100,
     "username": "Hoowieeee",
@@ -34,7 +34,25 @@
         "username": "Hoowieeee",
         "first_name": "Ховар"
       }
+    },
+    {
+      "timestamp": "2026-06-13T21:20:25.914902+03:00",
+      "timestamp_text": "13.06.2026 21:20 MSK",
+      "event": "status_changed",
+      "from_status": "new",
+      "status": "cancelled",
+      "actor": {
+        "user_id": 5467423100,
+        "username": "Hoowieeee",
+        "first_name": "Ховар",
+        "last_name": null
+      }
     }
   ],
-  "last_action_by": null
+  "last_action_by": {
+    "user_id": 5467423100,
+    "username": "Hoowieeee",
+    "first_name": "Ховар",
+    "last_name": null
+  }
 }

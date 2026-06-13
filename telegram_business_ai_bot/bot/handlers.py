@@ -382,6 +382,38 @@ def create_router(
             user=message.from_user,
             phone=message.contact.phone_number,
         )
+        pending_order = await pending_orders.get(message.from_user.id)
+        if pending_order is not None:
+            if customer.get("address"):
+                await answer_and_log(
+                    message,
+                    storage,
+                    profile_text(customer) + "\n\n<b>Контакты сохранены.</b> Передаю заказ менеджеру.",
+                    reply_markup=back_to_menu_keyboard(),
+                    parse_mode="HTML",
+                )
+                await finalize_pending_order(message, pending_order, state)
+                return
+            await answer_and_log(
+                message,
+                storage,
+                profile_text(customer) + "\n\nТеперь укажите адрес доставки.",
+                reply_markup=back_to_menu_keyboard(),
+                parse_mode="HTML",
+            )
+            await request_address_for_pending_order(message, state)
+            return
+
+        if customer.get("address"):
+            await state.clear()
+            await answer_and_log(
+                message,
+                storage,
+                profile_text(customer) + "\n\n<b>Готово.</b> Контакты сохранены.",
+                reply_markup=menu_keyboard,
+                parse_mode="HTML",
+            )
+            return
         await answer_and_log(
             message,
             storage,
@@ -414,6 +446,38 @@ def create_router(
             )
             return
         customer = await customer_storage.upsert(user=message.from_user, phone=message.text)
+        pending_order = await pending_orders.get(message.from_user.id)
+        if pending_order is not None:
+            if customer.get("address"):
+                await answer_and_log(
+                    message,
+                    storage,
+                    profile_text(customer) + "\n\n<b>Контакты сохранены.</b> Передаю заказ менеджеру.",
+                    reply_markup=back_to_menu_keyboard(),
+                    parse_mode="HTML",
+                )
+                await finalize_pending_order(message, pending_order, state)
+                return
+            await answer_and_log(
+                message,
+                storage,
+                profile_text(customer) + "\n\nТеперь укажите адрес доставки.",
+                reply_markup=back_to_menu_keyboard(),
+                parse_mode="HTML",
+            )
+            await request_address_for_pending_order(message, state)
+            return
+
+        if customer.get("address"):
+            await state.clear()
+            await answer_and_log(
+                message,
+                storage,
+                profile_text(customer) + "\n\n<b>Готово.</b> Контакты сохранены.",
+                reply_markup=menu_keyboard,
+                parse_mode="HTML",
+            )
+            return
         await answer_and_log(
             message,
             storage,
