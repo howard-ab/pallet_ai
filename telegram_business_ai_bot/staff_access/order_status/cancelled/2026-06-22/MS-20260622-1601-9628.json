@@ -1,0 +1,89 @@
+{
+  "timestamp": "2026-06-22T16:01:47.889559+03:00",
+  "created_at": "2026-06-22T16:01:47.889559+03:00",
+  "created_at_text": "22.06.2026 16:01 MSK",
+  "updated_at": "2026-06-22T16:02:06.271036+03:00",
+  "updated_at_text": "22.06.2026 16:02 MSK",
+  "date": "2026-06-22",
+  "order_number": "MS-20260622-1601-9628",
+  "status": "cancelled",
+  "customer": {
+    "user_id": 1934944785,
+    "username": "muhammadrafi05",
+    "first_name": "Muhammadrafi",
+    "phone": "79289060762"
+  },
+  "items": [
+    {
+      "name": "Фисташки турецкие жареные солёные, 500г",
+      "price": "1071 руб.",
+      "weight": "0,5 кг",
+      "quantity": 1
+    },
+    {
+      "name": "Абрикос сушёный (урюк) отборный, Таджикистан 1кг",
+      "price": "621 руб.",
+      "weight": "1 кг",
+      "quantity": 1
+    },
+    {
+      "name": "Курага натуральная турецкая джамбо, 1кг",
+      "price": "702 руб.",
+      "weight": "1 кг",
+      "quantity": 1
+    },
+    {
+      "name": "Финики сушёные арабские, 1кг",
+      "price": "468 руб.",
+      "weight": "1 кг",
+      "quantity": 1
+    }
+  ],
+  "total": 2862,
+  "history": [
+    {
+      "timestamp": "2026-06-22T16:01:47.889559+03:00",
+      "timestamp_text": "22.06.2026 16:01 MSK",
+      "event": "created",
+      "status": "new",
+      "actor": {
+        "source": "customer_bot",
+        "user_id": 1934944785,
+        "username": "muhammadrafi05",
+        "first_name": "Muhammadrafi"
+      }
+    },
+    {
+      "timestamp": "2026-06-22T16:02:02.358187+03:00",
+      "timestamp_text": "22.06.2026 16:02 MSK",
+      "event": "status_changed",
+      "from_status": "new",
+      "status": "assembled",
+      "actor": {
+        "user_id": 1934944785,
+        "username": "muhammadrafi05",
+        "first_name": "Muhammadrafi",
+        "last_name": null
+      }
+    },
+    {
+      "timestamp": "2026-06-22T16:02:06.271036+03:00",
+      "timestamp_text": "22.06.2026 16:02 MSK",
+      "event": "status_changed",
+      "from_status": "assembled",
+      "status": "cancelled",
+      "actor": {
+        "user_id": 1934944785,
+        "username": "muhammadrafi05",
+        "first_name": "Muhammadrafi",
+        "last_name": null
+      }
+    }
+  ],
+  "last_action_by": {
+    "user_id": 1934944785,
+    "username": "muhammadrafi05",
+    "first_name": "Muhammadrafi",
+    "last_name": null
+  }
+}
