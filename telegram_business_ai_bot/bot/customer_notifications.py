@@ -22,7 +22,7 @@ def _customer_chat_id(order: dict[str, object]) -> int | None:
         return None
 
 
-def _channel_url(raw_url: str) -> str:
+def normalize_channel_url(raw_url: str) -> str:
     value = raw_url.strip()
     if not value:
         return ""
@@ -35,6 +35,23 @@ def _channel_url(raw_url: str) -> str:
     return ""
 
 
+def channel_promo_text(channel_url: str) -> str:
+    normalized_channel_url = normalize_channel_url(channel_url)
+    if not normalized_channel_url:
+        return ""
+    safe_url = escape(normalized_channel_url, quote=True)
+    return (
+        "Подписывайтесь на наш канал 😉\n"
+        f"Следите за акциями, новинками и специальными предложениями: "
+        f"<a href=\"{safe_url}\">перейти в канал</a>."
+    )
+
+
+def _with_channel_promo(text: str, channel_url: str) -> str:
+    promo = channel_promo_text(channel_url)
+    return f"{text}\n\n{promo}" if promo else text
+
+
 def format_customer_status_message(
     order: dict[str, object],
     status: str,
@@ -44,18 +61,24 @@ def format_customer_status_message(
     order_number = escape(str(order.get("order_number") or "-"))
 
     if status == "in_delivery":
-        return (
+        return _with_channel_promo(
+            (
             "<b>🚚 Ваш заказ в доставке</b>\n\n"
             f"Номер заказа: <code>{order_number}</code>\n\n"
             "Курьер уже в пути. Постараемся доставить заказ в ближайшее время. "
             "Пожалуйста, оставайтесь на связи, чтобы курьер мог связаться с вами."
+            ),
+            channel_url,
         )
     
     if status == "cancelled":
-        return (
+        return _with_channel_promo(
+            (
             "<b>Ваш заказ отменён</b>\n\n"
             f"Номер заказа: <code>{order_number}</code>\n\n"
             "Свяжитесь с менеджером для уточнения деталей, если заказ был отменён не Вами. "
+            ),
+            channel_url,
         )
 
     if status == "delivered":
@@ -65,25 +88,24 @@ def format_customer_status_message(
             "Спасибо, что выбрали «Мир Сухофруктов»! "
             "Будем рады видеть вас снова."
         )
-        normalized_channel_url = _channel_url(channel_url)
-        if normalized_channel_url:
-            safe_url = escape(normalized_channel_url, quote=True)
-            text += (
-                "\n\nПодписывайтесь на наш канал, чтобы следить за акциями, "
-                f"новинками и специальными предложениями: <a href=\"{safe_url}\">перейти в канал</a>."
-            )
-        return text
+        return _with_channel_promo(text, channel_url)
 
     raise ValueError(f"Unsupported customer notification status: {status}")
 
 
 def channel_keyboard(channel_url: str) -> InlineKeyboardMarkup | None:
-    normalized_channel_url = _channel_url(channel_url)
+    normalized_channel_url = normalize_channel_url(channel_url)
     if not normalized_channel_url:
         return None
     return InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text="Подписаться на канал", url=normalized_channel_url)]
+            [
+                InlineKeyboardButton(
+                    text="Подписаться на канал 😉",
+                    style="primary",
+                    url=normalized_channel_url,
+                )
+            ]
         ]
     )
 

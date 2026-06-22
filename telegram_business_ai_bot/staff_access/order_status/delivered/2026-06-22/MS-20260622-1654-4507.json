@@ -1,0 +1,84 @@
+{
+  "timestamp": "2026-06-22T16:54:49.649669+03:00",
+  "created_at": "2026-06-22T16:54:49.649669+03:00",
+  "created_at_text": "22.06.2026 16:54 MSK",
+  "updated_at": "2026-06-22T16:55:13.145179+03:00",
+  "updated_at_text": "22.06.2026 16:55 MSK",
+  "date": "2026-06-22",
+  "order_number": "MS-20260622-1654-4507",
+  "status": "delivered",
+  "customer": {
+    "user_id": 5467423100,
+    "username": "Hoowieeee",
+    "first_name": "Ховар",
+    "phone": "79281704450"
+  },
+  "items": [
+    {
+      "name": "Финики сушёные арабские, 1кг",
+      "price": "468 руб.",
+      "weight": "1 кг",
+      "quantity": 1
+    }
+  ],
+  "total": 468,
+  "history": [
+    {
+      "timestamp": "2026-06-22T16:54:49.649669+03:00",
+      "timestamp_text": "22.06.2026 16:54 MSK",
+      "event": "created",
+      "status": "new",
+      "actor": {
+        "source": "customer_bot",
+        "user_id": 5467423100,
+        "username": "Hoowieeee",
+        "first_name": "Ховар"
+      }
+    },
+    {
+      "timestamp": "2026-06-22T16:54:57.532356+03:00",
+      "timestamp_text": "22.06.2026 16:54 MSK",
+      "event": "status_changed",
+      "from_status": "new",
+      "status": "assembled",
+      "actor": {
+        "user_id": 5467423100,
+        "username": "Hoowieeee",
+        "first_name": "Ховар",
+        "last_name": null
+      }
+    },
+    {
+      "timestamp": "2026-06-22T16:55:00.765884+03:00",
+      "timestamp_text": "22.06.2026 16:55 MSK",
+      "event": "status_changed",
+      "from_status": "assembled",
+      "status": "in_delivery",
+      "actor": {
+        "user_id": 5467423100,
+        "username": "Hoowieeee",
+        "first_name": "Ховар",
+        "last_name": null
+      }
+    },
+    {
+      "timestamp": "2026-06-22T16:55:13.145179+03:00",
+      "timestamp_text": "22.06.2026 16:55 MSK",
+      "event": "status_changed",
+      "from_status": "in_delivery",
+      "status": "delivered",
+      "actor": {
+        "user_id": 5467423100,
+        "username": "Hoowieeee",
+        "first_name": "Ховар",
+        "last_name": null
+      }
+    }
+  ],
+  "last_action_by": {
+    "user_id": 5467423100,
+    "username": "Hoowieeee",
+    "first_name": "Ховар",
+    "last_name": null
+  }
+}

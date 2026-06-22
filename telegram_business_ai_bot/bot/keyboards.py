@@ -11,7 +11,8 @@ ABOUT_BUTTON = "О магазине"
 CONTACT_BUTTON = "Связаться с менеджером"
 CART_BUTTON = "Корзина"
 OLD_SHOP_BUTTON = "Покупки"
-SHOP_BUTTON = "Каталог"
+SHOP_BUTTON = "🛍 Каталог"
+CHANNEL_BUTTON = "📢 Акции 😉"
 PROFILE_BUTTON = "Мои контакты"
 HOME_BUTTON = "В главное меню"
 OLD_BACK_BUTTON = "Назад в меню"
@@ -46,18 +47,54 @@ def build_main_menu_keyboard(shop_webapp_url: str = "", checkout_api_url: str = 
     launch_url = build_webapp_launch_url(shop_webapp_url, checkout_api_url)
     shop_button = KeyboardButton(
         text=SHOP_BUTTON,
+        style="success",
         web_app=WebAppInfo(url=launch_url),
-    ) if launch_url else KeyboardButton(text=SHOP_BUTTON)
+    ) if launch_url else KeyboardButton(text=SHOP_BUTTON, style="success")
 
     return ReplyKeyboardMarkup(
         keyboard=[
-            [shop_button, KeyboardButton(text=ASK_AI_BUTTON)],
+            [shop_button],
+            [KeyboardButton(text=ASK_AI_BUTTON)],
             [KeyboardButton(text=PROFILE_BUTTON), KeyboardButton(text=CONTACT_BUTTON)],
-            [KeyboardButton(text=ABOUT_BUTTON)],
+            [
+                KeyboardButton(text=ABOUT_BUTTON),
+                KeyboardButton(text=CHANNEL_BUTTON, style="primary"),
+            ],
         ],
         resize_keyboard=True,
         input_field_placeholder="Выберите действие",
     )
+
+
+def customer_promo_keyboard(
+    shop_webapp_url: str = "",
+    checkout_api_url: str = "",
+    channel_url: str = "",
+) -> InlineKeyboardMarkup | None:
+    rows: list[list[InlineKeyboardButton]] = []
+    launch_url = build_webapp_launch_url(shop_webapp_url, checkout_api_url)
+    if launch_url:
+        rows.append(
+            [
+                InlineKeyboardButton(
+                    text="🛍 Открыть каталог",
+                    style="success",
+                    web_app=WebAppInfo(url=launch_url),
+                )
+            ]
+        )
+    normalized_channel_url = channel_url.strip()
+    if normalized_channel_url:
+        rows.append(
+            [
+                InlineKeyboardButton(
+                    text="Подписаться на канал 😉",
+                    style="primary",
+                    url=normalized_channel_url,
+                )
+            ]
+        )
+    return InlineKeyboardMarkup(inline_keyboard=rows) if rows else None
 
 
 def catalog_keyboard() -> ReplyKeyboardMarkup:

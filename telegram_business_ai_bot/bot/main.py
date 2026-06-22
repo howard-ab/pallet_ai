@@ -122,6 +122,7 @@ async def main() -> None:
             customer_storage=customer_storage,
             manager_notifier=manager_notifier,
             shop_webapp_url=settings.shop_webapp_url,
+            shop_channel_url=settings.shop_channel_url,
             checkout_api_url=settings.checkout_api_url,
         )
     )

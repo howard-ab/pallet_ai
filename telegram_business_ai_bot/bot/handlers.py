@@ -20,20 +20,22 @@ from bot.catalog import (
 )
 from bot.customers import CustomerStorage, is_valid_phone
 from bot.customers import PendingOrderStorage, is_valid_rostov_address
+from bot.customer_notifications import channel_keyboard, channel_promo_text
 from bot.manager_notifications import ManagerNotifier
 from bot.keyboards import (
     ABOUT_BUTTON,
     ASK_AI_BUTTON,
     CART_BUTTON,
     CATALOG_BUTTON,
+    CHANNEL_BUTTON,
     CONTACT_BUTTON,
     HOME_BUTTON,
     OLD_BACK_BUTTON,
     OLD_SHOP_BUTTON,
     PROFILE_BUTTON,
     SHOP_BUTTON,
-    back_to_menu_keyboard,
     build_main_menu_keyboard,
+    customer_promo_keyboard,
     catalog_keyboard,
     cart_actions_keyboard,
     contact_request_keyboard,
@@ -61,13 +63,13 @@ WELCOME_ACTIONS_TEXT = (
     "Посмотреть и заказать товары прямо на сайте по категориям.\n\n"
     "• <b>Задать вопрос Искусственному Интеллекту</b>\n"
     "Уточнить состав, вкус, отличия и полезные свойства продуктов, или попросить рекомендовать Вам что-то из каталога.\n\n"
-    "• <b>Корзина</b>\n"
-    "Проверить выбранные позиции перед оформлением.\n\n"
+    "• <b>Акции и новинки</b>\n"
+    "Подписаться на канал магазина и не пропускать выгодные предложения 😉\n\n"
     "• <b>Связаться с менеджером</b>\n"
     "Быстро задать вопрос по заказу и доставке.\n\n"
     "• <b>О магазине</b>\n"
     "Посмотреть адреса и контакты.\n\n"
-    "👇 Чтобы оформить заказ, нажмите кнопку <b>Заказать</b> в нижнем меню."
+    "👇 Чтобы оформить заказ, нажмите зелёную кнопку <b>🛍 Каталог</b>."
 )
 
 ABOUT_TEXT = (
@@ -103,7 +105,7 @@ MAIN_MENU_TEXT = (
     "• <b>Задать вопрос ИИ</b> — уточнить состав и свойства\n"
     "• <b>Корзина</b> — проверить выбранные позиции\n"
     "• <b>Связаться с менеджером</b> — быстро написать по заказу\n\n"
-    "👇 Нажмите кнопку <b>Заказать</b> в нижнем меню 🛍."
+    "👇 Нажмите кнопку <b>Каталог</b> в нижнем меню 🛍."
 )
 
 
@@ -205,6 +207,7 @@ async def show_cart(
     message: Message,
     state: FSMContext,
     storage: SessionStorage,
+    menu_keyboard,
 ) -> None:
     data = await state.get_data()
     items = data.get("cart", [])
@@ -213,7 +216,7 @@ async def show_cart(
             message,
             storage,
             "<b>Корзина</b>\n\nПока пусто. Откройте витрину или каталог и добавьте товары.",
-            reply_markup=back_to_menu_keyboard(),
+            reply_markup=menu_keyboard,
             parse_mode="HTML",
         )
         return
@@ -227,7 +230,7 @@ async def show_cart(
         message,
         storage,
         "\n".join(lines),
-        reply_markup=back_to_menu_keyboard(),
+        reply_markup=menu_keyboard,
         parse_mode="HTML",
     )
 
@@ -238,11 +241,21 @@ def create_router(
     customer_storage: CustomerStorage,
     manager_notifier: ManagerNotifier,
     shop_webapp_url: str = "",
+    shop_channel_url: str = "",
     checkout_api_url: str = "",
 ) -> Router:
     router = Router()
     menu_keyboard = build_main_menu_keyboard(shop_webapp_url, checkout_api_url)
+    promo_keyboard = customer_promo_keyboard(
+        shop_webapp_url,
+        checkout_api_url,
+        shop_channel_url,
+    )
+    promo_text = channel_promo_text(shop_channel_url)
     pending_orders = PendingOrderStorage()
+
+    def with_channel_promo(text: str) -> str:
+        return f"{text}\n\n{promo_text}" if promo_text else text
 
     async def request_address_for_pending_order(
         message: Message,
@@ -254,7 +267,7 @@ def create_router(
             message,
             storage,
             address_request_text(),
-            reply_markup=back_to_menu_keyboard(),
+            reply_markup=menu_keyboard,
             parse_mode="HTML",
         )
 
@@ -292,8 +305,8 @@ def create_router(
         await answer_and_log(
             message,
             storage,
-            format_customer_order_confirmation(order),
-            reply_markup=back_to_menu_keyboard(),
+            format_customer_order_confirmation(order, channel_promo=promo_text),
+            reply_markup=menu_keyboard,
             parse_mode="HTML",
         )
 
@@ -343,6 +356,13 @@ def create_router(
     @router.message(CommandStart())
     async def start(message: Message, state: FSMContext) -> None:
         await state.clear()
+        await answer_and_log(
+            message,
+            storage,
+            with_channel_promo(WELCOME_TEXT),
+            reply_markup=promo_keyboard,
+            parse_mode="HTML",
+        )
         customer = await customer_storage.get(message.from_user.id) if message.from_user else None
         if message.from_user and customer is None:
             await answer_and_log(
@@ -359,17 +379,11 @@ def create_router(
                 message,
                 storage,
                 address_request_text(),
-                reply_markup=back_to_menu_keyboard(),
+                reply_markup=menu_keyboard,
                 parse_mode="HTML",
             )
             return
 
-        await answer_and_log(
-            message,
-            storage,
-            WELCOME_TEXT,
-            parse_mode="HTML",
-        )
         await answer_and_log(
             message,
             storage,
@@ -390,7 +404,7 @@ def create_router(
             message,
             storage,
             profile_text(customer) + "\n\nТеперь укажите адрес доставки.",
-            reply_markup=back_to_menu_keyboard(),
+            reply_markup=menu_keyboard,
             parse_mode="HTML",
         )
         await request_address_for_pending_order(message, state)
@@ -422,7 +436,7 @@ def create_router(
             message,
             storage,
             profile_text(customer) + "\n\nТеперь укажите адрес доставки.",
-            reply_markup=back_to_menu_keyboard(),
+            reply_markup=menu_keyboard,
             parse_mode="HTML",
         )
         await request_address_for_pending_order(message, state)
@@ -470,7 +484,7 @@ def create_router(
             parse_mode="HTML",
         )
 
-    @router.message(F.text.in_({SHOP_BUTTON, OLD_SHOP_BUTTON}))
+    @router.message(F.text.in_({SHOP_BUTTON, OLD_SHOP_BUTTON, CATALOG_BUTTON}))
     async def shop(message: Message) -> None:
         if not shop_webapp_url:
             await answer_and_log(
@@ -478,10 +492,17 @@ def create_router(
                 storage,
                 "<b>Покупки</b>\n\nMini App готов в папке <code>webapp/</code>. "
                 "Чтобы открыть его из Telegram, укажите HTTPS-ссылку в <code>SHOP_WEBAPP_URL</code>.",
-                reply_markup=back_to_menu_keyboard(),
+                reply_markup=menu_keyboard,
                 parse_mode="HTML",
             )
             return
+        await answer_and_log(
+            message,
+            storage,
+            "Нажмите зелёную кнопку <b>🛍 Каталог</b>, чтобы открыть витрину.",
+            reply_markup=menu_keyboard,
+            parse_mode="HTML",
+        )
         # await answer_and_log(
         #     message,
         #     storage,
@@ -540,7 +561,7 @@ def create_router(
             storage,
             f"<b>{escape(category)} / {escape(subcategory)}</b>\n\n"
             "Подборка товаров. Нажмите «В корзину» под нужной карточкой.",
-            reply_markup=back_to_menu_keyboard(),
+            reply_markup=menu_keyboard,
             parse_mode="HTML",
         )
 
@@ -577,7 +598,7 @@ def create_router(
             storage,
             "<b>AI-помощник</b>\n\n"
             "Напишите вопрос о вкусе, составе, подарке или подборе товара.",
-            reply_markup=back_to_menu_keyboard(),
+            reply_markup=menu_keyboard,
             parse_mode="HTML",
         )
 
@@ -597,12 +618,12 @@ def create_router(
             success=answer != FALLBACK_MESSAGE,
         )
         await state.clear()
-        await answer_and_log(message, storage, answer, reply_markup=back_to_menu_keyboard())
+        await answer_and_log(message, storage, answer, reply_markup=menu_keyboard)
 
     @router.message(Command("cart"))
     @router.message(F.text == CART_BUTTON)
     async def cart(message: Message, state: FSMContext) -> None:
-        await show_cart(message, state, storage)
+        await show_cart(message, state, storage, menu_keyboard)
 
     @router.message(F.web_app_data)
     async def webapp_order(message: Message, state: FSMContext) -> None:
@@ -645,7 +666,7 @@ def create_router(
         await answer_and_log(
             message,
             storage,
-            ABOUT_TEXT,
+            with_channel_promo(ABOUT_TEXT),
             reply_markup=menu_keyboard,
             parse_mode="HTML",
         )
@@ -657,8 +678,26 @@ def create_router(
         await answer_and_log(
             message,
             storage,
-            CONTACT_TEXT,
-            reply_markup=back_to_menu_keyboard(),
+            with_channel_promo(CONTACT_TEXT),
+            reply_markup=menu_keyboard,
+            parse_mode="HTML",
+        )
+
+    @router.message(F.text == CHANNEL_BUTTON)
+    async def show_channel(message: Message) -> None:
+        if not promo_text:
+            await answer_and_log(
+                message,
+                storage,
+                "Ссылка на канал скоро появится.",
+                reply_markup=menu_keyboard,
+            )
+            return
+        await answer_and_log(
+            message,
+            storage,
+            promo_text,
+            reply_markup=channel_keyboard(shop_channel_url),
             parse_mode="HTML",
         )
 
@@ -688,7 +727,7 @@ def create_router(
         if callback.message:
             await callback.message.answer(
                 "<b>Корзина очищена</b>\n\nМожно выбрать товары заново.",
-                reply_markup=back_to_menu_keyboard(),
+                reply_markup=menu_keyboard,
                 parse_mode="HTML",
             )
 
@@ -741,7 +780,7 @@ def create_router(
                         message,
                         storage,
                         "Адрес выглядит неполным. Укажите адрес в пределах Ростова-на-Дону: улица, дом, квартира, подъезд или домофон. Например: Ростов-на-Дону, ул. Пойменная, 21, кв. 14.",
-                        reply_markup=back_to_menu_keyboard(),
+                        reply_markup=menu_keyboard,
                     )
                     return
                 saved_customer = await customer_storage.update_address(message.from_user, message.text)
@@ -750,7 +789,7 @@ def create_router(
                         message,
                         storage,
                         f"<b>Адрес сохранен</b>\n\n{escape(str(saved_customer.get('address') or '-'))}\n\nПодтверждение получено, передаю заказ менеджеру.",
-                        reply_markup=back_to_menu_keyboard(),
+                        reply_markup=menu_keyboard,
                         parse_mode="HTML",
                     )
                     await finalize_pending_order(message, pending_order, state)
