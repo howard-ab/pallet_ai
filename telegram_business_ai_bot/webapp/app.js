@@ -1,6 +1,8 @@
 function startupMark(step) {
   const marker = new Image();
   marker.src = `./startup-check.gif?step=${encodeURIComponent(step)}&t=${Date.now()}`;
+  window.__startupMarkers = window.__startupMarkers || [];
+  window.__startupMarkers.push(marker);
 }
 
 startupMark("app-start");
@@ -87,8 +89,11 @@ const els = {
 startupMark("dom-ready");
 
 function initializeTelegramWebApp() {
-  if (!tg) return;
   try {
+    tg = window.Telegram && window.Telegram.WebApp
+      ? window.Telegram.WebApp
+      : null;
+    if (!tg) return;
     if (typeof tg.ready === "function") {
       tg.ready();
     }
