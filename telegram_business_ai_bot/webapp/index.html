@@ -151,7 +151,19 @@
       </div>
     </aside>
 
-    <script src="./app.js?v=compat-20260622"></script>
+    <script>
+      window.onerror = function (message, source, line, column) {
+        var panel = document.getElementById("runtimeErrorPanel");
+        if (!panel) {
+          panel = document.createElement("pre");
+          panel.id = "runtimeErrorPanel";
+          panel.style.cssText = "position:fixed;z-index:99999;left:8px;right:8px;bottom:8px;max-height:45vh;overflow:auto;padding:12px;background:#fff0f0;color:#9b1c1c;border:2px solid #9b1c1c;white-space:pre-wrap;font:13px monospace";
+          document.body.appendChild(panel);
+        }
+        panel.textContent = "JavaScript error: " + message + "\nСтрока: " + line + ", столбец: " + column;
+      };
+    </script>
+    <script src="./app.js?v=compat-20260622-2"></script>
     <script>
       window.setTimeout(function () {
         var appRoot = document.getElementById("appRoot");
