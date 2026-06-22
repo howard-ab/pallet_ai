@@ -646,7 +646,7 @@ def create_router(
             message,
             storage,
             ABOUT_TEXT,
-            reply_markup=back_to_menu_keyboard(),
+            reply_markup=menu_keyboard,
             parse_mode="HTML",
         )
 

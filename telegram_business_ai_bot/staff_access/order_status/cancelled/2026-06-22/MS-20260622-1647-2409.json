@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-06-22T16:47:24.808617+03:00",
+  "created_at": "2026-06-22T16:47:24.808617+03:00",
+  "created_at_text": "22.06.2026 16:47 MSK",
+  "updated_at": "2026-06-22T16:47:28.843386+03:00",
+  "updated_at_text": "22.06.2026 16:47 MSK",
+  "date": "2026-06-22",
+  "order_number": "MS-20260622-1647-2409",
+  "status": "cancelled",
+  "customer": {
+    "user_id": 1934944785,
+    "username": "muhammadrafi05",
+    "first_name": "Muhammadrafi",
+    "phone": "79289060762"
+  },
+  "items": [
+    {
+      "name": "Финики сушёные арабские, 1кг",
+      "price": "468 руб.",
+      "weight": "1 кг",
+      "quantity": 1
+    }
+  ],
+  "total": 468,
+  "history": [
+    {
+      "timestamp": "2026-06-22T16:47:24.808617+03:00",
+      "timestamp_text": "22.06.2026 16:47 MSK",
+      "event": "created",
+      "status": "new",
+      "actor": {
+        "source": "customer_bot",
+        "user_id": 1934944785,
+        "username": "muhammadrafi05",
+        "first_name": "Muhammadrafi"
+      }
+    },
+    {
+      "timestamp": "2026-06-22T16:47:28.843386+03:00",
+      "timestamp_text": "22.06.2026 16:47 MSK",
+      "event": "status_changed",
+      "from_status": "new",
+      "status": "cancelled",
+      "actor": {
+        "user_id": 5467423100,
+        "username": "Hoowieeee",
+        "first_name": "Ховар",
+        "last_name": null
+      }
+    }
+  ],
+  "last_action_by": {
+    "user_id": 5467423100,
+    "username": "Hoowieeee",
+    "first_name": "Ховар",
+    "last_name": null
+  }
+}
