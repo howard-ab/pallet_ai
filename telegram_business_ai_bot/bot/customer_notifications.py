@@ -9,7 +9,7 @@ from aiogram.exceptions import TelegramAPIError, TelegramNetworkError
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 
-CUSTOMER_NOTIFICATION_STATUSES = {"in_delivery", "delivered"}
+CUSTOMER_NOTIFICATION_STATUSES = {"in_delivery", "delivered", "Cancelled"}
 
 
 def _customer_chat_id(order: dict[str, object]) -> int | None:
