@@ -9,7 +9,7 @@ from aiogram.exceptions import TelegramAPIError, TelegramNetworkError
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 
-CUSTOMER_NOTIFICATION_STATUSES = {"in_delivery", "delivered", "Cancelled"}
+CUSTOMER_NOTIFICATION_STATUSES = {"in_delivery", "delivered", "cancelled"}
 
 
 def _customer_chat_id(order: dict[str, object]) -> int | None:
@@ -51,7 +51,7 @@ def format_customer_status_message(
             "Пожалуйста, оставайтесь на связи, чтобы курьер мог связаться с вами."
         )
     
-    if status == "Cancelled":
+    if status == "cancelled":
         return (
             "<b>Ваш заказ отменён</b>\n\n"
             f"Номер заказа: <code>{order_number}</code>\n\n"

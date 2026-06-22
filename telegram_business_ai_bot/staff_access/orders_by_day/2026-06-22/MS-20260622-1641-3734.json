@@ -1,0 +1,97 @@
+{
+  "timestamp": "2026-06-22T16:41:20.996239+03:00",
+  "created_at": "2026-06-22T16:41:20.996239+03:00",
+  "created_at_text": "22.06.2026 16:41 MSK",
+  "updated_at": "2026-06-22T16:41:53.050790+03:00",
+  "updated_at_text": "22.06.2026 16:41 MSK",
+  "date": "2026-06-22",
+  "order_number": "MS-20260622-1641-3734",
+  "status": "delivered",
+  "customer": {
+    "user_id": 5467423100,
+    "username": "Hoowieeee",
+    "first_name": "Ховар",
+    "phone": "79281704450"
+  },
+  "items": [
+    {
+      "name": "Абрикос сушёный (урюк) отборный, Таджикистан 1кг",
+      "price": "621 руб.",
+      "weight": "1 кг",
+      "quantity": 1
+    }
+  ],
+  "total": 621,
+  "history": [
+    {
+      "timestamp": "2026-06-22T16:41:20.996239+03:00",
+      "timestamp_text": "22.06.2026 16:41 MSK",
+      "event": "created",
+      "status": "new",
+      "actor": {
+        "source": "customer_bot",
+        "user_id": 5467423100,
+        "username": "Hoowieeee",
+        "first_name": "Ховар"
+      }
+    },
+    {
+      "timestamp": "2026-06-22T16:41:27.446968+03:00",
+      "timestamp_text": "22.06.2026 16:41 MSK",
+      "event": "status_changed",
+      "from_status": "new",
+      "status": "cancelled",
+      "actor": {
+        "user_id": 5467423100,
+        "username": "Hoowieeee",
+        "first_name": "Ховар",
+        "last_name": null
+      }
+    },
+    {
+      "timestamp": "2026-06-22T16:41:47.847007+03:00",
+      "timestamp_text": "22.06.2026 16:41 MSK",
+      "event": "status_changed",
+      "from_status": "cancelled",
+      "status": "assembled",
+      "actor": {
+        "user_id": 1934944785,
+        "username": "muhammadrafi05",
+        "first_name": "Muhammadrafi",
+        "last_name": null
+      }
+    },
+    {
+      "timestamp": "2026-06-22T16:41:50.609890+03:00",
+      "timestamp_text": "22.06.2026 16:41 MSK",
+      "event": "status_changed",
+      "from_status": "assembled",
+      "status": "in_delivery",
+      "actor": {
+        "user_id": 1934944785,
+        "username": "muhammadrafi05",
+        "first_name": "Muhammadrafi",
+        "last_name": null
+      }
+    },
+    {
+      "timestamp": "2026-06-22T16:41:53.050790+03:00",
+      "timestamp_text": "22.06.2026 16:41 MSK",
+      "event": "status_changed",
+      "from_status": "in_delivery",
+      "status": "delivered",
+      "actor": {
+        "user_id": 1934944785,
+        "username": "muhammadrafi05",
+        "first_name": "Muhammadrafi",
+        "last_name": null
+      }
+    }
+  ],
+  "last_action_by": {
+    "user_id": 1934944785,
+    "username": "muhammadrafi05",
+    "first_name": "Muhammadrafi",
+    "last_name": null
+  }
+}
