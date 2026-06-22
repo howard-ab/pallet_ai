@@ -1,9 +1,19 @@
-const tg = window.Telegram && window.Telegram.WebApp
-  ? window.Telegram.WebApp
-  : null;
-if (tg) {
-  tg.ready();
-  tg.expand();
+let tg = null;
+try {
+  tg = window.Telegram && window.Telegram.WebApp
+    ? window.Telegram.WebApp
+    : null;
+  if (tg) {
+    if (typeof tg.ready === "function") {
+      tg.ready();
+    }
+    if (typeof tg.expand === "function") {
+      tg.expand();
+    }
+  }
+} catch (error) {
+  console.warn("Telegram WebApp SDK initialization failed", error);
+  tg = null;
 }
 
 const searchParams = new URLSearchParams(window.location.search);

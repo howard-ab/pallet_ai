@@ -1,0 +1,120 @@
+{
+  "timestamp": "2026-06-22T14:52:21.545367+03:00",
+  "created_at": "2026-06-22T14:52:21.545367+03:00",
+  "created_at_text": "22.06.2026 14:52 MSK",
+  "updated_at": "2026-06-22T15:37:18.903465+03:00",
+  "updated_at_text": "22.06.2026 15:37 MSK",
+  "date": "2026-06-22",
+  "order_number": "MS-20260622-1452-7655",
+  "status": "delivered",
+  "customer": {
+    "user_id": 7111751327,
+    "username": "rizvanrf",
+    "first_name": "Rizvon",
+    "phone": "992944886677"
+  },
+  "items": [
+    {
+      "name": "Абрикос сушёный (урюк) отборный, Таджикистан 1кг",
+      "price": "621 руб.",
+      "weight": "1 кг",
+      "quantity": 1
+    },
+    {
+      "name": "Фисташки турецкие жареные солёные, 500г",
+      "price": "1071 руб.",
+      "weight": "0,5 кг",
+      "quantity": 1
+    },
+    {
+      "name": "Финики сушёные арабские, 1кг",
+      "price": "468 руб.",
+      "weight": "1 кг",
+      "quantity": 1
+    },
+    {
+      "name": "Курага натуральная турецкая джамбо, 1кг",
+      "price": "702 руб.",
+      "weight": "1 кг",
+      "quantity": 1
+    },
+    {
+      "name": "Семечки тыквенные сырые неочищенные, 2кг",
+      "price": "324 руб.",
+      "weight": "2 кг",
+      "quantity": 1
+    },
+    {
+      "name": "Миндаль сырой отборный, 1кг",
+      "price": "780 руб.",
+      "weight": "1 кг",
+      "quantity": 1
+    },
+    {
+      "name": "Фундук сырой светлый, 500г",
+      "price": "870 руб.",
+      "weight": "0,5 кг",
+      "quantity": 1
+    }
+  ],
+  "total": 4836,
+  "history": [
+    {
+      "timestamp": "2026-06-22T14:52:21.545367+03:00",
+      "timestamp_text": "22.06.2026 14:52 MSK",
+      "event": "created",
+      "status": "new",
+      "actor": {
+        "source": "customer_bot",
+        "user_id": 7111751327,
+        "username": "rizvanrf",
+        "first_name": "Rizvon"
+      }
+    },
+    {
+      "timestamp": "2026-06-22T15:37:14.867512+03:00",
+      "timestamp_text": "22.06.2026 15:37 MSK",
+      "event": "status_changed",
+      "from_status": "new",
+      "status": "assembled",
+      "actor": {
+        "user_id": 1934944785,
+        "username": "muhammadrafi05",
+        "first_name": "Muhammadrafi",
+        "last_name": null
+      }
+    },
+    {
+      "timestamp": "2026-06-22T15:37:17.467157+03:00",
+      "timestamp_text": "22.06.2026 15:37 MSK",
+      "event": "status_changed",
+      "from_status": "assembled",
+      "status": "in_delivery",
+      "actor": {
+        "user_id": 1934944785,
+        "username": "muhammadrafi05",
+        "first_name": "Muhammadrafi",
+        "last_name": null
+      }
+    },
+    {
+      "timestamp": "2026-06-22T15:37:18.903465+03:00",
+      "timestamp_text": "22.06.2026 15:37 MSK",
+      "event": "status_changed",
+      "from_status": "in_delivery",
+      "status": "delivered",
+      "actor": {
+        "user_id": 1934944785,
+        "username": "muhammadrafi05",
+        "first_name": "Muhammadrafi",
+        "last_name": null
+      }
+    }
+  ],
+  "last_action_by": {
+    "user_id": 1934944785,
+    "username": "muhammadrafi05",
+    "first_name": "Muhammadrafi",
+    "last_name": null
+  }
+}

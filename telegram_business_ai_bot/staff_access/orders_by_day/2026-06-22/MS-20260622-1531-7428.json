@@ -1,0 +1,82 @@
+{
+  "timestamp": "2026-06-22T15:31:07.183168+03:00",
+  "created_at": "2026-06-22T15:31:07.183168+03:00",
+  "created_at_text": "22.06.2026 15:31 MSK",
+  "updated_at": "2026-06-22T15:36:03.255105+03:00",
+  "updated_at_text": "22.06.2026 15:36 MSK",
+  "date": "2026-06-22",
+  "order_number": "MS-20260622-1531-7428",
+  "status": "cancelled",
+  "customer": {
+    "user_id": 5583233066,
+    "username": null,
+    "first_name": "Anvar",
+    "phone": "+79185617985"
+  },
+  "items": [
+    {
+      "name": "Абрикос сушёный (урюк) отборный, Таджикистан 1кг",
+      "price": "156 руб.",
+      "weight": "0,25 кг",
+      "quantity": 1
+    },
+    {
+      "name": "Фисташки турецкие жареные солёные, 500г",
+      "price": "536 руб.",
+      "weight": "0,25 кг",
+      "quantity": 1
+    },
+    {
+      "name": "Финики сушёные арабские, 1кг",
+      "price": "117 руб.",
+      "weight": "0,25 кг",
+      "quantity": 1
+    },
+    {
+      "name": "Изюм жёлтый кисло-сладкий, Узбекистан 500г",
+      "price": "230 руб.",
+      "weight": "0,25 кг",
+      "quantity": 1
+    },
+    {
+      "name": "Инжир сушёный натуральный, 500г",
+      "price": "210 руб.",
+      "weight": "0,25 кг",
+      "quantity": 1
+    }
+  ],
+  "total": 1249,
+  "history": [
+    {
+      "timestamp": "2026-06-22T15:31:07.183168+03:00",
+      "timestamp_text": "22.06.2026 15:31 MSK",
+      "event": "created",
+      "status": "new",
+      "actor": {
+        "source": "customer_bot",
+        "user_id": 5583233066,
+        "username": null,
+        "first_name": "Anvar"
+      }
+    },
+    {
+      "timestamp": "2026-06-22T15:36:03.255105+03:00",
+      "timestamp_text": "22.06.2026 15:36 MSK",
+      "event": "status_changed",
+      "from_status": "new",
+      "status": "cancelled",
+      "actor": {
+        "user_id": 1934944785,
+        "username": "muhammadrafi05",
+        "first_name": "Muhammadrafi",
+        "last_name": null
+      }
+    }
+  ],
+  "last_action_by": {
+    "user_id": 1934944785,
+    "username": "muhammadrafi05",
+    "first_name": "Muhammadrafi",
+    "last_name": null
+  }
+}
