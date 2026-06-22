@@ -16,6 +16,7 @@
     <h1>Проверка браузера Mini App</h1>
     <p id="status">JavaScript запускается…</p>
     <ul id="results"></ul>
+    <script src="./compat-external.js?v=1"></script>
     <script>
       (function () {
         var results = document.getElementById("results");
@@ -41,6 +42,8 @@
 
         status.textContent = "JavaScript работает";
         status.className = "ok";
+        add("внешний JavaScript", window.compatExternalScriptLoaded === true,
+          window.compatExternalScriptLoaded === true ? "выполняется" : "заблокирован");
         add("User-Agent", true, navigator.userAgent);
         add("Promise", typeof Promise !== "undefined");
         add("fetch", typeof fetch === "function");

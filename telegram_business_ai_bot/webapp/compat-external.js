@@ -1,0 +1,2 @@
+window.compatExternalScriptLoaded = true;
+
