@@ -403,7 +403,8 @@ function pickFeaturedProducts(allProducts) {
 
 function isSubsequence(query, target) {
   let position = 0;
-  for (const char of target) {
+  for (let index = 0; index < target.length; index += 1) {
+    const char = target.charAt(index);
     if (char === query[position]) {
       position += 1;
       if (position === query.length) {
@@ -850,8 +851,12 @@ els.orderButton.onclick = () => {
         launch_source: "webapp",
       }),
     })
-      .then(async (response) => {
-        const data = await response.json().catch(() => ({}));
+      .then((response) => response.json()
+        .catch(() => ({}))
+        .then((data) => ({ response: response, data: data })))
+      .then((result) => {
+        const response = result.response;
+        const data = result.data;
         if (!response.ok || !data.ok) {
           throw new Error(data.error || "checkout_failed");
         }
