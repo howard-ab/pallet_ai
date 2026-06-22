@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Проверка браузера</title>
+    <style>
+      body { font-family: sans-serif; margin: 20px; line-height: 1.45; }
+      h1 { font-size: 22px; }
+      .ok { color: #167a35; }
+      .bad { color: #b42318; }
+      li { margin: 7px 0; overflow-wrap: anywhere; }
+    </style>
+  </head>
+  <body>
+    <h1>Проверка браузера Mini App</h1>
+    <p id="status">JavaScript запускается…</p>
+    <ul id="results"></ul>
+    <script>
+      (function () {
+        var results = document.getElementById("results");
+        var status = document.getElementById("status");
+
+        function add(name, ok, details) {
+          var item = document.createElement("li");
+          item.className = ok ? "ok" : "bad";
+          item.appendChild(document.createTextNode(
+            (ok ? "✓ " : "✗ ") + name + (details ? ": " + details : "")
+          ));
+          results.appendChild(item);
+        }
+
+        function syntax(name, source) {
+          try {
+            new Function(source);
+            add(name, true, "поддерживается");
+          } catch (error) {
+            add(name, false, String(error));
+          }
+        }
+
+        status.textContent = "JavaScript работает";
+        status.className = "ok";
+        add("User-Agent", true, navigator.userAgent);
+        add("Promise", typeof Promise !== "undefined");
+        add("fetch", typeof fetch === "function");
+        add("URLSearchParams", typeof URLSearchParams !== "undefined");
+        add("Map", typeof Map !== "undefined");
+        add("Set", typeof Set !== "undefined");
+        add("Object.entries", typeof Object.entries === "function");
+        add("Object.fromEntries", typeof Object.fromEntries === "function");
+
+        syntax("const/let", "const value = 1; let other = 2;");
+        syntax("стрелочные функции", "var fn = () => 1;");
+        syntax("шаблонные строки", "var value = `test`; ");
+        syntax("деструктуризация", "var [first] = [1];");
+        syntax("параметры по умолчанию", "function test(value = 1) {}");
+        syntax("spread объектов", "var copy = {...{a: 1}};");
+        syntax("optional chaining", "var value = window.Telegram?.WebApp;");
+
+        try {
+          var request = new XMLHttpRequest();
+          request.open("GET", "./catalog.json?compat-test=1", true);
+          request.onreadystatechange = function () {
+            if (request.readyState === 4) {
+              add("catalog.json", request.status === 200, "HTTP " + request.status);
+            }
+          };
+          request.onerror = function () {
+            add("catalog.json", false, "ошибка сети");
+          };
+          request.send();
+        } catch (error) {
+          add("XMLHttpRequest", false, String(error));
+        }
+      }());
+    </script>
+  </body>
+</html>

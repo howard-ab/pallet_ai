@@ -1,4 +1,6 @@
-const tg = window.Telegram?.WebApp;
+const tg = window.Telegram && window.Telegram.WebApp
+  ? window.Telegram.WebApp
+  : null;
 if (tg) {
   tg.ready();
   tg.expand();
@@ -74,8 +76,12 @@ const els = {
 
 function hideSplash() {
   window.setTimeout(() => {
-    els.splash?.classList.add("hidden");
-    els.appRoot?.classList.remove("app-hidden");
+    if (els.splash) {
+      els.splash.classList.add("hidden");
+    }
+    if (els.appRoot) {
+      els.appRoot.classList.remove("app-hidden");
+    }
   }, 3000);
 }
 
@@ -216,17 +222,14 @@ function applyDiscountFlag(products, discountedKeys) {
 }
 
 function applyDiscountFlagToCatalog(catalog, discountedKeys) {
-  return Object.fromEntries(
-    Object.entries(catalog).map(([category, subcategories]) => [
-      category,
-      Object.fromEntries(
-        Object.entries(subcategories).map(([subcategory, products]) => [
-          subcategory,
-          applyDiscountFlag(products, discountedKeys),
-        ])
-      ),
-    ])
-  );
+  const result = {};
+  Object.entries(catalog).forEach(([category, subcategories]) => {
+    result[category] = {};
+    Object.entries(subcategories).forEach(([subcategory, products]) => {
+      result[category][subcategory] = applyDiscountFlag(products, discountedKeys);
+    });
+  });
+  return result;
 }
 
 function flattenCatalog(rawCatalog) {
@@ -265,7 +268,8 @@ function isChocolateProduct(product) {
 }
 
 function takeRawProducts(rawCatalog, category, subcategory, predicate = null) {
-  const items = (rawCatalog[category]?.[subcategory] || []).map((item) => ({
+  const categoryItems = rawCatalog[category] || {};
+  const items = (categoryItems[subcategory] || []).map((item) => ({
     ...item,
     rawCategory: category,
     rawSubcategory: subcategory,
@@ -456,9 +460,11 @@ function updateCatalogHeading(resultCount = 0) {
 }
 
 function applySearch() {
-  const query = String(els.searchInput?.value || "").trim();
+  const query = String(els.searchInput ? els.searchInput.value : "").trim();
   state.searchQuery = query;
-  els.searchInput?.blur();
+  if (els.searchInput) {
+    els.searchInput.blur();
+  }
   render();
 }
 
@@ -595,7 +601,7 @@ function createProductCard(product, options = {}) {
     const raw = String(weightInput.value || "").trim().replace(",", ".");
     const customWeight = Number(raw);
     if (!Number.isFinite(customWeight) || customWeight <= 0) {
-      if (tg?.showAlert) {
+      if (tg && tg.showAlert) {
         tg.showAlert("Введите вес в килограммах, например 0.5 или 1.5");
       } else {
         alert("Введите вес в килограммах, например 0.5 или 1.5");
@@ -654,7 +660,8 @@ function renderProducts() {
   }
 
   updateCatalogHeading();
-  const products = state.catalog[state.category]?.[state.subcategory] || [];
+  const currentCategory = state.catalog[state.category] || {};
+  const products = currentCategory[state.subcategory] || [];
   if (!products.length) {
     renderEmptyState(
       `${state.category} скоро появятся в витрине`,
@@ -786,7 +793,7 @@ els.cartPanel.onclick = (event) => {
 
 els.orderButton.onclick = () => {
   if (!state.cart.length) {
-    if (tg?.showAlert) {
+    if (tg && tg.showAlert) {
       tg.showAlert("Сначала добавьте товары в корзину.");
     } else {
       alert("Сначала добавьте товары в корзину.");

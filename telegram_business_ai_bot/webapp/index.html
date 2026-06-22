@@ -151,6 +151,21 @@
       </div>
     </aside>
 
-    <script src="./app.js"></script>
+    <script src="./app.js?v=compat-20260622"></script>
+    <script>
+      window.setTimeout(function () {
+        var appRoot = document.getElementById("appRoot");
+        if (!appRoot || !appRoot.classList.contains("app-hidden")) {
+          return;
+        }
+        var splash = document.getElementById("splashScreen");
+        var eyebrow = document.getElementById("catalogEyebrow");
+        var title = document.getElementById("catalogTitle");
+        if (splash) splash.classList.add("hidden");
+        appRoot.classList.remove("app-hidden");
+        if (eyebrow) eyebrow.textContent = "Ошибка запуска";
+        if (title) title.textContent = "Браузер телефона не смог запустить витрину. Обновите системный WebView.";
+      }, 8000);
+    </script>
   </body>
 </html>
