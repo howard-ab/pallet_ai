@@ -1,23 +1,24 @@
+function startupMark(step) {
+  const marker = new Image();
+  marker.src = `./startup-check.gif?step=${encodeURIComponent(step)}&t=${Date.now()}`;
+}
+
+startupMark("app-start");
+
 let tg = null;
 try {
   tg = window.Telegram && window.Telegram.WebApp
     ? window.Telegram.WebApp
     : null;
-  if (tg) {
-    if (typeof tg.ready === "function") {
-      tg.ready();
-    }
-    if (typeof tg.expand === "function") {
-      tg.expand();
-    }
-  }
 } catch (error) {
   console.warn("Telegram WebApp SDK initialization failed", error);
   tg = null;
 }
+startupMark("telegram-detected");
 
 const searchParams = new URLSearchParams(window.location.search);
 const checkoutApiUrl = searchParams.get("api") || "";
+startupMark("search-params-ready");
 
 const CATEGORY_ORDER = [
   "Сухофрукты",
@@ -83,6 +84,21 @@ const els = {
   infoWeight: document.querySelector("#infoWeight"),
   infoPrice: document.querySelector("#infoPrice"),
 };
+startupMark("dom-ready");
+
+function initializeTelegramWebApp() {
+  if (!tg) return;
+  try {
+    if (typeof tg.ready === "function") {
+      tg.ready();
+    }
+    if (typeof tg.expand === "function") {
+      tg.expand();
+    }
+  } catch (error) {
+    console.warn("Telegram WebApp SDK activation failed", error);
+  }
+}
 
 function hideSplash() {
   window.setTimeout(() => {
@@ -884,6 +900,7 @@ els.orderButton.onclick = () => {
   }
 };
 
+startupMark("before-catalog-fetch");
 fetch("./catalog.json")
   .then((response) => response.json())
   .then((rawCatalog) => {
@@ -897,5 +914,6 @@ fetch("./catalog.json")
     state.category = CATEGORY_ORDER.find((category) => state.catalog[category]) || Object.keys(state.catalog)[0] || "";
     state.subcategory = Object.keys(state.catalog[state.category] || {})[0] || "";
     render();
+    initializeTelegramWebApp();
     hideSplash();
   });
