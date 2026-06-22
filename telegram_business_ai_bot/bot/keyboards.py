@@ -70,14 +70,14 @@ def catalog_keyboard() -> ReplyKeyboardMarkup:
     )
 
 
-def subcategory_keyboard(category: str) -> ReplyKeyboardMarkup:
-    rows = [[KeyboardButton(text=subcategory)] for subcategory in get_subcategories(category)]
-    rows.append([KeyboardButton(text=CATALOG_BUTTON), KeyboardButton(text=HOME_BUTTON)])
-    return ReplyKeyboardMarkup(
-        keyboard=rows,
-        resize_keyboard=True,
-        input_field_placeholder="Выберите подкатегорию",
-    )
+# def subcategory_keyboard(category: str) -> ReplyKeyboardMarkup:
+#     rows = [[KeyboardButton(text=subcategory)] for subcategory in get_subcategories(category)]
+#     rows.append([KeyboardButton(text=CATALOG_BUTTON), KeyboardButton(text=HOME_BUTTON)])
+#     return ReplyKeyboardMarkup(
+#         keyboard=rows,
+#         resize_keyboard=True,
+#         input_field_placeholder="Выберите подкатегорию",
+#     )
 
 
 def back_to_menu_keyboard() -> ReplyKeyboardMarkup:

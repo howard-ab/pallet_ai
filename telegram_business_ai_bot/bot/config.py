@@ -14,6 +14,7 @@ class Settings:
     huggingface_api_token: str
     huggingface_model: str = DEFAULT_HUGGINGFACE_MODEL
     shop_webapp_url: str = ""
+    shop_channel_url: str = ""
     checkout_api_url: str = ""
     checkout_api_bind_host: str = "127.0.0.1"
     checkout_api_port: int = 8081
@@ -32,6 +33,7 @@ def load_settings() -> Settings:
         or DEFAULT_HUGGINGFACE_MODEL
     )
     shop_webapp_url = os.getenv("SHOP_WEBAPP_URL", "").strip()
+    shop_channel_url = os.getenv("SHOP_CHANNEL_URL", "").strip()
     checkout_api_url = os.getenv("CHECKOUT_API_URL", "").strip()
     checkout_api_bind_host = os.getenv("CHECKOUT_API_BIND_HOST", "127.0.0.1").strip() or "127.0.0.1"
     checkout_api_port = int((os.getenv("CHECKOUT_API_PORT", "8081").strip() or "8081"))
@@ -58,6 +60,7 @@ def load_settings() -> Settings:
         huggingface_api_token=huggingface_api_token,
         huggingface_model=huggingface_model,
         shop_webapp_url=shop_webapp_url,
+        shop_channel_url=shop_channel_url,
         checkout_api_url=checkout_api_url,
         checkout_api_bind_host=checkout_api_bind_host,
         checkout_api_port=checkout_api_port,

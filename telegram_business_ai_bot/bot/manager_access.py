@@ -363,6 +363,8 @@ class ManagerAccessStorage:
 
         now = datetime.now(MOSCOW_TZ)
         previous_status = str(record.get("status", "new"))
+        if previous_status == status:
+            return record
         record["status"] = status
         record["updated_at"] = now.isoformat()
         record["updated_at_text"] = format_moscow_datetime(now)

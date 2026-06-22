@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from html import escape
 from zoneinfo import ZoneInfo
 
-from aiogram import F, Router
+from aiogram import Bot, F, Router
 from aiogram.exceptions import TelegramBadRequest, TelegramNetworkError
 from aiogram.filters import Command, CommandObject, CommandStart
 from aiogram.fsm.context import FSMContext
@@ -12,6 +12,10 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, Message
 
 from bot.manager_access import ManagerAccessStorage
+from bot.customer_notifications import (
+    CUSTOMER_NOTIFICATION_STATUSES,
+    notify_customer_about_status,
+)
 from bot.keyboards import (
     MANAGER_DATE_BUTTON,
     MANAGER_DONE_BUTTON,
@@ -136,6 +140,8 @@ def create_manager_router(
     *,
     access_storage: ManagerAccessStorage,
     manager_notifier: object,
+    customer_bot: Bot,
+    shop_channel_url: str,
     access_code: str,
 ) -> Router:
     router = Router()
@@ -466,6 +472,8 @@ def create_manager_router(
             return
         next_status = parts[2]
         order_number = parts[3]
+        current_order = await access_storage.get_order(order_number)
+        previous_status = str((current_order or {}).get("status", ""))
         order = await access_storage.update_order_status(
             order_number=order_number,
             status=next_status,
@@ -475,8 +483,22 @@ def create_manager_router(
             await callback.answer("Заказ не найден.", show_alert=True)
             return
 
+        customer_notified: bool | None = None
+        if previous_status != next_status and next_status in CUSTOMER_NOTIFICATION_STATUSES:
+            customer_notified = await notify_customer_about_status(
+                customer_bot,
+                order=order,
+                status=next_status,
+                channel_url=shop_channel_url,
+            )
+
         try:
-            await callback.answer(f"Статус обновлен: {STATUS_LABELS.get(next_status, next_status)}")
+            answer_text = f"Статус обновлен: {STATUS_LABELS.get(next_status, next_status)}"
+            if customer_notified is True:
+                answer_text += ". Клиент уведомлен"
+            elif customer_notified is False:
+                answer_text += ". Не удалось уведомить клиента"
+            await callback.answer(answer_text)
         except TelegramNetworkError:
             pass
 

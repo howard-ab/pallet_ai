@@ -51,6 +51,7 @@ TELEGRAM_BOT_TOKEN=your_real_telegram_bot_token
 HUGGINGFACE_API_TOKEN=your_real_huggingface_api_token
 HUGGINGFACE_MODEL=Qwen/Qwen2.5-Coder-3B-Instruct
 SHOP_WEBAPP_URL=https://howard-ab.github.io/pallet_ai/webapp/
+SHOP_CHANNEL_URL=https://t.me/your_channel
 ```
 
 `HUGGINGFACE_MODEL` is configurable. By default, the project uses a small Qwen instruct model that is available through Hugging Face Inference Providers:

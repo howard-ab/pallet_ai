@@ -40,7 +40,7 @@ from bot.keyboards import (
     address_confirmation_keyboard,
     #order_cta_inline_keyboard,
     product_actions_keyboard,
-    subcategory_keyboard,
+    #subcategory_keyboard,
 )
 from bot.order_messages import format_customer_order_confirmation
 from bot.storage import SessionStorage

@@ -130,6 +130,8 @@ async def main() -> None:
             create_manager_router(
                 access_storage=manager_access_storage,
                 manager_notifier=manager_notifier,
+                customer_bot=bot,
+                shop_channel_url=settings.shop_channel_url,
                 access_code=settings.manager_access_code,
             )
         )
