@@ -373,8 +373,8 @@ def catalog_admin_edit_keyboard(location: ProductLocation, product: dict[str, An
         f"catalog_admin:edit:{location.category_index}:"
         f"{location.subcategory_index}:{location.product_index}:{product_revision(product)}"
     )
-    promo_enabled = bool(product.get("promo")) or int(product.get("discount_percent") or 0) > 0
-    promo_text = "🟢 Убрать акцию" if promo_enabled else "🔥 Сделать акцией -10%"
+    discount = int(product.get("discount_percent") or 0)
+    discount_text = f"🔥 Скидка: {discount}%" if discount > 0 else "🔥 Установить скидку"
     rows = [
         [InlineKeyboardButton(text="✏️ Название", callback_data=f"{prefix}:name")],
         [
@@ -389,8 +389,7 @@ def catalog_admin_edit_keyboard(location: ProductLocation, product: dict[str, An
             InlineKeyboardButton(text="🌍 Страна", callback_data=f"{prefix}:origin"),
         ],
         [
-            InlineKeyboardButton(text=promo_text, callback_data=f"{prefix}:promo"),
-            InlineKeyboardButton(text="Скидка %", callback_data=f"{prefix}:discount_percent"),
+            InlineKeyboardButton(text=discount_text, callback_data=f"{prefix}:discount_percent"),
         ],
         [InlineKeyboardButton(text="🗑 Удалить товар", callback_data=f"catalog_admin:delete:{location.category_index}:{location.subcategory_index}:{location.product_index}:{product_revision(product)}")],
         [

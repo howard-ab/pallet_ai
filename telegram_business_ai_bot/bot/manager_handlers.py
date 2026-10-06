@@ -824,32 +824,7 @@ def create_manager_router(
             await callback.answer("Неизвестное поле.", show_alert=True)
             return
         if field == "promo":
-            found = await catalog_storage.get_product(category_index, subcategory_index, product_index)
-            if found is None or product_revision(found[1]) != revision:
-                await callback.answer("Товар не найден.", show_alert=True)
-                return
-            _location, product = found
-            promo_enabled = bool(product.get("promo")) or int(product.get("discount_percent") or 0) > 0
-            updated = await catalog_storage.update_product_field(
-                category_index=category_index,
-                subcategory_index=subcategory_index,
-                product_index=product_index,
-                field="promo",
-                value=not promo_enabled,
-                expected_revision=revision,
-            )
-            if updated is None:
-                await callback.answer("Не удалось обновить акцию.", show_alert=True)
-                return
-            location, updated_product = updated
-            if callback.message:
-                await callback.message.answer(
-                    format_product_admin_card(location, updated_product),
-                    parse_mode="HTML",
-                    reply_markup=catalog_admin_edit_keyboard(location, updated_product),
-                )
-            await callback.answer("Акция обновлена")
-            return
+            field = "discount_percent"
 
         await state.set_state(ManagerAccessFlow.waiting_for_catalog_value)
         await state.update_data(

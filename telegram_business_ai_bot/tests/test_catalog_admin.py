@@ -101,6 +101,16 @@ class CatalogAdminTests(unittest.IsolatedAsyncioTestCase):
                     product.pop("rawSubcategory", None)
         self.assertEqual(site_catalog, normalize_catalog(raw, layout))
 
+    async def test_admin_discount_overrides_automatic_promo(self):
+        jsc = Path("/System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Helpers/jsc")
+        if not jsc.exists():
+            self.skipTest("JavaScriptCore unavailable")
+        app = (WEBAPP_DIR / "app.js").read_text()
+        functions = app[app.index("function priceValue("):app.index("function itemKey(")]
+        script = "const DISCOUNT_RATE=0.1;\n" + functions + "\nprint(JSON.stringify([productDiscountPercent({discount_percent:25}), productDiscountPercent({discount_percent:0,isDiscounted:true}), productDiscountPercent({discount_percent:99}), buildWeightedProduct({price:'1000 руб.',weight:'1 кг',discount_percent:25},1).discountedPriceValue]));"
+        result = subprocess.run([str(jsc), "-e", script], capture_output=True, text=True, check=True)
+        self.assertEqual(json.loads(result.stdout), [25, 0, 99, 750])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -141,9 +141,9 @@ function formatRub(value) {
 }
 
 function productDiscountPercent(product) {
-  const percent = Number(product.discount_percent || 0);
-  if (Number.isFinite(percent) && percent > 0) {
-    return Math.min(95, Math.max(0, percent));
+  if (product.discount_percent !== undefined && product.discount_percent !== null) {
+    const percent = Number(product.discount_percent);
+    if (Number.isFinite(percent)) return Math.min(99, Math.max(0, percent));
   }
   if (product.promo || product.isDiscounted) {
     return Math.round(DISCOUNT_RATE * 100);
@@ -249,7 +249,9 @@ function productIdentityKey(product) {
 function applyDiscountFlag(products, discountedKeys) {
   return products.map((product) => ({
     ...product,
-    isDiscounted: Boolean(product.promo)
+    isDiscounted: product.discount_percent !== undefined && product.discount_percent !== null
+      ? Number(product.discount_percent) > 0
+      : Boolean(product.promo)
       || Number(product.discount_percent || 0) > 0
       || discountedKeys.has(productIdentityKey(product)),
   }));
