@@ -2,15 +2,6 @@
   "Сухофрукты": {
     "Курага": [
       {
-        "name": "Абрикос сушёный (урюк) отборный, Таджикистан 1кг",
-        "description": "Сушёные абрикосы (урюк) с косточкой, премиум качество. Отборный урюк сладкий, вкусный.",
-        "price": "690 руб.",
-        "weight": "1 кг",
-        "origin": "Таджикистан",
-        "photo": "assets/products/admin/абрикос_сушеный_урюк_отборный_таджикистан_1кг_20261006_211158.jpg",
-        "photo_url": ""
-      },
-      {
         "name": "Курага жёлтая, отборная, Таджикистан, 1кг",
         "description": "Курага отборная, сладкая, чистая из Таджикистана. Крупные плода абрикоса. Сорт: \"Бобои\"",
         "price": "720 руб.",
@@ -45,6 +36,17 @@
         "origin": "Таджикистан",
         "photo": "assets/products/suhofrukty/kuraga/05_kuraga_zheltaya_otbornaya_tadzhikistan_1kg.jpg",
         "photo_url": ""
+      },
+      {
+        "name": "Курага сахарная",
+        "price": "650 руб.",
+        "weight": "1 кг",
+        "description": "Курага сахарная, сладкая сушенная на солнце, га вкус сладкая,  сухая.",
+        "origin": "Таджикистан",
+        "photo": "assets/products/admin/курага_сахарная_20261006_224452.jpg",
+        "photo_url": "",
+        "promo": false,
+        "discount_percent": 0
       }
     ],
     "Изюм": [
@@ -424,150 +426,12 @@
         "photo": "assets/products/orehi/orehovye_smesi/05_arahis_syroy_krasnyy_uzbekistan_500g.jpg",
         "photo_url": ""
       }
-    ],
-    "Орехи в глазури": [
-      {
-        "name": "Кешью в тёмном шоколаде, 500г",
-        "description": "Вкусный, отборный, жареный кешью в тёмной глазури",
-        "price": "920 руб.",
-        "weight": "500 г",
-        "origin": "уточняется",
-        "photo": "assets/products/orehi/orehi_v_glazuri/01_halva_uzbekskaya_shokoladno_molochnaya_zebra_1kg.jpg",
-        "photo_url": ""
-      },
-      {
-        "name": "Халва узбекская шоколадно-молочная \"Зебра\", 1кг",
-        "description": "Вкусная узбекская халва.",
-        "price": "490 руб.",
-        "weight": "1 кг",
-        "origin": "уточняется",
-        "photo": "assets/products/orehi/orehi_v_glazuri/02_arahis_v_kunzhute_s_medom_1kg.jpg",
-        "photo_url": ""
-      },
-      {
-        "name": "Арахис в разноцветном сахаре, 1кг",
-        "description": "Хрустящий арахис в цветном сахаре, в сахарной глазури.",
-        "price": "520 руб.",
-        "weight": "1 кг",
-        "origin": "уточняется",
-        "photo": "assets/products/orehi/orehi_v_glazuri/03_arahis_v_raznocvetnom_sahare_1kg.jpg",
-        "photo_url": ""
-      },
-      {
-        "name": "Арахис жареный со вкусом креветок, 500г",
-        "description": "Арахис очищенный жареный со кусом креветок",
-        "price": "480 руб.",
-        "weight": "500 г",
-        "origin": "уточняется",
-        "photo": "assets/products/orehi/orehi_v_glazuri/04_arahis_zharenyy_so_vkusom_barbekyu_1kg.jpg",
-        "photo_url": ""
-      },
-      {
-        "name": "Шоколадные камушки драже, 500г",
-        "description": "Качественный продукт от МирСухофруктов для ежедневного рациона и подарков.",
-        "price": "510 руб.",
-        "weight": "500 г",
-        "origin": "уточняется",
-        "photo": "assets/products/orehi/orehi_v_glazuri/05_halva_uzbekskaya_shokoladno_molochnaya_zebra_500g.jpg",
-        "photo_url": ""
-      }
     ]
   },
-  "Бакалея": {
-    "Семена": [
-      {
-        "name": "Семечки тыквенные сырые неочищенные, 2кг",
-        "description": "Тыквенные семечки — неочищенные, сырые, собранные в Волгоградской области. Урожай осени 2024 года.",
-        "price": "360 руб.",
-        "weight": "2 кг",
-        "origin": "уточняется",
-        "photo": "assets/products/bakaleya/semena/01_kunzhut_chernyy_1kg.jpg",
-        "photo_url": ""
-      },
-      {
-        "name": "Гречка зелёная, 1кг",
-        "description": "Непропаренная зеленая гречка.",
-        "price": "390 руб.",
-        "weight": "1 кг",
-        "origin": "уточняется",
-        "photo": "assets/products/bakaleya/semena/02_chay_110_krupnolistovoy_zelenyy_chay_400g.jpg",
-        "photo_url": ""
-      },
-      {
-        "name": "Семена чиа, 1кг",
-        "description": "Семена чиа",
-        "price": "420 руб.",
-        "weight": "1 кг",
-        "origin": "уточняется",
-        "photo": "assets/products/bakaleya/semena/03_kunzhut_belyy_1kg.jpg",
-        "photo_url": ""
-      },
-      {
-        "name": "Чай 95, крупнолистовой зелёный чай, 400г",
-        "description": "Зеленый чай \"95\" относится к превосходным крупнолистовым чаям с характерным для него терпким вкусом. Зеленый чай славится своей уникальной способностью утолять жажду и охлаждать организм, что весьма ценно в любой жаркой стране.\nКитайский зеленый чай ТОЗА № 95 сорт GUN POWDER, с восточным ароматом, отличающиеся крупными листьями (форма чая комковой), популярны еще с времен Советского Союза, сорта родом из Узбекистана и называются КОК-ЧОЙ",
-        "price": "650 руб.",
-        "weight": "400 г",
-        "origin": "Узбекистан",
-        "photo": "assets/products/bakaleya/semena/04_kumkvat_zelenyy_cukaty_1kg.jpg",
-        "photo_url": ""
-      },
-      {
-        "name": "Семечки тыквенные сырые неочищенные, 1кг",
-        "description": "Тыквенные семечки — неочищенные, сырые, собранные в Волгоградской области. Урожай осени 2024 года.",
-        "price": "480 руб.",
-        "weight": "1 кг",
-        "origin": "уточняется",
-        "photo": "assets/products/bakaleya/semena/01_kunzhut_chernyy_1kg.jpg",
-        "photo_url": ""
-      }
-    ],
-    "Крупы и бобовые": [
-      {
-        "name": "Булгур, крупа пшеничная, 1кг",
-        "description": "Булгур — лак, приготовленный из сушеной дробленой пшеницы преимущественно твердых сортов",
-        "price": "330 руб.",
-        "weight": "1 кг",
-        "origin": "уточняется",
-        "photo": "assets/products/bakaleya/krupy_i_bobovye/01_oves_neochischennyy_v_obolochke_2kg.jpg",
-        "photo_url": ""
-      },
-      {
-        "name": "Нут горох 8+, Узбекистан, 1кг",
-        "description": "Горох - нут, калибр 8+, отборный из Узбекистана. Получится вкусная еда. Также подходит для проращивания",
-        "price": "360 руб.",
-        "weight": "1 кг",
-        "origin": "Узбекистан",
-        "photo": "assets/products/bakaleya/krupy_i_bobovye/02_barbaris_sushenyy_chernyy_iranskiy_50g.jpg",
-        "photo_url": ""
-      },
-      {
-        "name": "Рис Осман круглозёрный, 1кг",
-        "description": "Белый круглозерный, краснодарский — хорошо варится, не превращаться в кашу, на зернышках не имеет трещин и обломанных краев, содержит меньший процент крахмальности.  Рассыпчатый и нежный злак. Высший сорт. Также отлично подходит для плова.",
-        "price": "390 руб.",
-        "weight": "1 кг",
-        "origin": "уточняется",
-        "photo": "assets/products/bakaleya/krupy_i_bobovye/04_barbaris_sushenyy_chernyy_iranskiy_500g.jpg",
-        "photo_url": ""
-      },
-      {
-        "name": "Фасоль \"Красная\", 1кг",
-        "description": "Фасоль \"Красная\", с красным окрасом. Вкусная с высоким содержанием белков.",
-        "price": "420 руб.",
-        "weight": "1 кг",
-        "origin": "уточняется",
-        "photo": "assets/products/bakaleya/krupy_i_bobovye/05_fasol_seraya_2kg.jpg",
-        "photo_url": ""
-      },
-      {
-        "name": "Булгур, крупа пшеничная, 500г",
-        "description": "Булгур — лак, приготовленный из сушеной дробленой пшеницы преимущественно твердых сортов",
-        "price": "450 руб.",
-        "weight": "500 г",
-        "origin": "уточняется",
-        "photo": "assets/products/bakaleya/krupy_i_bobovye/01_oves_neochischennyy_v_obolochke_2kg.jpg",
-        "photo_url": ""
-      }
-    ],
+  "Сушёные ягоды": {
+    "Изюм и ягоды": []
+  },
+  "Специи и пряности": {
     "Специи": [
       {
         "name": "Кукуруза для попкорна, 500г",
@@ -616,45 +480,7 @@
       }
     ]
   },
-  "Напитки и сладости": {
-    "Чай и кофе": [
-      {
-        "name": "Кофе молотый \"Мехмет Эфенди\", оригинальный 100г, 5шт",
-        "description": "Оригинальный турецкий кофе \"Мехмет Эфенди\", 100г, молотый. Хит продаж.  В комплекте 5 пачки.",
-        "price": "560 руб.",
-        "weight": "100 г",
-        "origin": "уточняется",
-        "photo": "assets/products/napitki_i_sladosti/chay_i_kofe/01_kofe_molotyy_mehmet_efendi_originalnyy_100g_3sht.jpg",
-        "photo_url": ""
-      },
-      {
-        "name": "Кофе молотый \"Мехмет Эфенди\", оригинальный 100г, 3шт",
-        "description": "Оригинальный турецкий кофе \"Мехмет Эфенди\", 100г, молотый. Хит продаж.  В комплекте 3 пачки.",
-        "price": "590 руб.",
-        "weight": "100 г",
-        "origin": "уточняется",
-        "photo": "assets/products/napitki_i_sladosti/chay_i_kofe/02_kofe_molotyy_mehmet_efendi_originalnyy_100g_5sht.jpg",
-        "photo_url": ""
-      },
-      {
-        "name": "Кофе молотый \"Мехмет Эфенди\", оригинальный, 100г",
-        "description": "Оригинальный турецкий кофе \"Мехмет Эфенди\", 100г, молотый. Хит продаж.",
-        "price": "620 руб.",
-        "weight": "100 г",
-        "origin": "уточняется",
-        "photo": "assets/products/napitki_i_sladosti/chay_i_kofe/03_kofe_molotyy_mehmet_efendi_originalnyy_100g.jpg",
-        "photo_url": ""
-      },
-      {
-        "name": "Цейлонский чёрный чай OPA, крупнолистовой высший сорт, 200г",
-        "description": "Чай крупнолистовой цейлонский OPA",
-        "price": "650 руб.",
-        "weight": "200 г",
-        "origin": "уточняется",
-        "photo": "assets/products/napitki_i_sladosti/chay_i_kofe/04_ceylonskiy_chernyy_chay_opa_krupnolistovoy_vysshiy_sort_200g.png",
-        "photo_url": ""
-      }
-    ],
+  "Восточные сладости": {
     "Сладости": [
       {
         "name": "Клубника вяленая с сахаром, 500г",
@@ -701,6 +527,198 @@
         "photo": "assets/products/napitki_i_sladosti/chay_i_kofe/01_kofe_molotyy_mehmet_efendi_originalnyy_100g_3sht.jpg",
         "photo_url": ""
       }
+    ],
+    "Чай и кофе": [
+      {
+        "name": "Кофе молотый \"Мехмет Эфенди\", оригинальный 100г, 5шт",
+        "description": "Оригинальный турецкий кофе \"Мехмет Эфенди\", 100г, молотый. Хит продаж.  В комплекте 5 пачки.",
+        "price": "560 руб.",
+        "weight": "100 г",
+        "origin": "уточняется",
+        "photo": "assets/products/napitki_i_sladosti/chay_i_kofe/01_kofe_molotyy_mehmet_efendi_originalnyy_100g_3sht.jpg",
+        "photo_url": ""
+      },
+      {
+        "name": "Кофе молотый \"Мехмет Эфенди\", оригинальный 100г, 3шт",
+        "description": "Оригинальный турецкий кофе \"Мехмет Эфенди\", 100г, молотый. Хит продаж.  В комплекте 3 пачки.",
+        "price": "590 руб.",
+        "weight": "100 г",
+        "origin": "уточняется",
+        "photo": "assets/products/napitki_i_sladosti/chay_i_kofe/02_kofe_molotyy_mehmet_efendi_originalnyy_100g_5sht.jpg",
+        "photo_url": ""
+      },
+      {
+        "name": "Кофе молотый \"Мехмет Эфенди\", оригинальный, 100г",
+        "description": "Оригинальный турецкий кофе \"Мехмет Эфенди\", 100г, молотый. Хит продаж.",
+        "price": "620 руб.",
+        "weight": "100 г",
+        "origin": "уточняется",
+        "photo": "assets/products/napitki_i_sladosti/chay_i_kofe/03_kofe_molotyy_mehmet_efendi_originalnyy_100g.jpg",
+        "photo_url": ""
+      },
+      {
+        "name": "Цейлонский чёрный чай OPA, крупнолистовой высший сорт, 200г",
+        "description": "Чай крупнолистовой цейлонский OPA",
+        "price": "650 руб.",
+        "weight": "200 г",
+        "origin": "уточняется",
+        "photo": "assets/products/napitki_i_sladosti/chay_i_kofe/04_ceylonskiy_chernyy_chay_opa_krupnolistovoy_vysshiy_sort_200g.png",
+        "photo_url": ""
+      }
     ]
+  },
+  "Орехи и фрукты в шоколаде": {
+    "Шоколад и глазурь": [
+      {
+        "name": "Кешью в тёмном шоколаде, 500г",
+        "description": "Вкусный, отборный, жареный кешью в тёмной глазури",
+        "price": "920 руб.",
+        "weight": "500 г",
+        "origin": "уточняется",
+        "photo": "assets/products/orehi/orehi_v_glazuri/01_halva_uzbekskaya_shokoladno_molochnaya_zebra_1kg.jpg",
+        "photo_url": ""
+      },
+      {
+        "name": "Халва узбекская шоколадно-молочная \"Зебра\", 1кг",
+        "description": "Вкусная узбекская халва.",
+        "price": "490 руб.",
+        "weight": "1 кг",
+        "origin": "уточняется",
+        "photo": "assets/products/orehi/orehi_v_glazuri/02_arahis_v_kunzhute_s_medom_1kg.jpg",
+        "photo_url": ""
+      },
+      {
+        "name": "Арахис в разноцветном сахаре, 1кг",
+        "description": "Хрустящий арахис в цветном сахаре, в сахарной глазури.",
+        "price": "520 руб.",
+        "weight": "1 кг",
+        "origin": "уточняется",
+        "photo": "assets/products/orehi/orehi_v_glazuri/03_arahis_v_raznocvetnom_sahare_1kg.jpg",
+        "photo_url": ""
+      },
+      {
+        "name": "Арахис жареный со вкусом креветок, 500г",
+        "description": "Арахис очищенный жареный со кусом креветок",
+        "price": "480 руб.",
+        "weight": "500 г",
+        "origin": "уточняется",
+        "photo": "assets/products/orehi/orehi_v_glazuri/04_arahis_zharenyy_so_vkusom_barbekyu_1kg.jpg",
+        "photo_url": ""
+      },
+      {
+        "name": "Шоколадные камушки драже, 500г",
+        "description": "Качественный продукт от МирСухофруктов для ежедневного рациона и подарков.",
+        "price": "510 руб.",
+        "weight": "500 г",
+        "origin": "уточняется",
+        "photo": "assets/products/orehi/orehi_v_glazuri/05_halva_uzbekskaya_shokoladno_molochnaya_zebra_500g.jpg",
+        "photo_url": ""
+      }
+    ]
+  },
+  "Бобовые и семена": {
+    "Семена": [
+      {
+        "name": "Семечки тыквенные сырые неочищенные, 2кг",
+        "description": "Тыквенные семечки — неочищенные, сырые, собранные в Волгоградской области. Урожай осени 2024 года.",
+        "price": "360 руб.",
+        "weight": "2 кг",
+        "origin": "уточняется",
+        "photo": "assets/products/bakaleya/semena/01_kunzhut_chernyy_1kg.jpg",
+        "photo_url": ""
+      },
+      {
+        "name": "Гречка зелёная, 1кг",
+        "description": "Непропаренная зеленая гречка.",
+        "price": "390 руб.",
+        "weight": "1 кг",
+        "origin": "уточняется",
+        "photo": "assets/products/bakaleya/semena/02_chay_110_krupnolistovoy_zelenyy_chay_400g.jpg",
+        "photo_url": ""
+      },
+      {
+        "name": "Семена чиа, 1кг",
+        "description": "Семена чиа",
+        "price": "420 руб.",
+        "weight": "1 кг",
+        "origin": "уточняется",
+        "photo": "assets/products/bakaleya/semena/03_kunzhut_belyy_1kg.jpg",
+        "photo_url": ""
+      },
+      {
+        "name": "Чай 95, крупнолистовой зелёный чай, 400г",
+        "description": "Зеленый чай \"95\" относится к превосходным крупнолистовым чаям с характерным для него терпким вкусом. Зеленый чай славится своей уникальной способностью утолять жажду и охлаждать организм, что весьма ценно в любой жаркой стране.\nКитайский зеленый чай ТОЗА № 95 сорт GUN POWDER, с восточным ароматом, отличающиеся крупными листьями (форма чая комковой), популярны еще с времен Советского Союза, сорта родом из Узбекистана и называются КОК-ЧОЙ",
+        "price": "650 руб.",
+        "weight": "400 г",
+        "origin": "Узбекистан",
+        "photo": "assets/products/bakaleya/semena/04_kumkvat_zelenyy_cukaty_1kg.jpg",
+        "photo_url": ""
+      },
+      {
+        "name": "Семечки тыквенные сырые неочищенные, 1кг",
+        "description": "Тыквенные семечки — неочищенные, сырые, собранные в Волгоградской области. Урожай осени 2024 года.",
+        "price": "480 руб.",
+        "weight": "1 кг",
+        "origin": "уточняется",
+        "photo": "assets/products/bakaleya/semena/01_kunzhut_chernyy_1kg.jpg",
+        "photo_url": ""
+      }
+    ],
+    "Бобовые и крупы": [
+      {
+        "name": "Булгур, крупа пшеничная, 1кг",
+        "description": "Булгур — лак, приготовленный из сушеной дробленой пшеницы преимущественно твердых сортов",
+        "price": "330 руб.",
+        "weight": "1 кг",
+        "origin": "уточняется",
+        "photo": "assets/products/bakaleya/krupy_i_bobovye/01_oves_neochischennyy_v_obolochke_2kg.jpg",
+        "photo_url": ""
+      },
+      {
+        "name": "Нут горох 8+, Узбекистан, 1кг",
+        "description": "Горох - нут, калибр 8+, отборный из Узбекистана. Получится вкусная еда. Также подходит для проращивания",
+        "price": "360 руб.",
+        "weight": "1 кг",
+        "origin": "Узбекистан",
+        "photo": "assets/products/bakaleya/krupy_i_bobovye/02_barbaris_sushenyy_chernyy_iranskiy_50g.jpg",
+        "photo_url": ""
+      },
+      {
+        "name": "Рис Осман круглозёрный, 1кг",
+        "description": "Белый круглозерный, краснодарский — хорошо варится, не превращаться в кашу, на зернышках не имеет трещин и обломанных краев, содержит меньший процент крахмальности.  Рассыпчатый и нежный злак. Высший сорт. Также отлично подходит для плова.",
+        "price": "390 руб.",
+        "weight": "1 кг",
+        "origin": "уточняется",
+        "photo": "assets/products/bakaleya/krupy_i_bobovye/04_barbaris_sushenyy_chernyy_iranskiy_500g.jpg",
+        "photo_url": ""
+      },
+      {
+        "name": "Фасоль \"Красная\", 1кг",
+        "description": "Фасоль \"Красная\", с красным окрасом. Вкусная с высоким содержанием белков.",
+        "price": "420 руб.",
+        "weight": "1 кг",
+        "origin": "уточняется",
+        "photo": "assets/products/bakaleya/krupy_i_bobovye/05_fasol_seraya_2kg.jpg",
+        "photo_url": ""
+      },
+      {
+        "name": "Булгур, крупа пшеничная, 500г",
+        "description": "Булгур — лак, приготовленный из сушеной дробленой пшеницы преимущественно твердых сортов",
+        "price": "450 руб.",
+        "weight": "500 г",
+        "origin": "уточняется",
+        "photo": "assets/products/bakaleya/krupy_i_bobovye/01_oves_neochischennyy_v_obolochke_2kg.jpg",
+        "photo_url": ""
+      }
+    ]
+  },
+  "Натуральные масла": {
+    "Масла": []
+  },
+  "Восточная керамика": {
+    "Керамика": []
+  },
+  "Подарочные наборы": {
+    "Подарки": []
   }
 }
