@@ -21,6 +21,7 @@ class Settings:
     manager_chat_ids: tuple[int, ...] = ()
     manager_bot_token: str = ""
     manager_access_code: str = DEFAULT_MANAGER_ACCESS_CODE
+    catalog_admin_user_ids: tuple[int, ...] = ()
 
 
 def load_settings() -> Settings:
@@ -48,6 +49,12 @@ def load_settings() -> Settings:
         os.getenv("MANAGER_ACCESS_CODE", DEFAULT_MANAGER_ACCESS_CODE).strip()
         or DEFAULT_MANAGER_ACCESS_CODE
     )
+    raw_catalog_admin_user_ids = os.getenv("CATALOG_ADMIN_USER_IDS", "").strip()
+    catalog_admin_user_ids = tuple(
+        int(item.strip())
+        for item in raw_catalog_admin_user_ids.split(",")
+        if item.strip()
+    )
 
     if not telegram_bot_token:
         raise RuntimeError("TELEGRAM_BOT_TOKEN is not set")
@@ -67,4 +74,5 @@ def load_settings() -> Settings:
         manager_chat_ids=manager_chat_ids,
         manager_bot_token=manager_bot_token,
         manager_access_code=manager_access_code,
+        catalog_admin_user_ids=catalog_admin_user_ids,
     )

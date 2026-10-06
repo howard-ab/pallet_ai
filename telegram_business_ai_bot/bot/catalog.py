@@ -1,3 +1,5 @@
+import json
+from pathlib import Path
 from typing import TypedDict
 
 
@@ -13,6 +15,8 @@ class Product(TypedDict):
 
 Catalog = dict[str, dict[str, list[Product]]]
 ProductRef = tuple[str, str, int]
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+WEBAPP_CATALOG_FILE = PROJECT_ROOT / "webapp" / "catalog.json"
 
 
 CATALOG: Catalog = {
@@ -723,16 +727,28 @@ CATALOG: Catalog = {
 }
 
 
+def load_catalog() -> Catalog:
+    if not WEBAPP_CATALOG_FILE.exists():
+        return CATALOG
+    try:
+        payload = json.loads(WEBAPP_CATALOG_FILE.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return CATALOG
+    if not isinstance(payload, dict):
+        return CATALOG
+    return payload
+
+
 def get_categories() -> list[str]:
-    return list(CATALOG.keys())
+    return list(load_catalog().keys())
 
 
 def get_subcategories(category: str) -> list[str]:
-    return list(CATALOG.get(category, {}).keys())
+    return list(load_catalog().get(category, {}).keys())
 
 
 def get_products(category: str, subcategory: str) -> list[Product]:
-    return CATALOG.get(category, {}).get(subcategory, [])
+    return load_catalog().get(category, {}).get(subcategory, [])
 
 
 def get_product(category: str, subcategory: str, index: int) -> Product | None:
@@ -743,7 +759,7 @@ def get_product(category: str, subcategory: str, index: int) -> Product | None:
 
 
 def find_category_by_subcategory(subcategory: str) -> str | None:
-    for category, subcategories in CATALOG.items():
+    for category, subcategories in load_catalog().items():
         if subcategory in subcategories:
             return category
     return None
@@ -751,7 +767,7 @@ def find_category_by_subcategory(subcategory: str) -> str | None:
 
 def get_product_ref(product_id: int) -> ProductRef | None:
     current_id = 0
-    for category, subcategories in CATALOG.items():
+    for category, subcategories in load_catalog().items():
         for subcategory, products in subcategories.items():
             for index, _product in enumerate(products):
                 if current_id == product_id:
@@ -773,7 +789,7 @@ def get_product_by_id(product_id: int) -> tuple[Product, str, str, int] | None:
 
 def get_product_id(category: str, subcategory: str, index: int) -> int | None:
     current_id = 0
-    for current_category, subcategories in CATALOG.items():
+    for current_category, subcategories in load_catalog().items():
         for current_subcategory, products in subcategories.items():
             for current_index, _product in enumerate(products):
                 if (current_category, current_subcategory, current_index) == (category, subcategory, index):

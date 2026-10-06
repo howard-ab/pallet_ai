@@ -11,12 +11,23 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, Message
 
+from bot.catalog_admin import (
+    CatalogAdminStorage,
+    catalog_admin_edit_keyboard,
+    catalog_admin_product_keyboard,
+    catalog_admin_root_keyboard,
+    catalog_admin_subcategory_keyboard,
+    format_edit_prompt,
+    format_product_admin_card,
+    normalize_price,
+)
 from bot.manager_access import ManagerAccessStorage
 from bot.customer_notifications import (
     CUSTOMER_NOTIFICATION_STATUSES,
     notify_customer_about_status,
 )
 from bot.keyboards import (
+    MANAGER_CATALOG_ADMIN_BUTTON,
     MANAGER_DATE_BUTTON,
     MANAGER_DONE_BUTTON,
     MANAGER_FIND_BUTTON,
@@ -44,6 +55,7 @@ class ManagerAccessFlow(StatesGroup):
     waiting_for_code = State()
     waiting_for_order_search = State()
     waiting_for_date = State()
+    waiting_for_catalog_value = State()
 
 
 def _format_datetime(raw: object) -> str:
@@ -143,9 +155,11 @@ def create_manager_router(
     customer_bot: Bot,
     shop_channel_url: str,
     access_code: str,
+    catalog_admin_user_ids: tuple[int, ...] = (),
 ) -> Router:
     router = Router()
     menu_keyboard = manager_menu_keyboard()
+    catalog_storage = CatalogAdminStorage()
 
     async def require_verified_message(message: Message) -> bool:
         if not message.from_user:
@@ -167,6 +181,38 @@ def create_manager_router(
         await access_storage.log_access_event(callback.from_user, "code_requested")
         return False
 
+    async def require_catalog_admin_message(message: Message) -> bool:
+        if not message.from_user:
+            return False
+        if not await require_verified_message(message):
+            return False
+        if catalog_admin_user_ids and message.from_user.id not in catalog_admin_user_ids:
+            await message.answer("⛔ У вас нет доступа к управлению каталогом.", reply_markup=menu_keyboard)
+            await access_storage.log_access_event(message.from_user, "catalog_admin_denied")
+            return False
+        return True
+
+    async def require_catalog_admin_callback(callback: CallbackQuery) -> bool:
+        if not callback.from_user:
+            return False
+        if not await require_verified_callback(callback):
+            return False
+        if catalog_admin_user_ids and callback.from_user.id not in catalog_admin_user_ids:
+            await callback.answer("Нет доступа к управлению каталогом.", show_alert=True)
+            await access_storage.log_access_event(callback.from_user, "catalog_admin_denied")
+            return False
+        return True
+
+    async def show_catalog_admin_home(message: Message) -> None:
+        catalog = await catalog_storage.read_catalog()
+        keyboard = catalog_admin_root_keyboard(catalog)
+        await message.answer(
+            "<b>🛠 Управление каталогом</b>\n\n"
+            "Выберите категорию. Здесь можно менять цену, описание, вес, страну, фото и акцию товара.",
+            parse_mode="HTML",
+            reply_markup=keyboard or menu_keyboard,
+        )
+
     @router.message(CommandStart())
     async def start(message: Message, state: FSMContext) -> None:
         if not message.from_user:
@@ -187,7 +233,8 @@ def create_manager_router(
                 "<code>/yesterday</code> — заказы за вчера\n"
                 "<code>/date 10.06.2026</code> — заказы по дате\n"
                 "<code>/find MS-...</code> — поиск по номеру заказа\n"
-                "<code>/whoami</code> — профиль сотрудника",
+                "<code>/whoami</code> — профиль сотрудника\n"
+                "<code>/catalog_admin</code> — управление каталогом",
                 parse_mode="HTML",
                 reply_markup=menu_keyboard,
             )
@@ -222,7 +269,8 @@ def create_manager_router(
             "<code>/today</code> — заказы за сегодня\n"
             "<code>/yesterday</code> — заказы за вчера\n"
             "<code>/date 10.06.2026</code> — заказы по дате\n"
-            "<code>/find MS-...</code> — поиск по номеру заказа",
+            "<code>/find MS-...</code> — поиск по номеру заказа\n"
+            "<code>/catalog_admin</code> — управление каталогом",
             parse_mode="HTML",
             reply_markup=menu_keyboard,
         )
@@ -451,12 +499,203 @@ def create_manager_router(
         actions = await access_storage.get_staff_actions(message.from_user.id)
         await message.answer(
             "<b>Профиль сотрудника</b>\n\n"
+            f"ID: <code>{escape(str(record.get('user_id') or message.from_user.id))}</code>\n"
             f"Telegram: @{escape(str(record.get('username') or 'не указан'))}\n"
             f"Смена: <b>{escape(str(record.get('shift') or '-'))}</b>\n"
             f"Последний вход: <code>{escape(str(record.get('last_seen_at_text') or record.get('last_seen_at') or '-'))}</code>\n"
             f"Действий по заказам: <b>{len(actions)}</b>",
             parse_mode="HTML",
             reply_markup=menu_keyboard,
+        )
+
+    @router.message(Command("catalog_admin"))
+    @router.message(F.text == MANAGER_CATALOG_ADMIN_BUTTON)
+    async def catalog_admin_home(message: Message) -> None:
+        if not await require_catalog_admin_message(message):
+            return
+        await show_catalog_admin_home(message)
+
+    @router.callback_query(F.data == "catalog_admin:home")
+    async def catalog_admin_home_callback(callback: CallbackQuery) -> None:
+        if not await require_catalog_admin_callback(callback):
+            return
+        catalog = await catalog_storage.read_catalog()
+        if callback.message:
+            await callback.message.answer(
+                "<b>🛠 Управление каталогом</b>\n\nВыберите категорию.",
+                parse_mode="HTML",
+                reply_markup=catalog_admin_root_keyboard(catalog),
+            )
+        await callback.answer("Категории")
+
+    @router.callback_query(F.data.startswith("catalog_admin:cat:"))
+    async def catalog_admin_category(callback: CallbackQuery) -> None:
+        if not await require_catalog_admin_callback(callback):
+            return
+        parts = (callback.data or "").split(":")
+        if len(parts) != 3:
+            await callback.answer("Не удалось открыть категорию.", show_alert=True)
+            return
+        category_index = int(parts[2])
+        catalog = await catalog_storage.read_catalog()
+        categories = list(catalog.keys())
+        if category_index < 0 or category_index >= len(categories):
+            await callback.answer("Категория не найдена.", show_alert=True)
+            return
+        if callback.message:
+            await callback.message.answer(
+                f"<b>{escape(categories[category_index])}</b>\n\nВыберите подкатегорию.",
+                parse_mode="HTML",
+                reply_markup=catalog_admin_subcategory_keyboard(catalog, category_index),
+            )
+        await callback.answer("Категория открыта")
+
+    @router.callback_query(F.data.startswith("catalog_admin:sub:"))
+    async def catalog_admin_subcategory(callback: CallbackQuery) -> None:
+        if not await require_catalog_admin_callback(callback):
+            return
+        parts = (callback.data or "").split(":")
+        if len(parts) != 4:
+            await callback.answer("Не удалось открыть подкатегорию.", show_alert=True)
+            return
+        category_index = int(parts[2])
+        subcategory_index = int(parts[3])
+        catalog = await catalog_storage.read_catalog()
+        categories = list(catalog.keys())
+        if category_index < 0 or category_index >= len(categories):
+            await callback.answer("Категория не найдена.", show_alert=True)
+            return
+        subcategories = list((catalog.get(categories[category_index]) or {}).keys())
+        if subcategory_index < 0 or subcategory_index >= len(subcategories):
+            await callback.answer("Подкатегория не найдена.", show_alert=True)
+            return
+        if callback.message:
+            await callback.message.answer(
+                f"<b>{escape(categories[category_index])} / {escape(subcategories[subcategory_index])}</b>\n\n"
+                "Выберите товар.",
+                parse_mode="HTML",
+                reply_markup=catalog_admin_product_keyboard(catalog, category_index, subcategory_index),
+            )
+        await callback.answer("Товары открыты")
+
+    @router.callback_query(F.data.startswith("catalog_admin:prod:"))
+    async def catalog_admin_product(callback: CallbackQuery) -> None:
+        if not await require_catalog_admin_callback(callback):
+            return
+        parts = (callback.data or "").split(":")
+        if len(parts) != 5:
+            await callback.answer("Не удалось открыть товар.", show_alert=True)
+            return
+        found = await catalog_storage.get_product(int(parts[2]), int(parts[3]), int(parts[4]))
+        if found is None:
+            await callback.answer("Товар не найден.", show_alert=True)
+            return
+        location, product = found
+        if callback.message:
+            await callback.message.answer(
+                format_product_admin_card(location, product),
+                parse_mode="HTML",
+                reply_markup=catalog_admin_edit_keyboard(location, product),
+            )
+        await callback.answer("Товар открыт")
+
+    @router.callback_query(F.data.startswith("catalog_admin:edit:"))
+    async def catalog_admin_edit(callback: CallbackQuery, state: FSMContext) -> None:
+        if not await require_catalog_admin_callback(callback):
+            return
+        parts = (callback.data or "").split(":")
+        if len(parts) != 6:
+            await callback.answer("Не удалось открыть редактирование.", show_alert=True)
+            return
+        category_index = int(parts[2])
+        subcategory_index = int(parts[3])
+        product_index = int(parts[4])
+        field = parts[5]
+        if field == "promo":
+            found = await catalog_storage.get_product(category_index, subcategory_index, product_index)
+            if found is None:
+                await callback.answer("Товар не найден.", show_alert=True)
+                return
+            _location, product = found
+            promo_enabled = bool(product.get("promo")) or int(product.get("discount_percent") or 0) > 0
+            updated = await catalog_storage.update_product_field(
+                category_index=category_index,
+                subcategory_index=subcategory_index,
+                product_index=product_index,
+                field="promo",
+                value=not promo_enabled,
+            )
+            if updated is None:
+                await callback.answer("Не удалось обновить акцию.", show_alert=True)
+                return
+            location, updated_product = updated
+            if callback.message:
+                await callback.message.answer(
+                    format_product_admin_card(location, updated_product),
+                    parse_mode="HTML",
+                    reply_markup=catalog_admin_edit_keyboard(location, updated_product),
+                )
+            await callback.answer("Акция обновлена")
+            return
+
+        await state.set_state(ManagerAccessFlow.waiting_for_catalog_value)
+        await state.update_data(
+            catalog_category_index=category_index,
+            catalog_subcategory_index=subcategory_index,
+            catalog_product_index=product_index,
+            catalog_field=field,
+        )
+        if callback.message:
+            await callback.message.answer(
+                format_edit_prompt(field),
+                parse_mode="HTML",
+                reply_markup=menu_keyboard,
+            )
+        await callback.answer("Введите новое значение")
+
+    @router.message(ManagerAccessFlow.waiting_for_catalog_value)
+    async def catalog_admin_save_value(message: Message, state: FSMContext) -> None:
+        if not await require_catalog_admin_message(message):
+            return
+        data = await state.get_data()
+        category_index = int(data.get("catalog_category_index", -1))
+        subcategory_index = int(data.get("catalog_subcategory_index", -1))
+        product_index = int(data.get("catalog_product_index", -1))
+        field = str(data.get("catalog_field") or "")
+
+        if field == "photo" and message.photo:
+            saved = await catalog_storage.save_uploaded_photo(
+                bot=message.bot,
+                file_id=message.photo[-1].file_id,
+                category_index=category_index,
+                subcategory_index=subcategory_index,
+                product_index=product_index,
+            )
+        else:
+            if not message.text:
+                await message.answer("Пришлите текстовое значение или фото.", reply_markup=menu_keyboard)
+                return
+            value = message.text.strip()
+            if field == "price":
+                value = normalize_price(value)
+            saved = await catalog_storage.update_product_field(
+                category_index=category_index,
+                subcategory_index=subcategory_index,
+                product_index=product_index,
+                field=field,
+                value=value,
+            )
+
+        await state.clear()
+        if saved is None:
+            await message.answer("Не удалось сохранить товар. Попробуйте открыть каталог заново.", reply_markup=menu_keyboard)
+            return
+
+        location, product = saved
+        await message.answer(
+            "✅ Сохранено.\n\n" + format_product_admin_card(location, product),
+            parse_mode="HTML",
+            reply_markup=catalog_admin_edit_keyboard(location, product),
         )
 
     @router.callback_query(F.data.startswith("order:status:"))
@@ -603,7 +842,8 @@ def create_manager_router(
                 "<code>/yesterday</code> — заказы за вчера\n"
                 "<code>/date 10.06.2026</code> — заказы по дате\n"
                 "<code>/find MS-...</code> — поиск по номеру заказа\n"
-                "<code>/whoami</code> — профиль сотрудника",
+                "<code>/whoami</code> — профиль сотрудника\n"
+                "<code>/catalog_admin</code> — управление каталогом",
                 parse_mode="HTML",
                 reply_markup=menu_keyboard,
             )

@@ -25,6 +25,7 @@ MANAGER_NEW_BUTTON = "Новые заказы"
 MANAGER_READY_BUTTON = "Готовы к доставке"
 MANAGER_IN_DELIVERY_BUTTON = "В доставке"
 MANAGER_DONE_BUTTON = "Доставленные"
+MANAGER_CATALOG_ADMIN_BUTTON = "🛠 Каталог"
 
 
 def main_menu_keyboard() -> ReplyKeyboardMarkup:
@@ -196,7 +197,7 @@ def manager_menu_keyboard() -> ReplyKeyboardMarkup:
             [KeyboardButton(text=MANAGER_FIND_BUTTON), KeyboardButton(text=MANAGER_DONE_BUTTON)],
             [KeyboardButton(text=MANAGER_TODAY_BUTTON), KeyboardButton(text=MANAGER_IN_DELIVERY_BUTTON)],
             [KeyboardButton(text=MANAGER_YESTERDAY_BUTTON), KeyboardButton(text=MANAGER_DATE_BUTTON)],
-            [KeyboardButton(text=MANAGER_PROFILE_BUTTON)],
+            [KeyboardButton(text=MANAGER_PROFILE_BUTTON), KeyboardButton(text=MANAGER_CATALOG_ADMIN_BUTTON)],
         ],
         resize_keyboard=True,
         input_field_placeholder="Выберите действие",

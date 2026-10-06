@@ -152,12 +152,24 @@ function formatRub(value) {
   return `${Math.round(value)} руб.`;
 }
 
+function productDiscountPercent(product) {
+  const percent = Number(product.discount_percent || 0);
+  if (Number.isFinite(percent) && percent > 0) {
+    return Math.min(95, Math.max(0, percent));
+  }
+  if (product.promo || product.isDiscounted) {
+    return Math.round(DISCOUNT_RATE * 100);
+  }
+  return 0;
+}
+
 function buildWeightedProduct(product, selectedWeightKg) {
   const baseWeightKg = parseWeightKg(product.weight);
   const unitPricePerKg = priceValue(product.price) / baseWeightKg;
   const originalPriceValue = Math.round(unitPricePerKg * selectedWeightKg);
-  const discountedPriceValue = product.isDiscounted
-    ? Math.max(1, Math.round(originalPriceValue * (1 - DISCOUNT_RATE)))
+  const discountPercent = productDiscountPercent(product);
+  const discountedPriceValue = discountPercent > 0
+    ? Math.max(1, Math.round(originalPriceValue * (1 - discountPercent / 100)))
     : originalPriceValue;
   return {
     ...product,
@@ -169,6 +181,7 @@ function buildWeightedProduct(product, selectedWeightKg) {
     discountedPriceValue,
     originalPrice: formatRub(originalPriceValue),
     price: formatRub(discountedPriceValue),
+    discountPercent,
   };
 }
 
@@ -248,7 +261,9 @@ function productIdentityKey(product) {
 function applyDiscountFlag(products, discountedKeys) {
   return products.map((product) => ({
     ...product,
-    isDiscounted: discountedKeys.has(productIdentityKey(product)),
+    isDiscounted: Boolean(product.promo)
+      || Number(product.discount_percent || 0) > 0
+      || discountedKeys.has(productIdentityKey(product)),
   }));
 }
 
@@ -379,6 +394,15 @@ function buildDisplayCatalog(rawCatalog) {
 
 function pickFeaturedProducts(allProducts) {
   const selected = [];
+  const manualPromoProducts = allProducts.filter((product) => (
+    Boolean(product.promo) || Number(product.discount_percent || 0) > 0
+  ));
+  manualPromoProducts.forEach((product) => {
+    if (selected.length < 5 && !selected.includes(product)) {
+      selected.push(product);
+    }
+  });
+
   const wanted = [
     ["курага", "урюк"],
     ["фисташ"],
@@ -558,6 +582,7 @@ function renderSubcategories() {
 function createProductCard(product, options = {}) {
   const { featured = false } = options;
   const hasDiscount = Boolean(product.isDiscounted);
+  const discountPercent = productDiscountPercent(product);
   const defaultWeightKg = parseWeightKg(product.weight);
   let selectedWeightKg = defaultWeightKg;
   const card = document.createElement("article");
@@ -567,7 +592,7 @@ function createProductCard(product, options = {}) {
     <div class="product-body">
       ${(featured || hasDiscount) ? `
         <div class="product-badges">
-          ${hasDiscount ? '<span class="product-badge discount">-10% скидка</span>' : ''}
+          ${hasDiscount ? `<span class="product-badge discount">-${discountPercent}% скидка</span>` : ''}
           ${featured ? '<span class="product-badge">Товар недели</span>' : ''}
         </div>
       ` : ""}

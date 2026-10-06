@@ -45,6 +45,7 @@ async def setup_manager_bot_commands(bot: Bot) -> None:
             BotCommand(command="date", description="Показать заказы по дате"),
             BotCommand(command="find", description="Найти заказ по номеру"),
             BotCommand(command="whoami", description="Показать профиль сотрудника"),
+            BotCommand(command="catalog_admin", description="Управление каталогом"),
         ]
     )
 
@@ -134,6 +135,7 @@ async def main() -> None:
                 customer_bot=bot,
                 shop_channel_url=settings.shop_channel_url,
                 access_code=settings.manager_access_code,
+                catalog_admin_user_ids=settings.catalog_admin_user_ids,
             )
         )
 
