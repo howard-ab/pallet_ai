@@ -313,6 +313,16 @@ function takeRawProducts(rawCatalog, category, subcategory, predicate = null) {
 
 function buildDisplayCatalog(rawCatalog) {
   const result = {};
+  const legacy = Boolean(rawCatalog["Бакалея"] && rawCatalog["Напитки и сладости"] && !rawCatalog["Специи и пряности"]);
+  if (!legacy) {
+    Object.entries(rawCatalog).forEach(([category, subs]) => {
+      result[category] = {};
+      Object.entries(subs).forEach(([sub, products]) => {
+        result[category][sub] = products.map((product) => ({...product, rawCategory: category, rawSubcategory: sub}));
+      });
+    });
+    return result;
+  }
   const sources = new Map();
   Object.entries(catalogLayout).forEach(([category, subs]) => {
     result[category] = {};

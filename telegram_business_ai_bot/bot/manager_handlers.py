@@ -59,6 +59,7 @@ class ManagerAccessFlow(StatesGroup):
     waiting_for_date = State()
     waiting_for_catalog_value = State()
     waiting_for_new_product = State()
+    waiting_for_section_name = State()
 
 
 def _format_datetime(raw: object) -> str:
@@ -211,7 +212,7 @@ def create_manager_router(
         keyboard = catalog_admin_root_keyboard(catalog)
         await message.answer(
             "<b>🛠 Управление каталогом</b>\n\n"
-            "Выберите категорию. Здесь можно добавлять и удалять товары, менять название, цену, описание, вес, страну, фото и скидку.\n\n"
+            "Выберите категорию. Здесь можно создавать, переименовывать и удалять категории и подкатегории, добавлять и удалять товары, менять название, цену, описание, вес, страну, фото и скидку.\n\n"
             "Изменения сохраняются в каталог проекта. Публичный сайт GitHub Pages обновляется после публикации.",
             parse_mode="HTML",
             reply_markup=keyboard or menu_keyboard,
@@ -608,6 +609,97 @@ def create_manager_router(
             )
         await callback.answer("Товар открыт")
 
+    @router.callback_query(F.data.startswith("catalog_admin:section:"))
+    async def catalog_admin_section(callback: CallbackQuery, state: FSMContext) -> None:
+        if not await require_catalog_admin_callback(callback):
+            return
+        parts = (callback.data or "").split(":")
+        if len(parts) != 6 or parts[2] not in {"add", "rename", "delete"}:
+            await callback.answer("Откройте каталог заново.", show_alert=True)
+            return
+        try:
+            category_index, subcategory_index = int(parts[3]), int(parts[4])
+        except ValueError:
+            await callback.answer("Некорректный раздел.", show_alert=True)
+            return
+        catalog = await catalog_storage.read_catalog()
+        if product_revision(catalog) != parts[5]:
+            await callback.answer("Каталог изменился. Откройте его заново.", show_alert=True)
+            return
+        await state.clear()
+        action = parts[2]
+        if action == "delete":
+            categories = list(catalog)
+            if not 0 <= category_index < len(categories):
+                await callback.answer("Категория не найдена.", show_alert=True)
+                return
+            category = categories[category_index]
+            if subcategory_index == -1:
+                name = category
+                count = sum(len(products) for products in catalog[category].values())
+                scope = "категорию"
+            else:
+                subs = list(catalog[category])
+                if not 0 <= subcategory_index < len(subs):
+                    await callback.answer("Подкатегория не найдена.", show_alert=True)
+                    return
+                name = subs[subcategory_index]
+                count = len(catalog[category][name])
+                scope = "подкатегорию"
+            if callback.message:
+                await callback.message.answer(
+                    f"Удалить {scope} <b>{escape(name)}</b>?\n\nТакже будут удалены товары: <b>{count}</b>. Отменить удаление нельзя.",
+                    parse_mode="HTML",
+                    reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+                        [InlineKeyboardButton(text="Да, удалить раздел и товары", callback_data=f"catalog_admin:confirm:{category_index}:{subcategory_index}:{parts[5]}")],
+                        [InlineKeyboardButton(text="Отмена", callback_data="catalog_admin:home")],
+                    ]),
+                )
+        else:
+            await state.set_state(ManagerAccessFlow.waiting_for_section_name)
+            await state.update_data(section_action=action, section_category_index=category_index, section_subcategory_index=subcategory_index, section_revision=parts[5])
+            scope = "подкатегории" if (action == "add" and category_index >= 0) or subcategory_index >= 0 else "категории"
+            if callback.message:
+                await callback.message.answer(f"Введите название {scope} (до 80 символов). Для отмены отправьте /cancel.")
+        await callback.answer()
+
+    @router.message(ManagerAccessFlow.waiting_for_section_name)
+    async def catalog_admin_section_name(message: Message, state: FSMContext) -> None:
+        if not await require_catalog_admin_message(message):
+            return
+        if message.text == "/cancel":
+            await state.clear()
+            await show_catalog_admin_home(message)
+            return
+        data = await state.get_data()
+        try:
+            await catalog_storage.change_section(data["section_action"], data["section_category_index"], data["section_subcategory_index"], data["section_revision"], (message.text or "").strip())
+        except ValueError as error:
+            await message.answer(str(error))
+            return
+        await state.clear()
+        await message.answer("✅ Раздел сохранён.")
+        await show_catalog_admin_home(message)
+
+    @router.callback_query(F.data.startswith("catalog_admin:confirm:"))
+    async def catalog_admin_section_delete(callback: CallbackQuery, state: FSMContext) -> None:
+        if not await require_catalog_admin_callback(callback):
+            return
+        parts = (callback.data or "").split(":")
+        if len(parts) != 5:
+            await callback.answer("Откройте каталог заново.", show_alert=True)
+            return
+        try:
+            catalog = await catalog_storage.change_section("delete", int(parts[2]), int(parts[3]), parts[4])
+        except ValueError as error:
+            await callback.answer(str(error), show_alert=True)
+            return
+        await state.clear()
+        if callback.message:
+            await callback.message.edit_reply_markup(reply_markup=None)
+            await callback.message.answer("✅ Раздел и его товары удалены.", reply_markup=catalog_admin_root_keyboard(catalog))
+        await callback.answer()
+
     @router.callback_query(F.data.startswith("catalog_admin:add:"))
     async def catalog_admin_add(callback: CallbackQuery, state: FSMContext) -> None:
         if not await require_catalog_admin_callback(callback):
@@ -624,7 +716,7 @@ def create_manager_router(
             return
         await state.clear()
         await state.set_state(ManagerAccessFlow.waiting_for_new_product)
-        await state.update_data(catalog_category_index=category_index, catalog_subcategory_index=subcategory_index, new_product_step="name", new_product={})
+        await state.update_data(catalog_category_index=category_index, catalog_subcategory_index=subcategory_index, new_product_step="name", new_product={}, new_product_catalog_revision=product_revision(catalog))
         if callback.message:
             await callback.message.answer("Введите название нового товара. Для отмены отправьте /cancel.")
         await callback.answer()
@@ -664,7 +756,7 @@ def create_manager_router(
             await message.answer("Введите положительный вес с единицей: 1 кг или 500 г.")
             return
         product.update(weight=value, description="", origin="уточняется", photo="", photo_url="", promo=False, discount_percent=0)
-        saved = await catalog_storage.add_product(int(data["catalog_category_index"]), int(data["catalog_subcategory_index"]), product)
+        saved = await catalog_storage.add_product(int(data["catalog_category_index"]), int(data["catalog_subcategory_index"]), product, expected_catalog_revision=data.get("new_product_catalog_revision"))
         await state.clear()
         if saved is None:
             await message.answer("Раздел изменился. Откройте каталог заново.")

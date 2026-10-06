@@ -16,6 +16,7 @@ class CatalogAdminTests(unittest.IsolatedAsyncioTestCase):
         self.addCleanup(self.temp.cleanup)
         self.path = Path(self.temp.name) / "catalog.json"
         self.initial = {
+            "Напитки и сладости": {},
             "Бакалея": {"Семена": [{"name": "Чиа", "price": "100 руб.", "weight": "1 кг"}]},
             "Орехи": {"Орехи в глазури": [{"name": "Миндаль в глазури"}]},
             "Другой раздел": {"Прочее": [{"name": "Не терять"}]},
@@ -53,6 +54,34 @@ class CatalogAdminTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(json.JSONDecodeError):
             await self.storage.add_product(0, 0, {"name": "New"})
         self.assertEqual(self.path.read_text(), "broken")
+
+    async def test_section_crud_and_deleted_defaults_do_not_return(self):
+        catalog = await self.storage.read_catalog()
+        catalog = await self.storage.change_section("add", -1, -1, product_revision(catalog), "Новинки")
+        index = list(catalog).index("Новинки")
+        catalog = await self.storage.change_section("add", index, -1, product_revision(catalog), "Летнее")
+        await self.storage.add_product(index, 0, {"name": "Новый товар"})
+        catalog = await self.storage.read_catalog()
+        catalog = await self.storage.change_section("rename", index, 0, product_revision(catalog), "Зимнее")
+        self.assertEqual(catalog["Новинки"]["Зимнее"][0]["name"], "Новый товар")
+        catalog = await self.storage.change_section("rename", index, -1, product_revision(catalog), "Новое")
+        self.assertIn("Новое", catalog)
+        catalog = await self.storage.change_section("delete", index, 0, product_revision(catalog))
+        self.assertEqual(catalog["Новое"], {})
+        index = list(catalog).index("Сухофрукты")
+        old_revision = product_revision(catalog)
+        catalog = await self.storage.change_section("delete", index, -1, old_revision)
+        self.assertNotIn("Сухофрукты", await self.storage.read_catalog())
+        with self.assertRaises(ValueError):
+            await self.storage.change_section("delete", index, -1, old_revision)
+        with self.assertRaises(ValueError):
+            await self.storage.change_section("add", -1, -1, product_revision(catalog), "Новое")
+
+    async def test_empty_catalog_can_start_again(self):
+        self.path.write_text("{}")
+        self.assertEqual(await self.storage.read_catalog(), {})
+        catalog = await self.storage.change_section("add", -1, -1, product_revision({}), "Первый раздел")
+        self.assertEqual(catalog, {"Первый раздел": {}})
 
     async def test_site_and_bot_use_identical_layout(self):
         jsc = Path("/System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Helpers/jsc")

@@ -33,6 +33,9 @@ EDITABLE_FIELDS = {
 
 def normalize_catalog(catalog: dict, layout: dict) -> dict:
     """Use the storefront layout, preserving products from unlisted sections."""
+    legacy = "Бакалея" in catalog and "Напитки и сладости" in catalog and "Специи и пряности" not in catalog
+    if not legacy:
+        return catalog
     result = {category: {sub: [] for sub in subs} for category, subs in layout.items()}
     sources = {
         tuple(source): (category, sub)
@@ -84,9 +87,58 @@ class CatalogAdminStorage:
         catalog = await self.read_catalog()
         return self._get_product_from_catalog(catalog, category_index, subcategory_index, product_index)
 
-    async def add_product(self, category_index: int, subcategory_index: int, product: dict) -> tuple[ProductLocation, dict] | None:
+    async def change_section(self, action: str, category_index: int, subcategory_index: int, revision: str, name: str = "") -> dict:
         async with self._lock:
             catalog = await asyncio.to_thread(self._read_catalog_sync)
+            if product_revision(catalog) != revision:
+                raise ValueError("Каталог изменился. Откройте раздел заново.")
+            if action not in {"add", "rename", "delete"}:
+                raise ValueError("Неизвестное действие.")
+            if category_index < -1 or subcategory_index < -1:
+                raise ValueError("Раздел не найден.")
+            if action != "delete" and (not name.strip() or len(name.strip()) > 80):
+                raise ValueError("Введите название от 1 до 80 символов.")
+            name = name.strip()
+            if category_index == -1:
+                if action != "add":
+                    raise ValueError("Категория не найдена.")
+                container = catalog
+                old_name = None
+                new_value = {}
+            else:
+                categories = list(catalog)
+                if not 0 <= category_index < len(categories):
+                    raise ValueError("Категория не найдена.")
+                category = categories[category_index]
+                if action == "add" or subcategory_index >= 0:
+                    container = catalog[category]
+                    subs = list(container)
+                    if action != "add" and not 0 <= subcategory_index < len(subs):
+                        raise ValueError("Подкатегория не найдена.")
+                    old_name = subs[subcategory_index] if action != "add" else None
+                    new_value = []
+                else:
+                    container = catalog
+                    old_name = category
+                    new_value = {}
+            if action != "delete" and name in container and name != old_name:
+                raise ValueError("Раздел с таким названием уже существует.")
+            if action == "add":
+                container[name] = new_value
+            elif action == "delete":
+                del container[old_name]
+            else:
+                renamed = {name if key == old_name else key: value for key, value in container.items()}
+                container.clear()
+                container.update(renamed)
+            await asyncio.to_thread(self._write_catalog_sync, catalog)
+            return catalog
+
+    async def add_product(self, category_index: int, subcategory_index: int, product: dict, expected_catalog_revision: str | None = None) -> tuple[ProductLocation, dict] | None:
+        async with self._lock:
+            catalog = await asyncio.to_thread(self._read_catalog_sync)
+            if expected_catalog_revision is not None and product_revision(catalog) != expected_catalog_revision:
+                return None
             categories = list(catalog)
             if not 0 <= category_index < len(categories):
                 return None
@@ -248,7 +300,8 @@ def catalog_admin_root_keyboard(catalog: dict[str, dict[str, list[dict[str, Any]
                 )
             ]
         )
-    return InlineKeyboardMarkup(inline_keyboard=rows) if rows else None
+    rows.append([InlineKeyboardButton(text="➕ Добавить категорию", callback_data=f"catalog_admin:section:add:-1:-1:{product_revision(catalog)}")])
+    return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
 def catalog_admin_subcategory_keyboard(
@@ -269,6 +322,10 @@ def catalog_admin_subcategory_keyboard(
                 )
             ]
         )
+    revision = product_revision(catalog)
+    rows.append([InlineKeyboardButton(text="➕ Добавить подкатегорию", callback_data=f"catalog_admin:section:add:{category_index}:-1:{revision}")])
+    rows.append([InlineKeyboardButton(text="✏️ Название категории", callback_data=f"catalog_admin:section:rename:{category_index}:-1:{revision}")])
+    rows.append([InlineKeyboardButton(text="🗑 Удалить категорию", callback_data=f"catalog_admin:section:delete:{category_index}:-1:{revision}")])
     rows.append([InlineKeyboardButton(text="⬅️ Категории", callback_data="catalog_admin:home")])
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
@@ -304,6 +361,9 @@ def catalog_admin_product_keyboard(
             ]
         )
     rows.append([InlineKeyboardButton(text="➕ Добавить товар", callback_data=f"catalog_admin:add:{category_index}:{subcategory_index}")])
+    revision = product_revision(catalog)
+    rows.append([InlineKeyboardButton(text="✏️ Название подкатегории", callback_data=f"catalog_admin:section:rename:{category_index}:{subcategory_index}:{revision}")])
+    rows.append([InlineKeyboardButton(text="🗑 Удалить подкатегорию", callback_data=f"catalog_admin:section:delete:{category_index}:{subcategory_index}:{revision}")])
     rows.append([InlineKeyboardButton(text="⬅️ Подкатегории", callback_data=f"catalog_admin:cat:{category_index}")])
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
