@@ -19,21 +19,9 @@ try {
 startupMark("telegram-detected");
 
 const searchParams = new URLSearchParams(window.location.search);
+let catalogLayout = {};
 const checkoutApiUrl = searchParams.get("api") || "";
 startupMark("search-params-ready");
-
-const CATEGORY_ORDER = [
-  "Сухофрукты",
-  "Орехи",
-  "Сушёные ягоды",
-  "Специи и пряности",
-  "Восточные сладости",
-  "Орехи и фрукты в шоколаде",
-  "Бобовые и семена",
-  "Натуральные масла",
-  "Восточная керамика",
-  "Подарочные наборы",
-];
 
 const EMPTY_CATEGORY_COPY = {
   "Натуральные масла": "Скоро добавим натуральные масла в витрину. Пока можно выбрать другие позиции и оформить заказ через менеджера.",
@@ -126,7 +114,7 @@ function normalizeText(value) {
 }
 
 function priceValue(price) {
-  const match = String(price).replace(/\s/g, "").match(/\d+/);
+  const match = String(price).replace(/\s/g, "").replace(",", ".").match(/\d+(?:\.\d+)?/);
   return match ? Number(match[0]) : 0;
 }
 
@@ -324,72 +312,37 @@ function takeRawProducts(rawCatalog, category, subcategory, predicate = null) {
 }
 
 function buildDisplayCatalog(rawCatalog) {
-  const allProducts = flattenCatalog(rawCatalog);
-  const sweetsProducts = takeRawProducts(rawCatalog, "Напитки и сладости", "Сладости");
-  const spiceProducts = takeRawProducts(rawCatalog, "Бакалея", "Специи");
-  const grainProducts = takeRawProducts(rawCatalog, "Бакалея", "Крупы и бобовые");
-  const seedProducts = takeRawProducts(rawCatalog, "Бакалея", "Семена");
-  const chocolateProducts = dedupeProducts([
-    ...allProducts.filter(isChocolateProduct),
-    ...takeRawProducts(rawCatalog, "Орехи", "Орехи в глазури"),
-  ]);
-  const driedBerryProducts = dedupeProducts([
-    ...takeRawProducts(rawCatalog, "Сухофрукты", "Изюм"),
-    ...allProducts.filter((product) => matchesKeywords(product, ["клубник", "ягод", "вишн", "клюкв", "смородин", "черешн"])),
-  ]);
-  const naturalOilProducts = dedupeProducts(
-    allProducts.filter((product) => matchesKeywords(product, ["масло", "оливков", "кунжутн", "льнян"]))
-  );
-  const ceramicProducts = dedupeProducts(
-    allProducts.filter((product) => matchesKeywords(product, ["керамик", "пиала", "блюдо", "тарел", "чаша"]))
-  );
-  const giftProducts = dedupeProducts(
-    allProducts.filter((product) => {
-      const nameOnly = normalizeText(product.name);
-      return nameOnly.includes("подар") || nameOnly.includes("набор") || nameOnly.includes("корзин");
-    })
-  );
-
-  return {
-    "Сухофрукты": {
-      "Курага": takeRawProducts(rawCatalog, "Сухофрукты", "Курага"),
-      "Изюм": takeRawProducts(rawCatalog, "Сухофрукты", "Изюм"),
-      "Финики": takeRawProducts(rawCatalog, "Сухофрукты", "Финики"),
-      "Цукаты": takeRawProducts(rawCatalog, "Сухофрукты", "Цукаты"),
-      "Прочие сухофрукты": takeRawProducts(rawCatalog, "Сухофрукты", "Прочие сухофрукты"),
-    },
-    "Орехи": {
-      "Фисташки": takeRawProducts(rawCatalog, "Орехи", "Фисташки", (product) => !isChocolateProduct(product)),
-      "Миндаль и фундук": takeRawProducts(rawCatalog, "Орехи", "Миндаль и фундук", (product) => !isChocolateProduct(product)),
-      "Грецкий орех": takeRawProducts(rawCatalog, "Орехи", "Грецкий орех", (product) => !isChocolateProduct(product)),
-      "Ореховые смеси": takeRawProducts(rawCatalog, "Орехи", "Ореховые смеси", (product) => !isChocolateProduct(product)),
-    },
-    "Сушёные ягоды": {
-      "Изюм и ягоды": driedBerryProducts,
-    },
-    "Специи и пряности": {
-      "Специи": spiceProducts,
-    },
-    "Восточные сладости": {
-      "Сладости": dedupeProducts(sweetsProducts.filter((product) => !isChocolateProduct(product))),
-    },
-    "Орехи и фрукты в шоколаде": {
-      "Шоколад и глазурь": chocolateProducts,
-    },
-    "Бобовые и семена": {
-      "Семена": seedProducts,
-      "Бобовые и крупы": grainProducts,
-    },
-    "Натуральные масла": {
-      "Масла": naturalOilProducts,
-    },
-    "Восточная керамика": {
-      "Керамика": ceramicProducts,
-    },
-    "Подарочные наборы": {
-      "Подарки": giftProducts,
-    },
-  };
+  const result = {};
+  const sources = new Map();
+  Object.entries(catalogLayout).forEach(([category, subs]) => {
+    result[category] = {};
+    Object.entries(subs).forEach(([sub, paths]) => {
+      result[category][sub] = [];
+      paths.forEach((path) => sources.set(JSON.stringify(path), [category, sub]));
+    });
+  });
+  Object.entries(rawCatalog).forEach(([category, subs]) => {
+    Object.entries(subs).forEach(([sub, products]) => {
+      const target = catalogLayout[category] && catalogLayout[category][sub] ? [category, sub]
+        : sources.get(JSON.stringify([category, sub])) || [category, sub];
+      products.forEach((product) => {
+        let destination = target;
+        if (!catalogLayout[category] || sub === "Орехи в глазури") {
+          const name = String(product.name || "").toLowerCase();
+          if (name.includes("шоколад") || name.includes("глазур")) {
+            destination = ["Орехи и фрукты в шоколаде", "Шоколад и глазурь"];
+          }
+        }
+        const [displayCategory, displaySub] = destination;
+        if (!result[displayCategory]) result[displayCategory] = {};
+        if (!result[displayCategory][displaySub]) result[displayCategory][displaySub] = [];
+        result[displayCategory][displaySub].push({
+          ...product, rawCategory: displayCategory, rawSubcategory: displaySub,
+        });
+      });
+    });
+  });
+  return result;
 }
 
 function pickFeaturedProducts(allProducts) {
@@ -535,7 +488,7 @@ function resetSearch() {
 
 function renderCategories() {
   els.categories.innerHTML = "";
-  CATEGORY_ORDER.filter((category) => state.catalog[category]).forEach((category) => {
+  Object.keys(state.catalog).forEach((category) => {
     const button = document.createElement("button");
     button.className = `tab${category === state.category ? " active" : ""}`;
     button.textContent = category;
@@ -579,6 +532,12 @@ function renderSubcategories() {
   });
 }
 
+function escapeHtml(value) {
+  return String(value || "").replace(/[&<>"']/g, (character) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  }[character]));
+}
+
 function createProductCard(product, options = {}) {
   const { featured = false } = options;
   const hasDiscount = Boolean(product.isDiscounted);
@@ -588,7 +547,7 @@ function createProductCard(product, options = {}) {
   const card = document.createElement("article");
   card.className = `product${featured ? " featured" : ""}`;
   card.innerHTML = `
-    <img src="${product.photo || product.photo_url || ""}" alt="${product.name}">
+    <img src="${escapeHtml(product.photo || product.photo_url)}" alt="${escapeHtml(product.name)}">
     <div class="product-body">
       ${(featured || hasDiscount) ? `
         <div class="product-badges">
@@ -596,9 +555,9 @@ function createProductCard(product, options = {}) {
           ${featured ? '<span class="product-badge">Товар недели</span>' : ''}
         </div>
       ` : ""}
-      <h3>${product.name}</h3>
+      <h3>${escapeHtml(product.name)}</h3>
       <div class="meta">
-        <span>${product.origin}</span>
+        <span>${escapeHtml(product.origin)}</span>
         <span class="selected-weight">${formatWeightKg(selectedWeightKg)}</span>
         <div class="selected-price-block${hasDiscount ? ' has-discount' : ''}">
           ${hasDiscount ? '<span class="selected-price-old"></span>' : ''}
@@ -752,10 +711,10 @@ function renderCart() {
     row.className = "cart-item";
     row.innerHTML = `
       <div class="cart-item-copy">
-        <strong>${item.name}</strong>
+        <strong>${escapeHtml(item.name)}</strong>
         <div class="cart-item-price${item.isDiscounted ? " discounted" : ""}">
-          ${item.isDiscounted ? `<span class="cart-old-price">${item.weight} · ${item.originalPrice}</span>` : ""}
-          <span class="cart-current-price">${item.weight} · ${item.price}</span>
+          ${item.isDiscounted ? `<span class="cart-old-price">${escapeHtml(item.weight)} · ${escapeHtml(item.originalPrice)}</span>` : ""}
+          <span class="cart-current-price">${escapeHtml(item.weight)} · ${escapeHtml(item.price)}</span>
         </div>
       </div>
       <div class="cart-item-actions">
@@ -936,19 +895,30 @@ els.orderButton.onclick = () => {
 };
 
 startupMark("before-catalog-fetch");
-fetch("./catalog.json")
-  .then((response) => response.json())
-  .then((rawCatalog) => {
-    state.rawCatalog = rawCatalog;
-    const flatProducts = flattenCatalog(rawCatalog);
+Promise.all(["./catalog.json", "./catalog-layout.json"].map((url) => (
+  fetch(url, { cache: "no-store" }).then((response) => {
+    if (!response.ok) throw new Error(`Не удалось загрузить каталог: HTTP ${response.status}`);
+    return response.json();
+  })
+)))
+  .then(([rawCatalog, layout]) => {
+    catalogLayout = layout;
+    const displayCatalog = buildDisplayCatalog(rawCatalog);
+    state.rawCatalog = displayCatalog;
+    const flatProducts = flattenCatalog(displayCatalog);
     const featuredProducts = pickFeaturedProducts(flatProducts);
     state.discountedProductKeys = new Set(featuredProducts.map((product) => productIdentityKey(product)));
     state.flatProducts = applyDiscountFlag(flatProducts, state.discountedProductKeys);
-    state.catalog = applyDiscountFlagToCatalog(buildDisplayCatalog(rawCatalog), state.discountedProductKeys);
+    state.catalog = applyDiscountFlagToCatalog(displayCatalog, state.discountedProductKeys);
     state.featured = applyDiscountFlag(featuredProducts, state.discountedProductKeys);
-    state.category = CATEGORY_ORDER.find((category) => state.catalog[category]) || Object.keys(state.catalog)[0] || "";
+    state.category = Object.keys(state.catalog)[0] || "";
     state.subcategory = Object.keys(state.catalog[state.category] || {})[0] || "";
     render();
     initializeTelegramWebApp();
+    hideSplash();
+  })
+  .catch((error) => {
+    console.error("Catalog loading failed", error);
+    els.catalogTitle.textContent = "Не удалось загрузить каталог. Попробуйте обновить страницу.";
     hideSplash();
   });

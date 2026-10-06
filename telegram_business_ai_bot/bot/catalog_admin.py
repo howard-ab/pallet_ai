@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import hashlib
 import re
 from dataclasses import dataclass
 from datetime import datetime
@@ -21,12 +22,40 @@ MOSCOW_TZ = ZoneInfo("Europe/Moscow")
 
 
 EDITABLE_FIELDS = {
+    "name": "название",
     "price": "цена",
     "description": "описание",
     "photo": "фото",
     "origin": "страна/производитель",
     "weight": "вес",
 }
+
+
+def normalize_catalog(catalog: dict, layout: dict) -> dict:
+    """Use the storefront layout, preserving products from unlisted sections."""
+    result = {category: {sub: [] for sub in subs} for category, subs in layout.items()}
+    sources = {
+        tuple(source): (category, sub)
+        for category, subs in layout.items()
+        for sub, paths in subs.items()
+        for source in paths
+    }
+    for category, subs in catalog.items():
+        for sub, products in subs.items():
+            target = (category, sub) if sub in layout.get(category, {}) else sources.get((category, sub), (category, sub))
+            for product in products:
+                destination = target
+                # Legacy catalog placed chocolate among nuts and sweets.
+                if category not in layout or sub == "Орехи в глазури":
+                    name = str(product.get("name", "")).lower()
+                    if "шоколад" in name or "глазур" in name:
+                        destination = ("Орехи и фрукты в шоколаде", "Шоколад и глазурь")
+                result.setdefault(destination[0], {}).setdefault(destination[1], []).append(product)
+    return result
+
+
+def product_revision(product: dict) -> str:
+    return hashlib.sha256(json.dumps(product, sort_keys=True, ensure_ascii=False).encode()).hexdigest()[:12]
 
 
 @dataclass(frozen=True)
@@ -55,6 +84,33 @@ class CatalogAdminStorage:
         catalog = await self.read_catalog()
         return self._get_product_from_catalog(catalog, category_index, subcategory_index, product_index)
 
+    async def add_product(self, category_index: int, subcategory_index: int, product: dict) -> tuple[ProductLocation, dict] | None:
+        async with self._lock:
+            catalog = await asyncio.to_thread(self._read_catalog_sync)
+            categories = list(catalog)
+            if not 0 <= category_index < len(categories):
+                return None
+            category = categories[category_index]
+            subs = list(catalog[category])
+            if not 0 <= subcategory_index < len(subs):
+                return None
+            sub = subs[subcategory_index]
+            products = catalog[category][sub]
+            products.append(dict(product))
+            await asyncio.to_thread(self._write_catalog_sync, catalog)
+            return ProductLocation(category_index, subcategory_index, len(products) - 1, category, sub), dict(product)
+
+    async def delete_product(self, category_index: int, subcategory_index: int, product_index: int, revision: str) -> bool:
+        async with self._lock:
+            catalog = await asyncio.to_thread(self._read_catalog_sync)
+            found = self._get_product_from_catalog(catalog, category_index, subcategory_index, product_index)
+            if found is None or product_revision(found[1]) != revision:
+                return False
+            location, _ = found
+            del catalog[location.category][location.subcategory][product_index]
+            await asyncio.to_thread(self._write_catalog_sync, catalog)
+            return True
+
     async def update_product_field(
         self,
         *,
@@ -63,6 +119,7 @@ class CatalogAdminStorage:
         product_index: int,
         field: str,
         value: Any,
+        expected_revision: str | None = None,
     ) -> tuple[ProductLocation, dict[str, Any]] | None:
         if field not in EDITABLE_FIELDS and field not in {"promo", "discount_percent"}:
             return None
@@ -73,6 +130,8 @@ class CatalogAdminStorage:
             if found is None:
                 return None
             location, product = found
+            if expected_revision is not None and product_revision(product) != expected_revision:
+                return None
 
             if field == "promo":
                 enabled = bool(value)
@@ -103,6 +162,7 @@ class CatalogAdminStorage:
         category_index: int,
         subcategory_index: int,
         product_index: int,
+        expected_revision: str | None = None,
     ) -> tuple[ProductLocation, dict[str, Any]] | None:
         async with self._lock:
             catalog = await asyncio.to_thread(self._read_catalog_sync)
@@ -110,6 +170,8 @@ class CatalogAdminStorage:
             if found is None:
                 return None
             location, product = found
+            if expected_revision is not None and product_revision(product) != expected_revision:
+                return None
 
             ADMIN_PRODUCTS_DIR.mkdir(parents=True, exist_ok=True)
             safe_name = _slugify(str(product.get("name") or "product"))
@@ -123,15 +185,14 @@ class CatalogAdminStorage:
             return location, dict(product)
 
     def _read_catalog_sync(self) -> dict[str, dict[str, list[dict[str, Any]]]]:
-        if not self._catalog_file.exists():
-            return {}
-        try:
+        if self._catalog_file.exists():
             payload = json.loads(self._catalog_file.read_text(encoding="utf-8"))
-        except json.JSONDecodeError:
-            return {}
+        else:
+            payload = {}
         if not isinstance(payload, dict):
-            return {}
-        return payload
+            raise ValueError("Catalog must be a JSON object")
+        layout = json.loads((WEBAPP_DIR / "catalog-layout.json").read_text(encoding="utf-8"))
+        return normalize_catalog(payload, layout)
 
     def _write_catalog_sync(self, catalog: dict[str, dict[str, list[dict[str, Any]]]]) -> None:
         self._catalog_file.parent.mkdir(parents=True, exist_ok=True)
@@ -238,10 +299,11 @@ def catalog_admin_product_keyboard(
             [
                 InlineKeyboardButton(
                     text=label,
-                    callback_data=f"catalog_admin:prod:{category_index}:{subcategory_index}:{index}",
+                    callback_data=f"catalog_admin:prod:{category_index}:{subcategory_index}:{index}:{product_revision(product)}",
                 )
             ]
         )
+    rows.append([InlineKeyboardButton(text="➕ Добавить товар", callback_data=f"catalog_admin:add:{category_index}:{subcategory_index}")])
     rows.append([InlineKeyboardButton(text="⬅️ Подкатегории", callback_data=f"catalog_admin:cat:{category_index}")])
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
@@ -249,11 +311,12 @@ def catalog_admin_product_keyboard(
 def catalog_admin_edit_keyboard(location: ProductLocation, product: dict[str, Any]) -> InlineKeyboardMarkup:
     prefix = (
         f"catalog_admin:edit:{location.category_index}:"
-        f"{location.subcategory_index}:{location.product_index}"
+        f"{location.subcategory_index}:{location.product_index}:{product_revision(product)}"
     )
     promo_enabled = bool(product.get("promo")) or int(product.get("discount_percent") or 0) > 0
     promo_text = "🟢 Убрать акцию" if promo_enabled else "🔥 Сделать акцией -10%"
     rows = [
+        [InlineKeyboardButton(text="✏️ Название", callback_data=f"{prefix}:name")],
         [
             InlineKeyboardButton(text="💰 Цена", callback_data=f"{prefix}:price"),
             InlineKeyboardButton(text="🖼 Фото", callback_data=f"{prefix}:photo"),
@@ -267,7 +330,9 @@ def catalog_admin_edit_keyboard(location: ProductLocation, product: dict[str, An
         ],
         [
             InlineKeyboardButton(text=promo_text, callback_data=f"{prefix}:promo"),
+            InlineKeyboardButton(text="Скидка %", callback_data=f"{prefix}:discount_percent"),
         ],
+        [InlineKeyboardButton(text="🗑 Удалить товар", callback_data=f"catalog_admin:delete:{location.category_index}:{location.subcategory_index}:{location.product_index}:{product_revision(product)}")],
         [
             InlineKeyboardButton(
                 text="⬅️ К товарам",
@@ -302,6 +367,10 @@ def format_product_admin_card(location: ProductLocation, product: dict[str, Any]
 
 
 def format_edit_prompt(field: str) -> str:
+    if field == "name":
+        return "Введите новое название товара."
+    if field == "discount_percent":
+        return "Введите скидку целым числом от 0 до 99. Ноль отключает акцию."
     if field == "price":
         return "Введите новую цену, например: <code>690 руб.</code>"
     if field == "description":

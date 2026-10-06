@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 from html import escape
+import re
 from zoneinfo import ZoneInfo
 
 from aiogram import Bot, F, Router
@@ -9,7 +10,7 @@ from aiogram.exceptions import TelegramBadRequest, TelegramNetworkError
 from aiogram.filters import Command, CommandObject, CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery, Message, InlineKeyboardButton, InlineKeyboardMarkup
 
 from bot.catalog_admin import (
     CatalogAdminStorage,
@@ -20,6 +21,7 @@ from bot.catalog_admin import (
     format_edit_prompt,
     format_product_admin_card,
     normalize_price,
+    product_revision,
 )
 from bot.manager_access import ManagerAccessStorage
 from bot.customer_notifications import (
@@ -56,6 +58,7 @@ class ManagerAccessFlow(StatesGroup):
     waiting_for_order_search = State()
     waiting_for_date = State()
     waiting_for_catalog_value = State()
+    waiting_for_new_product = State()
 
 
 def _format_datetime(raw: object) -> str:
@@ -208,7 +211,8 @@ def create_manager_router(
         keyboard = catalog_admin_root_keyboard(catalog)
         await message.answer(
             "<b>🛠 Управление каталогом</b>\n\n"
-            "Выберите категорию. Здесь можно менять цену, описание, вес, страну, фото и акцию товара.",
+            "Выберите категорию. Здесь можно добавлять и удалять товары, менять название, цену, описание, вес, страну, фото и скидку.\n\n"
+            "Изменения сохраняются в каталог проекта. Публичный сайт GitHub Pages обновляется после публикации.",
             parse_mode="HTML",
             reply_markup=keyboard or menu_keyboard,
         )
@@ -510,15 +514,17 @@ def create_manager_router(
 
     @router.message(Command("catalog_admin"))
     @router.message(F.text == MANAGER_CATALOG_ADMIN_BUTTON)
-    async def catalog_admin_home(message: Message) -> None:
+    async def catalog_admin_home(message: Message, state: FSMContext) -> None:
         if not await require_catalog_admin_message(message):
             return
+        await state.clear()
         await show_catalog_admin_home(message)
 
     @router.callback_query(F.data == "catalog_admin:home")
-    async def catalog_admin_home_callback(callback: CallbackQuery) -> None:
+    async def catalog_admin_home_callback(callback: CallbackQuery, state: FSMContext) -> None:
         if not await require_catalog_admin_callback(callback):
             return
+        await state.clear()
         catalog = await catalog_storage.read_catalog()
         if callback.message:
             await callback.message.answer(
@@ -529,9 +535,10 @@ def create_manager_router(
         await callback.answer("Категории")
 
     @router.callback_query(F.data.startswith("catalog_admin:cat:"))
-    async def catalog_admin_category(callback: CallbackQuery) -> None:
+    async def catalog_admin_category(callback: CallbackQuery, state: FSMContext) -> None:
         if not await require_catalog_admin_callback(callback):
             return
+        await state.clear()
         parts = (callback.data or "").split(":")
         if len(parts) != 3:
             await callback.answer("Не удалось открыть категорию.", show_alert=True)
@@ -551,9 +558,10 @@ def create_manager_router(
         await callback.answer("Категория открыта")
 
     @router.callback_query(F.data.startswith("catalog_admin:sub:"))
-    async def catalog_admin_subcategory(callback: CallbackQuery) -> None:
+    async def catalog_admin_subcategory(callback: CallbackQuery, state: FSMContext) -> None:
         if not await require_catalog_admin_callback(callback):
             return
+        await state.clear()
         parts = (callback.data or "").split(":")
         if len(parts) != 4:
             await callback.answer("Не удалось открыть подкатегорию.", show_alert=True)
@@ -579,15 +587,16 @@ def create_manager_router(
         await callback.answer("Товары открыты")
 
     @router.callback_query(F.data.startswith("catalog_admin:prod:"))
-    async def catalog_admin_product(callback: CallbackQuery) -> None:
+    async def catalog_admin_product(callback: CallbackQuery, state: FSMContext) -> None:
         if not await require_catalog_admin_callback(callback):
             return
+        await state.clear()
         parts = (callback.data or "").split(":")
-        if len(parts) != 5:
+        if len(parts) != 6:
             await callback.answer("Не удалось открыть товар.", show_alert=True)
             return
         found = await catalog_storage.get_product(int(parts[2]), int(parts[3]), int(parts[4]))
-        if found is None:
+        if found is None or product_revision(found[1]) != parts[5]:
             await callback.answer("Товар не найден.", show_alert=True)
             return
         location, product = found
@@ -599,21 +608,132 @@ def create_manager_router(
             )
         await callback.answer("Товар открыт")
 
+    @router.callback_query(F.data.startswith("catalog_admin:add:"))
+    async def catalog_admin_add(callback: CallbackQuery, state: FSMContext) -> None:
+        if not await require_catalog_admin_callback(callback):
+            return
+        parts = (callback.data or "").split(":")
+        if len(parts) != 4 or not all(part.isdigit() for part in parts[2:]):
+            await callback.answer("Откройте каталог заново.", show_alert=True)
+            return
+        category_index, subcategory_index = map(int, parts[2:])
+        catalog = await catalog_storage.read_catalog()
+        categories = list(catalog)
+        if not 0 <= category_index < len(categories) or not 0 <= subcategory_index < len(catalog[categories[category_index]]):
+            await callback.answer("Раздел не найден.", show_alert=True)
+            return
+        await state.clear()
+        await state.set_state(ManagerAccessFlow.waiting_for_new_product)
+        await state.update_data(catalog_category_index=category_index, catalog_subcategory_index=subcategory_index, new_product_step="name", new_product={})
+        if callback.message:
+            await callback.message.answer("Введите название нового товара. Для отмены отправьте /cancel.")
+        await callback.answer()
+
+    @router.message(ManagerAccessFlow.waiting_for_new_product)
+    async def catalog_admin_create_product(message: Message, state: FSMContext) -> None:
+        if not await require_catalog_admin_message(message):
+            return
+        if message.text == "/cancel":
+            await state.clear()
+            await show_catalog_admin_home(message)
+            return
+        value = (message.text or "").strip()
+        if not value:
+            await message.answer("Пришлите текст или /cancel.")
+            return
+        data = await state.get_data()
+        product = data.get("new_product", {})
+        step = data.get("new_product_step", "name")
+        if step == "name":
+            if len(value) > 200:
+                await message.answer("Название должно быть не длиннее 200 символов.")
+                return
+            product["name"] = value
+            await state.update_data(new_product=product, new_product_step="price")
+            await message.answer("Введите цену за указанный вес, например 690 или 690 руб.")
+            return
+        if step == "price":
+            if not re.fullmatch(r"\d+(?:[.,]\d{1,2})?(?:\s*руб\.?)?", value) or float(re.search(r"\d+(?:[.,]\d+)?", value)[0].replace(",", ".")) <= 0:
+                await message.answer("Введите положительную цену, например 690 руб.")
+                return
+            product["price"] = normalize_price(value)
+            await state.update_data(new_product=product, new_product_step="weight")
+            await message.answer("Введите вес, например 1 кг или 500 г.")
+            return
+        if not re.fullmatch(r"\d+(?:[.,]\d+)?\s*(?:кг|г)", value) or float(re.search(r"\d+(?:[.,]\d+)?", value)[0].replace(",", ".")) <= 0:
+            await message.answer("Введите положительный вес с единицей: 1 кг или 500 г.")
+            return
+        product.update(weight=value, description="", origin="уточняется", photo="", photo_url="", promo=False, discount_percent=0)
+        saved = await catalog_storage.add_product(int(data["catalog_category_index"]), int(data["catalog_subcategory_index"]), product)
+        await state.clear()
+        if saved is None:
+            await message.answer("Раздел изменился. Откройте каталог заново.")
+            return
+        location, product = saved
+        await message.answer("✅ Товар добавлен. Теперь добавьте фото и описание.\n\n" + format_product_admin_card(location, product), parse_mode="HTML", reply_markup=catalog_admin_edit_keyboard(location, product))
+
+    @router.callback_query(F.data.startswith("catalog_admin:delete:"))
+    async def catalog_admin_delete_prompt(callback: CallbackQuery) -> None:
+        if not await require_catalog_admin_callback(callback):
+            return
+        parts = (callback.data or "").split(":")
+        if len(parts) != 6 or not all(part.isdigit() for part in parts[2:5]):
+            await callback.answer("Откройте каталог заново.", show_alert=True)
+            return
+        found = await catalog_storage.get_product(*map(int, parts[2:5]))
+        if found is None or product_revision(found[1]) != parts[5]:
+            await callback.answer("Товар не найден.", show_alert=True)
+            return
+        location, product = found
+        if callback.message:
+            await callback.message.answer(
+                f"Удалить товар <b>{escape(str(product.get('name', '')))}</b>?",
+                parse_mode="HTML",
+                reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+                    [InlineKeyboardButton(text="Да, удалить", callback_data=f"catalog_admin:remove:{location.category_index}:{location.subcategory_index}:{location.product_index}:{product_revision(product)}")],
+                    [InlineKeyboardButton(text="Отмена", callback_data=f"catalog_admin:sub:{location.category_index}:{location.subcategory_index}")],
+                ]),
+            )
+        await callback.answer()
+
+    @router.callback_query(F.data.startswith("catalog_admin:remove:"))
+    async def catalog_admin_delete(callback: CallbackQuery, state: FSMContext) -> None:
+        if not await require_catalog_admin_callback(callback):
+            return
+        parts = (callback.data or "").split(":")
+        if len(parts) != 6 or not all(part.isdigit() for part in parts[2:5]):
+            await callback.answer("Откройте каталог заново.", show_alert=True)
+            return
+        category_index, subcategory_index, product_index = map(int, parts[2:5])
+        deleted = await catalog_storage.delete_product(category_index, subcategory_index, product_index, parts[5])
+        if not deleted:
+            await callback.answer("Товар изменился или уже удалён. Откройте каталог заново.", show_alert=True)
+            return
+        await state.clear()
+        if callback.message:
+            await callback.message.edit_reply_markup(reply_markup=None)
+            await callback.message.answer("✅ Товар удалён.", reply_markup=catalog_admin_product_keyboard(await catalog_storage.read_catalog(), category_index, subcategory_index))
+        await callback.answer()
+
     @router.callback_query(F.data.startswith("catalog_admin:edit:"))
     async def catalog_admin_edit(callback: CallbackQuery, state: FSMContext) -> None:
         if not await require_catalog_admin_callback(callback):
             return
         parts = (callback.data or "").split(":")
-        if len(parts) != 6:
+        if len(parts) != 7:
             await callback.answer("Не удалось открыть редактирование.", show_alert=True)
             return
         category_index = int(parts[2])
         subcategory_index = int(parts[3])
         product_index = int(parts[4])
-        field = parts[5]
+        revision = parts[5]
+        field = parts[6]
+        if field not in {"name", "price", "description", "photo", "origin", "weight", "promo", "discount_percent"}:
+            await callback.answer("Неизвестное поле.", show_alert=True)
+            return
         if field == "promo":
             found = await catalog_storage.get_product(category_index, subcategory_index, product_index)
-            if found is None:
+            if found is None or product_revision(found[1]) != revision:
                 await callback.answer("Товар не найден.", show_alert=True)
                 return
             _location, product = found
@@ -624,6 +744,7 @@ def create_manager_router(
                 product_index=product_index,
                 field="promo",
                 value=not promo_enabled,
+                expected_revision=revision,
             )
             if updated is None:
                 await callback.answer("Не удалось обновить акцию.", show_alert=True)
@@ -644,6 +765,7 @@ def create_manager_router(
             catalog_subcategory_index=subcategory_index,
             catalog_product_index=product_index,
             catalog_field=field,
+            catalog_product_revision=revision,
         )
         if callback.message:
             await callback.message.answer(
@@ -656,6 +778,10 @@ def create_manager_router(
     @router.message(ManagerAccessFlow.waiting_for_catalog_value)
     async def catalog_admin_save_value(message: Message, state: FSMContext) -> None:
         if not await require_catalog_admin_message(message):
+            return
+        if message.text == "/cancel":
+            await state.clear()
+            await show_catalog_admin_home(message)
             return
         data = await state.get_data()
         category_index = int(data.get("catalog_category_index", -1))
@@ -670,12 +796,20 @@ def create_manager_router(
                 category_index=category_index,
                 subcategory_index=subcategory_index,
                 product_index=product_index,
+                expected_revision=data.get("catalog_product_revision"),
             )
         else:
             if not message.text:
                 await message.answer("Пришлите текстовое значение или фото.", reply_markup=menu_keyboard)
                 return
             value = message.text.strip()
+            if not value:
+                await message.answer("Значение не должно быть пустым.")
+                return
+            if field == "discount_percent":
+                if not value.isdigit() or not 0 <= int(value) <= 99:
+                    await message.answer("Введите целое число от 0 до 99.")
+                    return
             if field == "price":
                 value = normalize_price(value)
             saved = await catalog_storage.update_product_field(
@@ -684,6 +818,7 @@ def create_manager_router(
                 product_index=product_index,
                 field=field,
                 value=value,
+                expected_revision=data.get("catalog_product_revision"),
             )
 
         await state.clear()
