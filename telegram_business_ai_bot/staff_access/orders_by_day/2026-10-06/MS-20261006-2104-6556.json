@@ -1,0 +1,46 @@
+{
+  "timestamp": "2026-10-06T21:04:17.103999+03:00",
+  "created_at": "2026-10-06T21:04:17.103999+03:00",
+  "created_at_text": "06.10.2026 21:04 MSK",
+  "updated_at": "2026-10-06T21:04:17.103999+03:00",
+  "updated_at_text": "06.10.2026 21:04 MSK",
+  "date": "2026-10-06",
+  "order_number": "MS-20261006-2104-6556",
+  "status": "new",
+  "customer": {
+    "user_id": 7163785167,
+    "username": null,
+    "first_name": "Рафф",
+    "phone": "79286660525"
+  },
+  "items": [
+    {
+      "name": "Абрикос сушёный (урюк) отборный, Таджикистан 1кг",
+      "price": "156 руб.",
+      "weight": "0,25 кг",
+      "quantity": 1
+    },
+    {
+      "name": "Курага натуральная турецкая джамбо, 1кг",
+      "price": "351 руб.",
+      "weight": "0,5 кг",
+      "quantity": 1
+    }
+  ],
+  "total": 507,
+  "history": [
+    {
+      "timestamp": "2026-10-06T21:04:17.103999+03:00",
+      "timestamp_text": "06.10.2026 21:04 MSK",
+      "event": "created",
+      "status": "new",
+      "actor": {
+        "source": "customer_bot",
+        "user_id": 7163785167,
+        "username": null,
+        "first_name": "Рафф"
+      }
+    }
+  ],
+  "last_action_by": null
+}

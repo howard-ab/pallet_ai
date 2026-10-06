@@ -1,0 +1,90 @@
+{
+  "timestamp": "2026-10-06T20:53:21.212960+03:00",
+  "created_at": "2026-10-06T20:53:21.212960+03:00",
+  "created_at_text": "06.10.2026 20:53 MSK",
+  "updated_at": "2026-10-06T20:54:15.658655+03:00",
+  "updated_at_text": "06.10.2026 20:54 MSK",
+  "date": "2026-10-06",
+  "order_number": "MS-20261006-2053-3947",
+  "status": "delivered",
+  "customer": {
+    "user_id": 7019360208,
+    "username": "rafieveee",
+    "first_name": "-",
+    "phone": "79953792738"
+  },
+  "items": [
+    {
+      "name": "Абрикос сушёный (урюк) отборный, Таджикистан 1кг",
+      "price": "311 руб.",
+      "weight": "0,5 кг",
+      "quantity": 1
+    },
+    {
+      "name": "Курага натуральная турецкая джамбо, 1кг",
+      "price": "176 руб.",
+      "weight": "0,25 кг",
+      "quantity": 1
+    }
+  ],
+  "total": 487,
+  "history": [
+    {
+      "timestamp": "2026-10-06T20:53:21.212960+03:00",
+      "timestamp_text": "06.10.2026 20:53 MSK",
+      "event": "created",
+      "status": "new",
+      "actor": {
+        "source": "customer_bot",
+        "user_id": 7019360208,
+        "username": "rafieveee",
+        "first_name": "-"
+      }
+    },
+    {
+      "timestamp": "2026-10-06T20:54:12.000272+03:00",
+      "timestamp_text": "06.10.2026 20:54 MSK",
+      "event": "status_changed",
+      "from_status": "new",
+      "status": "assembled",
+      "actor": {
+        "user_id": 1934944785,
+        "username": "muhammadrafi05",
+        "first_name": "Muhammadrafi",
+        "last_name": null
+      }
+    },
+    {
+      "timestamp": "2026-10-06T20:54:14.082443+03:00",
+      "timestamp_text": "06.10.2026 20:54 MSK",
+      "event": "status_changed",
+      "from_status": "assembled",
+      "status": "in_delivery",
+      "actor": {
+        "user_id": 1934944785,
+        "username": "muhammadrafi05",
+        "first_name": "Muhammadrafi",
+        "last_name": null
+      }
+    },
+    {
+      "timestamp": "2026-10-06T20:54:15.658655+03:00",
+      "timestamp_text": "06.10.2026 20:54 MSK",
+      "event": "status_changed",
+      "from_status": "in_delivery",
+      "status": "delivered",
+      "actor": {
+        "user_id": 1934944785,
+        "username": "muhammadrafi05",
+        "first_name": "Muhammadrafi",
+        "last_name": null
+      }
+    }
+  ],
+  "last_action_by": {
+    "user_id": 1934944785,
+    "username": "muhammadrafi05",
+    "first_name": "Muhammadrafi",
+    "last_name": null
+  }
+}
