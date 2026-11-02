@@ -43,7 +43,7 @@
         "weight": "1 кг",
         "description": "Курага сахарная, сладкая сушенная на солнце, га вкус сладкая,  сухая.",
         "origin": "Таджикистан",
-        "photo": "assets/products/admin/курага_сахарная_20261006_224452.jpg",
+        "photo": "assets/products/admin/курага_сахарная_20261006_233634.jpg",
         "photo_url": "",
         "promo": false,
         "discount_percent": 0
@@ -241,12 +241,12 @@
   "Орехи": {
     "Фисташки": [
       {
-        "name": "Фисташки турецкие жареные солёные, 500г",
+        "name": "Фисташки турецкие жареные соленые, 1 кг",
         "description": "Отборные горные турецкие фисташки, высший сорт, слабосолёные. (Чанкая, Cankaya)",
-        "price": "1190 руб.",
-        "weight": "500 г",
+        "price": "2500 руб.",
+        "weight": "1 кг",
         "origin": "уточняется",
-        "photo": "assets/products/orehi/fistashki/01_fistashki_zharenye_solenye_iranskie_sort_ahmadi_1kg.jpg",
+        "photo": "Фисташки турецкие жареные соленые",
         "photo_url": ""
       },
       {
@@ -261,7 +261,7 @@
       {
         "name": "Фисташки сырые крупные американские, 1кг",
         "description": "Фисташки крупные, не жареные и не солёные. Страна произростания — США. Отборный сорт",
-        "price": "1250 руб.",
+        "price": "1650 руб.",
         "weight": "1 кг",
         "origin": "США",
         "photo": "assets/products/orehi/fistashki/03_yadra_fistashek_ochischennye_krupnye_250g.jpg",
@@ -290,7 +290,7 @@
       {
         "name": "Миндаль сырой отборный, 1кг",
         "description": "Вкусный очищенный от скорлупы калифорнийский сырой миндаль.",
-        "price": "780 руб.",
+        "price": "1300 руб.",
         "weight": "1 кг",
         "origin": "уточняется",
         "photo": "assets/products/orehi/mindal_i_funduk/01_mindal_syroy_krupnyy_chili_1kg.jpg",
@@ -299,26 +299,26 @@
       {
         "name": "Фундук в белом шоколаде, 1кг",
         "description": "Вкусный, отборный, жареный фундук в белой глазури",
-        "price": "810 руб.",
+        "price": "1150 руб.",
         "weight": "1 кг",
         "origin": "уточняется",
         "photo": "assets/products/orehi/mindal_i_funduk/02_mindal_zharenyy_otbornyy_500g.jpg",
         "photo_url": ""
       },
       {
-        "name": "Фундук в тёмном шоколаде, 1кг",
+        "name": "Фундук в темном шоколаде, 1 кг",
         "description": "Вкусный, отборный, жареный фундук в тёмной глазури",
-        "price": "840 руб.",
+        "price": "1150 руб.",
         "weight": "1 кг",
         "origin": "уточняется",
         "photo": "assets/products/orehi/mindal_i_funduk/03_funduk_v_belom_shokolade_1kg.jpg",
         "photo_url": ""
       },
       {
-        "name": "Фундук сырой светлый, 500г",
-        "description": "Вкусный и полезный сырой фундук из Дагестан",
-        "price": "870 руб.",
-        "weight": "500 г",
+        "name": "Фундук светлый сырой, 1 кг",
+        "description": "Вкусный и полезный фундук из Дагестана",
+        "price": "1400 руб.",
+        "weight": "1 кг",
         "origin": "уточняется",
         "photo": "assets/products/orehi/mindal_i_funduk/04_mindalnye_lepestki_500g.jpg",
         "photo_url": ""
@@ -326,28 +326,127 @@
       {
         "name": "Фундук сырой тёмный, 1кг",
         "description": "Фундук из Абхазии, крупный 17+, свежий урожай",
-        "price": "900 руб.",
+        "price": "1400 руб.",
         "weight": "1 кг",
         "origin": "уточняется",
         "photo": "assets/products/orehi/mindal_i_funduk/05_funduk_syroy_svetlyy_1kg.jpg",
         "photo_url": ""
+      },
+      {
+        "name": "Фундук жареный ,1 кг",
+        "price": "1500 руб.",
+        "weight": "1 кг",
+        "description": "",
+        "origin": "уточняется",
+        "photo": "assets/products/admin/фундук_жареный_20261102_172123.jpg",
+        "photo_url": "",
+        "promo": false,
+        "discount_percent": 0
+      },
+      {
+        "name": "Миндаль жареный со специями, 1 кг",
+        "price": "1450 руб.",
+        "weight": "1 кг",
+        "description": "",
+        "origin": "уточняется",
+        "photo": "assets/products/admin/миндаль_жареный_со_специями_1_кг_20261102_174120.jpg",
+        "photo_url": "",
+        "promo": false,
+        "discount_percent": 0
+      },
+      {
+        "name": "Миндаль сырой, 1 кг",
+        "price": "1100 руб.",
+        "weight": "1кг",
+        "description": "",
+        "origin": "уточняется",
+        "photo": "",
+        "photo_url": "",
+        "promo": false,
+        "discount_percent": 0
+      },
+      {
+        "name": "Миндаль жареный, 1 кг",
+        "price": "1300 руб.",
+        "weight": "1 кг",
+        "description": "",
+        "origin": "уточняется",
+        "photo": "",
+        "photo_url": "",
+        "promo": false,
+        "discount_percent": 0
+      },
+      {
+        "name": "Миндаль сырой",
+        "price": "1100 руб.",
+        "weight": "1 кг",
+        "description": "",
+        "origin": "уточняется",
+        "photo": "",
+        "photo_url": "",
+        "promo": false,
+        "discount_percent": 0
+      },
+      {
+        "name": "Миндаль жареный в скорлупе с ванилью,1 кг",
+        "price": "1300 руб.",
+        "weight": "1 кг",
+        "description": "",
+        "origin": "уточняется",
+        "photo": "",
+        "photo_url": "",
+        "promo": false,
+        "discount_percent": 0
+      },
+      {
+        "name": "Миндаль в белом шоколаде , 1 кг",
+        "price": "1150 руб.",
+        "weight": "1 кг",
+        "description": "",
+        "origin": "уточняется",
+        "photo": "",
+        "photo_url": "",
+        "promo": false,
+        "discount_percent": 0
+      },
+      {
+        "name": "Миндаль в темном шоколаде, 1 кг",
+        "price": "1150 руб.",
+        "weight": "1 кг",
+        "description": "",
+        "origin": "уточняется",
+        "photo": "",
+        "photo_url": "",
+        "promo": false,
+        "discount_percent": 0
+      },
+      {
+        "name": "Фундук в какао ,1 кг",
+        "price": "1150 руб.",
+        "weight": "1 кг",
+        "description": "",
+        "origin": "уточняется",
+        "photo": "",
+        "photo_url": "",
+        "promo": false,
+        "discount_percent": 0
       }
     ],
     "Грецкий орех": [
       {
-        "name": "Грецкий орех очищенный, отборный, 500г",
+        "name": "Грецкий орех очищенный отборный,1 кг",
         "description": "Качественный продукт от МирСухофруктов для ежедневного рациона и подарков.",
-        "price": "780 руб.",
-        "weight": "500 г",
+        "price": "1200 руб.",
+        "weight": "1 кг",
         "origin": "уточняется",
         "photo": "assets/products/orehi/greckiy_oreh/01_greckiy_oreh_v_skorlupe_chili_1kg.jpg",
         "photo_url": ""
       },
       {
-        "name": "Грецкий орех очищенный четвертинки, 500г",
+        "name": "Грецкий орех очищенный четвертинки,1 кг",
         "description": "Грецкий орех очищенный, \"рядовка\", вкусные.",
-        "price": "810 руб.",
-        "weight": "500 г",
+        "price": "700 руб.",
+        "weight": "1 кг",
         "origin": "уточняется",
         "photo": "assets/products/orehi/greckiy_oreh/02_peregorodki_greckih_orehov_1kg.jpg",
         "photo_url": ""
@@ -355,7 +454,7 @@
       {
         "name": "Грецкий орех в скорлупе, Китай, 1кг",
         "description": "Качественный продукт от МирСухофруктов для ежедневного рациона и подарков.",
-        "price": "840 руб.",
+        "price": "400 руб.",
         "weight": "1 кг",
         "origin": "Китай",
         "photo": "assets/products/orehi/greckiy_oreh/03_greckiy_oreh_ochischennyy_otbornyy_1kg.jpg",
@@ -364,7 +463,7 @@
       {
         "name": "Грецкий орех в скорлупе, Чили 1кг",
         "description": "Отборный, крупный чилийский грецкий орех. Свежий урожай",
-        "price": "870 руб.",
+        "price": "700 руб.",
         "weight": "1 кг",
         "origin": "Чили",
         "photo": "assets/products/orehi/greckiy_oreh/04_greckiy_oreh_ochischennyy_babochka_chili_500g.jpg",
@@ -378,53 +477,309 @@
         "origin": "уточняется",
         "photo": "assets/products/orehi/greckiy_oreh/05_greckiy_oreh_ochischennyy_otbornyy_500g.jpg",
         "photo_url": ""
+      },
+      {
+        "name": "Грецкий орех очищенный половинки ,1 кг",
+        "price": "850 руб.",
+        "weight": "1 кг",
+        "description": "",
+        "origin": "уточняется",
+        "photo": "",
+        "photo_url": "",
+        "promo": false,
+        "discount_percent": 0
+      },
+      {
+        "name": "Грецкий орех очищенный Чили,1 кг",
+        "price": "1700 руб.",
+        "weight": "1 кг",
+        "description": "",
+        "origin": "уточняется",
+        "photo": "",
+        "photo_url": "",
+        "promo": false,
+        "discount_percent": 0
+      },
+      {
+        "name": "Грецкий орех в какао,1 кг",
+        "price": "1150 руб.",
+        "weight": "1 кг",
+        "description": "",
+        "origin": "уточняется",
+        "photo": "",
+        "photo_url": "",
+        "promo": false,
+        "discount_percent": 0
       }
     ],
-    "Ореховые смеси": [
+    "Кешью": [
       {
-        "name": "Арахис в скорлупе обжаренный, 500г",
-        "description": "Вкусный жареный арахис в скорлупе (неочищенный).",
-        "price": "390 руб.",
-        "weight": "500 г",
-        "origin": "уточняется",
-        "photo": "assets/products/orehi/orehovye_smesi/01_arahis_zharenyy_uzbekistan_1kg.jpg",
-        "photo_url": ""
-      },
-      {
-        "name": "Фруктово-ореховая смесь, 500г",
-        "description": "Вкусная и полезная смесь из сухофруктов и орехов.",
-        "price": "920 руб.",
-        "weight": "500 г",
-        "origin": "уточняется",
-        "photo": "assets/products/orehi/orehovye_smesi/02_pekan_ochischennyy_syroy_argentina_500g.jpg",
-        "photo_url": ""
-      },
-      {
-        "name": "Бразильский орех Medium, 500г",
-        "description": "Очищенный разильский орех — среднего размера (Medium), страна эспортёр: Боливия.",
-        "price": "450 руб.",
-        "weight": "500 г",
-        "origin": "уточняется",
-        "photo": "assets/products/orehi/orehovye_smesi/03_arahis_v_skorlupe_obzharennyy_500g.jpg",
-        "photo_url": ""
-      },
-      {
-        "name": "Арахис сырой красный, Узбекистан, 1кг",
-        "description": "Вкусный очищенный арахис из Узбекистана, урожай 2023года.",
-        "price": "480 руб.",
+        "name": "Кешью сырой ,1 кг",
+        "price": "1200 руб.",
         "weight": "1 кг",
-        "origin": "Узбекистан",
-        "photo": "assets/products/orehi/orehovye_smesi/04_brazilskiy_oreh_medium_1kg.jpg",
-        "photo_url": ""
+        "description": "",
+        "origin": "уточняется",
+        "photo": "assets/products/admin/кешью_сырой_1_кг_20261102_180226.jpg",
+        "photo_url": "",
+        "promo": false,
+        "discount_percent": 0
       },
       {
-        "name": "Пастила фруктовая натуральная, 5шт",
-        "description": "Пастила скрученная вкусная из разных фруктов. 5шт ассорти в комплекте.",
-        "price": "510 руб.",
-        "weight": "0.86 кг с упаковкой",
+        "name": "Кешью сырой крупный , 1 кг",
+        "price": "1450 руб.",
+        "weight": "1 кг",
+        "description": "",
         "origin": "уточняется",
-        "photo": "assets/products/orehi/orehovye_smesi/05_arahis_syroy_krasnyy_uzbekistan_500g.jpg",
-        "photo_url": ""
+        "photo": "assets/products/admin/кешью_сырой_крупный_1_кг_20261102_180206.jpg",
+        "photo_url": "",
+        "promo": false,
+        "discount_percent": 0
+      },
+      {
+        "name": "Кешью жареный , 1 кг",
+        "price": "1250 руб.",
+        "weight": "1 кг",
+        "description": "",
+        "origin": "уточняется",
+        "photo": "assets/products/admin/кешью_жареный_1_кг_20261102_180329.jpg",
+        "photo_url": "",
+        "promo": false,
+        "discount_percent": 0
+      },
+      {
+        "name": "Кешью неочищенный жареный , 1 кг",
+        "price": "1300 руб.",
+        "weight": "1 кг",
+        "description": "",
+        "origin": "уточняется",
+        "photo": "assets/products/admin/кешью_неочищенный_жареный_1_кг_20261102_180501.jpg",
+        "photo_url": "",
+        "promo": false,
+        "discount_percent": 0
+      },
+      {
+        "name": "Кешью жареный со специями, 1 кг",
+        "price": "1500 руб.",
+        "weight": "1 кг",
+        "description": "",
+        "origin": "уточняется",
+        "photo": "assets/products/admin/кешью_жареный_со_специями_1_кг_20261102_180545.jpg",
+        "photo_url": "",
+        "promo": false,
+        "discount_percent": 0
+      },
+      {
+        "name": "Кешью в темном шоколаде,1 кг",
+        "price": "1150 руб.",
+        "weight": "1 кг",
+        "description": "",
+        "origin": "уточняется",
+        "photo": "",
+        "photo_url": "",
+        "promo": false,
+        "discount_percent": 0
+      },
+      {
+        "name": "Кешью в белом шоколаде ,1 кг",
+        "price": "1150 руб.",
+        "weight": "1 кг",
+        "description": "",
+        "origin": "уточняется",
+        "photo": "",
+        "photo_url": "",
+        "promo": false,
+        "discount_percent": 0
+      },
+      {
+        "name": "Кешью в какао,1 кг",
+        "price": "1150 руб.",
+        "weight": "1 кг",
+        "description": "",
+        "origin": "уточняется",
+        "photo": "",
+        "photo_url": "",
+        "promo": false,
+        "discount_percent": 0
+      }
+    ],
+    "Арахис": [
+      {
+        "name": "Арахис жареный,1 кг",
+        "price": "350 руб.",
+        "weight": "1 кг",
+        "description": "",
+        "origin": "уточняется",
+        "photo": "",
+        "photo_url": "",
+        "promo": false,
+        "discount_percent": 0
+      },
+      {
+        "name": "Арахис средняя Азия,1 кг",
+        "price": "300 руб.",
+        "weight": "1 кг",
+        "description": "",
+        "origin": "уточняется",
+        "photo": "",
+        "photo_url": "",
+        "promo": false,
+        "discount_percent": 0
+      },
+      {
+        "name": "Арахис Индия,1 кг",
+        "price": "320 руб.",
+        "weight": "1 кг",
+        "description": "",
+        "origin": "уточняется",
+        "photo": "",
+        "photo_url": "",
+        "promo": false,
+        "discount_percent": 0
+      },
+      {
+        "name": "Арахис крупный,1 кг",
+        "price": "350 руб.",
+        "weight": "1 кг",
+        "description": "",
+        "origin": "уточняется",
+        "photo": "",
+        "photo_url": "",
+        "promo": false,
+        "discount_percent": 0
+      },
+      {
+        "name": "Арахис жареный соленый ,1 кг",
+        "price": "350 руб.",
+        "weight": "1 кг",
+        "description": "",
+        "origin": "уточняется",
+        "photo": "",
+        "photo_url": "",
+        "promo": false,
+        "discount_percent": 0
+      },
+      {
+        "name": "Арахис неочищенный,1 кг",
+        "price": "340 руб.",
+        "weight": "1 кг",
+        "description": "",
+        "origin": "уточняется",
+        "photo": "",
+        "photo_url": "",
+        "promo": false,
+        "discount_percent": 0
+      },
+      {
+        "name": "Арахис в жженом сахаре ,1 кг",
+        "price": "400 руб.",
+        "weight": "1 кг",
+        "description": "",
+        "origin": "уточняется",
+        "photo": "",
+        "photo_url": "",
+        "promo": false,
+        "discount_percent": 0
+      },
+      {
+        "name": "Арахис в белом сахаре,1 кг",
+        "price": "350 руб.",
+        "weight": "1 кг",
+        "description": "",
+        "origin": "уточняется",
+        "photo": "",
+        "photo_url": "",
+        "promo": false,
+        "discount_percent": 0
+      },
+      {
+        "name": "Арахис в кунжуте,1 кг",
+        "price": "350 руб.",
+        "weight": "1 кг",
+        "description": "",
+        "origin": "уточняется",
+        "photo": "",
+        "photo_url": "",
+        "promo": false,
+        "discount_percent": 0
+      },
+      {
+        "name": "Арахис в йогурте,1 кг",
+        "price": "550 руб.",
+        "weight": "1 кг",
+        "description": "",
+        "origin": "уточняется",
+        "photo": "",
+        "photo_url": "",
+        "promo": false,
+        "discount_percent": 0
+      },
+      {
+        "name": "Арахис в шоколаде,1 кг",
+        "price": "850 руб.",
+        "weight": "1 кг",
+        "description": "",
+        "origin": "уточняется",
+        "photo": "",
+        "photo_url": "",
+        "promo": false,
+        "discount_percent": 0
+      }
+    ],
+    "Бразильский орех,макадамия и пекан": [
+      {
+        "name": "Бразильский орех,1 кг",
+        "price": "2400 руб.",
+        "weight": "1 кг",
+        "description": "",
+        "origin": "уточняется",
+        "photo": "assets/products/admin/бразильский_орех_1_кг_20261102_183716.jpg",
+        "photo_url": "",
+        "promo": false,
+        "discount_percent": 0
+      },
+      {
+        "name": "Пекан очищенный сырой,1 кг",
+        "price": "2200 руб.",
+        "weight": "1 кг",
+        "description": "",
+        "origin": "уточняется",
+        "photo": "",
+        "photo_url": "",
+        "promo": false,
+        "discount_percent": 0
+      },
+      {
+        "name": "Пекан в скорлупе жареный,1 кг",
+        "price": "1300 руб.",
+        "weight": "1 кг",
+        "description": "",
+        "origin": "уточняется",
+        "photo": "",
+        "photo_url": "",
+        "promo": false,
+        "discount_percent": 0
+      },
+      {
+        "name": "Макадамия,1 кг",
+        "price": "800 руб.",
+        "weight": "1 кг",
+        "description": "",
+        "origin": "уточняется",
+        "photo": "",
+        "photo_url": "",
+        "promo": false,
+        "discount_percent": 0
+      },
+      {
+        "name": "Макадамия крупная ,1 кг",
+        "price": "900 руб.",
+        "weight": "1 кг",
+        "description": "",
+        "origin": "уточняется",
+        "photo": "",
+        "photo_url": "",
+        "promo": false,
+        "discount_percent": 0
       }
     ]
   },
